@@ -793,8 +793,9 @@ export default function Layout({ children, currentPageName }) {
       )}
 
       {showSidebar && (
-        <nav className="fixed left-0 top-0 h-full w-64 glass-effect flex flex-col p-4 z-50 overflow-y-auto lg:block hidden lg:translate-x-0"
+        <nav className="fixed left-0 top-0 h-full w-64 glass-effect flex-col p-4 z-50 overflow-y-auto lg:flex"
           style={{ display: sidebarOpen ? 'flex' : undefined }}
+          className={`fixed left-0 top-0 h-full w-64 glass-effect flex-col p-4 z-50 overflow-y-auto transition-transform duration-300 ${sidebarOpen ? 'translate-x-0 flex' : '-translate-x-full lg:translate-x-0 lg:flex'}`}
         >
           <button
             onClick={closeSidebar}
