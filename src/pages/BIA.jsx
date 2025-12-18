@@ -3,7 +3,7 @@ import { Assessment } from "@/entities/Assessment";
 import { BIA } from "@/entities/BIA";
 import { User } from "@/entities/User";
 // import BIASection from "../components/bia/BIASection"; // Removed: Replaced with new components
-import SimpleBIAWizard from "../components/bia/SimpleBIAWizard";
+import StreamlinedBIAWizard from "../components/bia/StreamlinedBIAWizard";
 import BIACard from "../components/bia/BIACard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -54,6 +54,7 @@ export default function BIAPage() {
   const [industryBenchmarks, setIndustryBenchmarks] = useState(null);
   const [currentView, setCurrentView] = useState('workbench'); // 'workbench' or 'results'
   const [activeTabValue, setActiveTabValue] = useState('standalone'); // Tracks the active tab
+  const [autoSaveTimer, setAutoSaveTimer] = useState(null);
 
   // New states for the item management UI
   const [showWizard, setShowWizard] = useState(false);
@@ -202,6 +203,35 @@ export default function BIAPage() {
     triggerAutoSave();
   }, [editingItemIndex]);
 
+  const handleSaveBia = useCallback(async () => {
+    if (!selectedBia) return;
+    setSaving(true);
+    try {
+      if (selectedBia.id) {
+        const updated = await BIA.update(selectedBia.id, {
+          ...selectedBia,
+          status: selectedBia.status || "draft",
+          bia_last_calculated_date: new Date().toISOString()
+        });
+        setSelectedBia(updated);
+      } else {
+        const created = await BIA.create({
+          ...selectedBia,
+          status: selectedBia.status || "draft",
+          bia_last_calculated_date: new Date().toISOString()
+        });
+        setSelectedBia(created);
+      }
+      if (selectedBia.linked_assessment_id) {
+        await loadLinkedBias(selectedAssessmentId);
+      } else {
+        await loadBIAs(user.company_id);
+      }
+    } finally {
+      setSaving(false);
+    }
+  }, [selectedBia, user, selectedAssessmentId, loadLinkedBias, loadBIAs]);
+
   const triggerAutoSave = useCallback(() => {
     if (autoSaveTimer) clearTimeout(autoSaveTimer);
     const timer = setTimeout(() => {
@@ -210,7 +240,7 @@ export default function BIAPage() {
       }
     }, 2000);
     setAutoSaveTimer(timer);
-  }, [autoSaveTimer, selectedBia]);
+  }, [autoSaveTimer, selectedBia, handleSaveBia]);
 
   // Handlers - Standalone
   const handleCreateStandalone = async () => {
@@ -629,13 +659,13 @@ export default function BIAPage() {
                           {editingItemIndex !== null ? "Edit Critical Function" : "Add Critical Function"}
                         </DialogTitle>
                       </DialogHeader>
-                      <SimpleBIAWizard
-                        item={editingItemIndex !== null ? items[editingItemIndex] : null}
-                        onUpdate={(inputs) => {
-                          // Optional: live update as user types (can be used for preview)
-                          // For now, full update only on complete
-                        }}
+                      <StreamlinedBIAWizard
+                        initialData={editingItemIndex !== null ? items[editingItemIndex]?.inputs : undefined}
                         onComplete={handleWizardComplete}
+                        onCancel={() => {
+                          setShowWizard(false);
+                          setEditingItemIndex(null);
+                        }}
                       />
                     </DialogContent>
                   </Dialog>
@@ -839,12 +869,13 @@ export default function BIAPage() {
                           {editingItemIndex !== null ? "Edit Critical Function" : "Add Critical Function"}
                         </DialogTitle>
                       </DialogHeader>
-                      <SimpleBIAWizard
-                        item={editingItemIndex !== null ? items[editingItemIndex] : null}
-                        onUpdate={(inputs) => {
-                          // Optional: live update as user types
-                        }}
+                      <StreamlinedBIAWizard
+                        initialData={editingItemIndex !== null ? items[editingItemIndex]?.inputs : undefined}
                         onComplete={handleWizardComplete}
+                        onCancel={() => {
+                          setShowWizard(false);
+                          setEditingItemIndex(null);
+                        }}
                       />
                     </DialogContent>
                   </Dialog>
