@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback } from "react";
 import { Assessment } from "@/entities/Assessment";
 import { BIA } from "@/entities/BIA";
@@ -183,16 +182,17 @@ export default function BIAPage() {
     setItems(prev => {
       const updated = [...prev];
       if (editingItemIndex !== null && editingItemIndex < updated.length) {
-        // Update existing item
+        // Update existing item - preserve structure with inputs nested
         updated[editingItemIndex] = {
-          ...updated[editingItemIndex], // Preserve existing ID and other immutable properties
-          ...itemInputs, // Overwrite with new inputs
+          ...updated[editingItemIndex], // Preserve existing ID and result
+          inputs: itemInputs, // Update inputs
         };
       } else {
-        // Add new item with a unique ID (simple timestamp for now)
+        // Add new item with a unique ID and proper structure
         updated.push({
           id: Date.now().toString(),
-          ...itemInputs,
+          inputs: itemInputs,
+          result: null // No result yet until calculation
         });
       }
       return updated;
