@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { User } from '@/entities/User';
 import { Company } from '@/entities/Company';
@@ -85,7 +84,7 @@ export default function AccessDenied() {
     }
   };
 
-  const contactFortigap = () => {
+  const contactHubcys = () => {
     const subject = encodeURIComponent('Account Access Appeal - Fortigap');
     const body = encodeURIComponent(`Hello Fortigap Team,
 
@@ -164,11 +163,11 @@ ${user?.full_name || 'User'}`);
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
               <Button
-                onClick={contactFortigap}
+                onClick={contactHubcys}
                 className="bg-cyan-600 hover:bg-cyan-700 text-white"
               >
                 <Mail className="w-4 h-4 mr-2" />
-                Contact Fortigap
+                Contact Hubcys
               </Button>
               
               <Button

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -64,7 +63,7 @@ export default function TermsOfService() {
               <ul className="list-disc ml-5 space-y-2">
                 <li>
                   Early Career: One-year, non-recurring license. You can renew manually each year by contacting{" "}
-                  <a className="text-cyan-300 hover:text-cyan-200" href="mailto:sales@fortigap.com">sales@fortigap.com</a>.
+                  <a className="text-cyan-300 hover:text-cyan-200" href="mailto:sales@hubcys.com">sales@hubcys.com</a>.
                 </li>
                 <li>
                   Business Plans: Billed by invoice based on the selected tier and term. Seat counts and overages
@@ -144,7 +143,7 @@ export default function TermsOfService() {
             <section>
               <h2 className="text-white font-semibold mb-1">11. Indemnification</h2>
               <p>
-                You will indemnify and hold Fortigap harmless from claims arising from your use of the Services or your
+                You will indemnify and hold Hubcys harmless from claims arising from your use of the Services or your
                 violation of these Terms or applicable law.
               </p>
             </section>
