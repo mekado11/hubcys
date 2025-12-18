@@ -184,24 +184,33 @@ export default function BIAPage() {
     setItems(prev => {
       const updated = [...prev];
       if (editingItemIndex !== null && editingItemIndex < updated.length) {
-        // Update existing item - preserve structure with inputs nested
         updated[editingItemIndex] = {
-          ...updated[editingItemIndex], // Preserve existing ID and result
-          inputs: itemInputs, // Update inputs
+          ...updated[editingItemIndex],
+          inputs: itemInputs,
         };
       } else {
-        // Add new item with a unique ID and proper structure
         updated.push({
           id: Date.now().toString(),
           inputs: itemInputs,
-          result: null // No result yet until calculation
+          result: null
         });
       }
       return updated;
     });
     setShowWizard(false);
     setEditingItemIndex(null);
+    triggerAutoSave();
   }, [editingItemIndex]);
+
+  const triggerAutoSave = useCallback(() => {
+    if (autoSaveTimer) clearTimeout(autoSaveTimer);
+    const timer = setTimeout(() => {
+      if (selectedBia?.id) {
+        handleSaveBia();
+      }
+    }, 2000);
+    setAutoSaveTimer(timer);
+  }, [autoSaveTimer, selectedBia]);
 
   // Handlers - Standalone
   const handleCreateStandalone = async () => {
