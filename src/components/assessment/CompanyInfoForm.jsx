@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,23 +5,20 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, AlertTriangle, Shield, Users, ChevronUp, ChevronDown, Briefcase, ShieldAlert, Scale, Globe, CircleCheck, Search, Calendar as CalendarIcon, Sparkles, Loader2, Wand2, Save, Building } from "lucide-react";
+import { ArrowRight, AlertTriangle, Shield, Users, ChevronUp, ChevronDown, Briefcase, ShieldAlert, Scale, Globe, CircleCheck, Search, Calendar as CalendarIcon, Loader2, Save, Building } from "lucide-react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import InlineControlManager from "./InlineControlManager";
 import AddFrameworkDialog from "./AddFrameworkDialog";
 import TooltipInfo from '../ui/TooltipInfo';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Checkbox } from "@/components/ui/checkbox";
-// User entity import is removed as it's no longer fetched within this component
-import PCISpecificFields from './PCISpecificFields'; // New import for PCI DSS specific fields
-import AudioTranscriber from "../common/AudioTranscriber"; // New import for AudioTranscriber
+import PCISpecificFields from './PCISpecificFields';
+import AudioTranscriber from "../common/AudioTranscriber";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from 'date-fns';
-import { toast } from "sonner"; // New import for toast notifications
-import { surfaceExposureRecon } from "@/functions/surfaceExposureRecon"; // NEW: call backend function directly
-import { generateAssessmentDraft } from '@/functions/generateAssessmentDraft';
-
+import { toast } from "sonner";
+import { surfaceExposureRecon } from "@/functions/surfaceExposureRecon";
 
 // Helper component for a simple loading spinner
 const LoadingSpinner = ({ message = "Loading..." }) => (
@@ -225,10 +221,7 @@ export default function CompanyInfoForm({
 }) {
   const [showControlsSection, setShowControlsSection] = useState(false);
   const [showPrivacyLaws, setShowPrivacyLaws] = useState(false);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false); // New state to track unsaved changes
-  const [generatingDraft, setGeneratingDraft] = useState(false);
-  const [draftGenerated, setDraftGenerated] = useState(false);
-
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Ref to track previous 'saving' prop value
   const prevSavingRef = useRef(saving);
@@ -247,7 +240,6 @@ export default function CompanyInfoForm({
   }, [data, handleUpdate]);
 
   // Wrapped handlePrivacyLawChange to use handleUpdate
-  // Updated to use a generic 'applicable_privacy_laws' field
   const handlePrivacyLawChange = useCallback((lawValue, checked) => {
     const currentLaws = data.applicable_privacy_laws || [];
     let updatedLaws;
@@ -274,11 +266,10 @@ export default function CompanyInfoForm({
   // Effect to handle page refresh warning
   useEffect(() => {
     const handleBeforeUnload = (event) => {
-      // Only warn if there are unsaved changes AND not currently saving
       if (hasUnsavedChanges && !saving) {
         event.preventDefault();
-        event.returnValue = ''; // Standard way to trigger the prompt in modern browsers
-        return 'You have unsaved changes. Are you sure you want to leave?'; // For older browsers
+        event.returnValue = '';
+        return 'You have unsaved changes. Are you sure you want to leave?';
       }
     };
 
@@ -291,14 +282,11 @@ export default function CompanyInfoForm({
 
   // Effect to reset hasUnsavedChanges when save operation completes
   useEffect(() => {
-    // If it was saving (prevSavingRef.current was true) and now it's not (saving is false)
-    // and there were unsaved changes, it means a save likely just completed successfully.
     if (prevSavingRef.current && !saving && hasUnsavedChanges) {
       setHasUnsavedChanges(false);
     }
-    // Update the ref for the next render
     prevSavingRef.current = saving;
-  }, [saving, hasUnsavedChanges]); // hasUnsavedChanges added to deps to prevent stale closure issues
+  }, [saving, hasUnsavedChanges]);
 
 
   const industries = [
@@ -311,9 +299,9 @@ export default function CompanyInfoForm({
     { value: "Government", label: "Government & Public Sector" },
     { value: "Energy", label: "Energy & Utilities" },
     { value: "Legal", label: "Legal & Professional Services" },
-    { value: "UK_Transport", label: "UK Transport (CNI)" }, // NEW UK industry
-    { value: "UK_Water", label: "UK Water (CNI)" }, // NEW UK industry
-    { value: "UK_Digital_Infrastructure", label: "UK Digital Infrastructure (CNI)" }, // NEW UK industry
+    { value: "UK_Transport", label: "UK Transport (CNI)" },
+    { value: "UK_Water", label: "UK Water (CNI)" },
+    { value: "UK_Digital_Infrastructure", label: "UK Digital Infrastructure (CNI)" },
     { value: "Other", label: "Other" }
   ];
 
@@ -324,7 +312,6 @@ export default function CompanyInfoForm({
     { value: "Enterprise_2000+", label: "Enterprise (2,000+ employees)" }
   ];
 
-  // Combined privacy laws from US and UK
   const privacyLaws = [
     { value: "UK_GDPR", label: "UK GDPR (United Kingdom)", description: "United Kingdom General Data Protection Regulation" },
     { value: "CCPA_CPRA", label: "California Consumer Privacy Act (CCPA) / California Privacy Rights Act (CPRA)", description: "California residents' data privacy rights" },
@@ -345,7 +332,7 @@ export default function CompanyInfoForm({
   const isValid = useCallback(() => {
     return (
       !!data.company_name &&
-      !!data.company_id && // This might be auto-filled, so perhaps not a direct user input validation
+      !!data.company_id &&
       !!data.company_website &&
       !!data.framework &&
       !!data.industry_sector &&
@@ -356,75 +343,12 @@ export default function CompanyInfoForm({
       !!data.current_biggest_risks &&
       !!data.business_critical_systems &&
       !!data.ciso_perspective
-      // data.target_completion_date is optional, not included in isValid
     );
   }, [data]);
 
   const handleNext = async () => {
     onNext();
   };
-
-  const handleGenerateDraft = async () => {
-    // Validation
-    if (!data.company_name || !data.company_website) {
-      toast.error('Please fill in Company Name and Website before generating draft');
-      return;
-    }
-    if (!data.id) {
-        toast.error('Assessment ID missing. Please save the assessment first.');
-        return;
-    }
-
-    setGeneratingDraft(true);
-    try {
-      // First, save the current data
-      // const savedId = await onSave(); // Assuming onSave returns the assessment ID
-      // const assessmentId = savedId || data.id; // Use saved ID or existing ID
-
-      // if (!assessmentId) {
-      //   throw new Error('Could not save assessment before generating draft');
-      // }
-      // The current onSave only updates the backend and sets saving=false. It doesn't return ID.
-      // However, data.id should already be present if the assessment exists.
-      // If it's a brand new assessment, data.id might be undefined.
-      // For now, relying on data.id being present. If not, the backend generate function might error.
-      // A better approach would be to ensure onSave always returns the ID.
-      // For this task, let's assume `data.id` is reliable after initial save/load.
-      // Or, better, `onSave` should be called first, and `generateAssessmentDraft` called with `data.id`
-      // after `onSave` completes and `data.id` is available.
-      // However, the outline directly uses `assessmentId = savedId || data.id;` suggesting `onSave` returns it.
-      // Let's call onSave first, then proceed.
-
-      await onSave(); // Ensure latest data is saved
-
-      // Call the AI generation function
-      const response = await generateAssessmentDraft({ assessmentId: data.id });
-
-      if (response.error) {
-        throw new Error(response.error);
-      }
-
-      toast.success('AI draft generated successfully! Review the maturity scores in the next steps.');
-      setDraftGenerated(true);
-
-      // Update local data with the AI-generated results
-      if (response.assessment) {
-        Object.keys(response.assessment).forEach(key => {
-          if (response.assessment[key] !== undefined && response.assessment[key] !== null) {
-            onUpdate(key, response.assessment[key]);
-          }
-        });
-      }
-
-    } catch (error) {
-      console.error('Error generating AI draft:', error);
-      toast.error(`Failed to generate draft: ${error.message || 'Unknown error'}`);
-    } finally {
-      setGeneratingDraft(false);
-    }
-  };
-
-  const canGenerateDraft = data.company_name && data.company_website && !generatingDraft && !!data.id;
 
   // Check if PCI DSS is selected
   const isPCISelected = data.framework && managedFrameworks.find(f => f.id === data.framework)?.framework_type === 'PCI_DSS';
@@ -443,67 +367,7 @@ export default function CompanyInfoForm({
             </p>
           </CardHeader>
 
-          <CardContent className="space-y-6"> {/* Changed to space-y-6 as per outline */}
-            {/* AI Draft Generation Banner */}
-            {!draftGenerated && (
-              <div className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 border border-purple-500/30 rounded-lg p-4 mb-6">
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
-                      <Sparkles className="w-6 h-6 text-white" />
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-lg font-semibold text-white mb-2">
-                      AI-Powered Smart Start
-                    </h4>
-                    <p className="text-gray-300 text-sm mb-4">
-                      Let our AI analyze your company profile and generate intelligent initial maturity scores
-                      and recommendations tailored to your industry, size, and selected framework. This saves
-                      you significant time and provides expert guidance.
-                    </p>
-                    <Button
-                      onClick={handleGenerateDraft}
-                      disabled={!canGenerateDraft}
-                      className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                    >
-                      {generatingDraft ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Generating AI Draft...
-                        </>
-                      ) : (
-                        <>
-                          <Wand2 className="w-4 h-4 mr-2" />
-                          Generate AI Draft Assessment
-                        </>
-                      )}
-                    </Button>
-                    {!canGenerateDraft && !generatingDraft && (
-                      <p className="text-xs text-yellow-300 mt-2">
-                        Fill in Company Name and Website (and ensure it's saved to get an ID) to enable AI generation
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {draftGenerated && (
-              <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 border border-green-500/30 rounded-lg p-4 mb-6">
-                <div className="flex items-center gap-3">
-                  <Sparkles className="w-6 h-6 text-green-400" />
-                  <div>
-                    <h4 className="font-semibold text-white">AI Draft Generated!</h4>
-                    <p className="text-sm text-gray-300">
-                      Your assessment has been pre-populated with AI-generated maturity scores and insights.
-                      Review and refine them in the following steps.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
+          <CardContent className="space-y-6">
             {/* Basic Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-white">Basic Information</h3>
@@ -522,7 +386,6 @@ export default function CompanyInfoForm({
                   />
                 </div>
 
-                {/* Company Website with improved validation message */}
                 <div>
                   <Label htmlFor="companyWebsite" className="text-white font-medium">
                     Company Website <span className="text-red-400">*</span>
@@ -733,7 +596,7 @@ export default function CompanyInfoForm({
               )}
             </div>
 
-            {/* NIS2 Directive Alignment Section (moved directly under US State Privacy Laws) */}
+            {/* NIS2 Directive Alignment Section */}
             <div className="pt-6 border-t border-gray-700/50">
               <Collapsible>
                 <CollapsibleTrigger asChild>
@@ -803,7 +666,6 @@ export default function CompanyInfoForm({
                     />
                   </div>
 
-                  {/* Additional NIS2-Specific Fields */}
                   <div className="space-y-2">
                     <Label htmlFor="nis2_essential_services" className="flex items-center text-gray-300 text-sm font-medium">
                       Essential/Important Services Identification
@@ -883,13 +745,12 @@ export default function CompanyInfoForm({
               </div>
             )}
 
-            {/* Add Surface Exposure Recon Integration */}
+            {/* Surface Exposure Recon Integration */}
             {data.company_website && (
               <div className="pt-6 border-t border-gray-700/50">
                 <SurfaceExposureRecon
                   domain={data.company_website}
                   onResultsUpdate={(results) => {
-                    // Update assessment with external reconnaissance data
                     handleUpdate('external_attack_surface', JSON.stringify({
                       exposed_assets: results.exposed_assets,
                       tech_stack: results.tech_stack,
