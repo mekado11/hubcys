@@ -47,7 +47,7 @@ export default function FAIRIntroBanner() {
                   FAIR-Based Business Impact Analysis Engine
                 </CardTitle>
                 <p className="text-sm text-white/90 font-medium">
-                  Powered by FortiGAP Intelligence Framework
+                  Powered by Hubcys Intelligence Framework
                 </p>
               </div>
             </div>
@@ -171,7 +171,7 @@ export default function FAIRIntroBanner() {
                 Why It Matters
               </h3>
               <p className="text-gray-300 mb-3 leading-relaxed">
-                FortiGAP's FAIR-based BIA turns <em className="text-cyan-300">qualitative risk</em> into <strong className="text-white">quantified business impact</strong> — 
+                Hubcys's FAIR-based BIA turns <em className="text-cyan-300">qualitative risk</em> into <strong className="text-white">quantified business impact</strong> — 
                 empowering CISOs, risk officers, and executives to:
               </p>
               <ul className="space-y-2 text-gray-300">
