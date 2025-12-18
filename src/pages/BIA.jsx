@@ -142,16 +142,18 @@ export default function BIAPage() {
 
   // Effect to update selectedBia.bia_items when 'items' state changes
   useEffect(() => {
-    const currentBiaItemsString = selectedBia?.bia_items || "[]";
+    if (!selectedBia) return;
+    
+    const currentBiaItemsString = selectedBia.bia_items || "[]";
     const newItemsString = JSON.stringify(items);
 
-    if (selectedBia && currentBiaItemsString !== newItemsString) {
+    if (currentBiaItemsString !== newItemsString) {
       setSelectedBia(prev => ({
         ...prev,
         bia_items: newItemsString
       }));
     }
-  }, [items, selectedBia]); // Dependency on selectedBia itself to catch when other fields of selectedBia change
+  }, [items]); // Only depend on items to avoid infinite loop
 
   // Init
   useEffect(() => {
