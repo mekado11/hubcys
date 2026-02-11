@@ -430,20 +430,21 @@ Return ONLY a JSON object with this structure:
   "audit_evidence_examples": ["Evidence type 1", "Evidence type 2", "Evidence type 3", "Evidence type 4", "Evidence type 5"]
 }
 
-**QUALITY CHECKLIST - VERIFY BEFORE RETURNING:**
-✓ Scope section explicitly mentions "corporate-managed endpoints (laptops, servers, mobile devices, and cloud workloads)"
-✓ Contains exact phrase: "Access must be modified within 24 hours of role or responsibility changes"
-✓ Contains exact phrase: "Offboarding: access revoked within 24 hours of termination"
-✓ Contains exact phrase: "Temporary or elevated access must include an expiration date"
-✓ Contains exact phrase: "Passwords must be at least 12 characters and resistant to commonly used or breached passwords"
-✓ Contains exact phrase: "Access logs must be retained for a minimum of 90 days"
-✓ Contains exact phrase: "All users must have unique IDs; shared accounts are prohibited"
-✓ Uses "must" instead of "should" for critical controls
-✓ Includes quarterly access review requirement
-✓ Includes framework alignment (NIST CSF PR.AC, CIS 6 & 16, ISO 27001 A.9)
-✓ Has numbered sections matching the mandatory structure
-✓ Includes Appendix A with control mapping table
-✓ Includes Appendix B with audit evidence examples
+**QUALITY CHECKLIST - VERIFY YOUR POLICY INCLUDES:**
+✓ Explicit scope with device types (endpoints, servers, mobile, cloud where applicable)
+✓ Specific timeframes: "24 hours", "quarterly", "90 days", etc. (at least 3-5 throughout policy)
+✓ JML language where applicable: role changes, offboarding within 24 hours, expiration dates for temporary access
+✓ "Passwords must be at least 12 characters" (or equivalent auth standard for policy type)
+✓ "Logs must be retained for a minimum of [X days/years]" (adapt to policy type)
+✓ Uses "must" not "should" for all critical controls (at least 15+ instances)
+✓ Quarterly or annual review requirement stated explicitly
+✓ Framework alignment with specific control IDs (NIST, CIS, ISO 27001, SOC 2, etc.)
+✓ Numbered sections with clear structure
+✓ Roles and Responsibilities section (CISO, managers, system owners, users)
+✓ Enforcement and consequences section ("disciplinary action up to termination")
+✓ Exceptions process (risk assessment + CISO approval)
+✓ Appendix A: Control mapping table
+✓ Appendix B: Audit evidence examples (minimum 5)
 
 This policy must pass a SOC 2 Type II or ISO 27001 audit on first review. Every auditor expectation for JML, time-bound access, logging retention, and authentication must be explicitly addressed with measurable requirements.
 
