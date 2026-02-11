@@ -190,40 +190,61 @@ ${formData.review_frequency}
 
 ${assessmentContext}
 
-**CRITICAL: MANDATORY LANGUAGE AND REQUIREMENTS**
+**CRITICAL: AUDIT-READY POLICY STANDARDS - APPLY TO ALL POLICY TYPES**
 
-You MUST incorporate these EXACT statements and thresholds into the policy. Do not make these optional or vague:
+Your generated policy MUST meet these enterprise-grade lite standards. These are NOT optional suggestions:
 
-**1. SCOPE SECTION - MUST INCLUDE THIS EXACT LANGUAGE:**
-"Applies to: all employees, contractors, and third parties with access to corporate resources.
-Covers: digital systems, cloud environments, databases, applications, physical facilities, and corporate-managed endpoints (laptops, servers, mobile devices, and cloud workloads)."
+**1. SCOPE - Always state explicitly:**
+• "Applies to: all employees, contractors, third parties, and vendors with access to corporate resources."
+• "Covers: [adapt to policy type but include device types] - examples: corporate-managed endpoints (laptops, servers, mobile devices), cloud workloads, applications, networks, databases, physical facilities."
 
-**2. USER ACCESS MANAGEMENT - MUST INCLUDE THESE EXACT REQUIREMENTS:**
-• "All users must have unique IDs; shared accounts are prohibited."
-• "Access must be modified within 24 hours of role or responsibility changes."
-• "Offboarding: access revoked within 24 hours of termination or contract end."
-• "Temporary or elevated access must include an expiration date."
-• "Access rights must be requested, approved, and documented via a formal process."
+**2. CONCRETE TIMEFRAMES - Every policy needs specific SLAs where applicable:**
+• Provisioning/changes: "within 24 hours" or "within [X] business days"
+• Offboarding/termination: "within 24 hours of termination or contract end"
+• Incident response: specific response times by severity (e.g., "Critical: 15 minutes, High: 1 hour")
+• Review cycles: "quarterly", "annually", "monthly" - be specific
+• Temporary access: "must include an expiration date"
+• Log retention: "minimum of 90 days" (adjust for policy type - some may need 1 year, 3 years)
 
-**3. AUTHENTICATION STANDARDS - MUST INCLUDE:**
-• "Passwords must be at least 12 characters and resistant to commonly used or breached passwords."
-• "Multi-Factor Authentication (MFA) required for [critical systems/remote access/privileged accounts - adapt based on policy type]."
+**3. JOINER-MOVER-LEAVER (JML) PROCESSES - Include where relevant:**
+• New hires: access provisioned via formal request/approval
+• Role changes: "access must be modified within 24 hours of role or responsibility changes"
+• Departures: "access revoked within 24 hours of termination or contract end"
+• Temporary/elevated access: "must include an expiration date"
 
-**4. ACCESS REVIEWS - MUST INCLUDE:**
-• "Access rights for sensitive systems must be reviewed quarterly by system owners and security."
-• "Evidence of reviews must be retained for audit purposes."
+**4. AUTHENTICATION & ACCESS STANDARDS - State minimums:**
+• "Passwords must be at least 12 characters and resistant to commonly used or breached passwords"
+• MFA requirements (adapt to policy context): "Multi-Factor Authentication (MFA) required for [critical systems/remote access/admin accounts/sensitive data]"
+• "All users must have unique IDs; shared accounts are prohibited" (where applicable)
 
-**5. MONITORING AND LOGGING - MUST INCLUDE:**
-• "Access events (logins, privilege escalations, failed attempts) must be logged and monitored."
-• "Access logs must be retained for a minimum of 90 days."
+**5. REVIEWS & AUDITS - Make them measurable:**
+• "Access rights/[policy scope] must be reviewed quarterly/annually by [role]"
+• "Evidence of reviews must be retained for audit purposes"
+• Specify what gets reviewed and who reviews it
 
-**6. ENFORCEMENT LANGUAGE:**
+**6. MONITORING & LOGGING - Include retention:**
+• "[Policy-relevant events] must be logged and monitored"
+• "Logs must be retained for a minimum of 90 days [or longer based on compliance needs]"
+• State what gets logged (access events, changes, incidents, etc.)
+
+**7. ENFORCEMENT - Use mandatory language:**
 • Use "must" not "should" for all critical controls
-• Include specific timeframes: "24 hours", "90 days", "quarterly"
-• State consequences: "Violations may result in disciplinary action, up to and including termination and legal action."
+• Include consequences: "Violations may result in disciplinary action, up to and including termination and legal action"
+• State who enforces and how
 
-**7. FRAMEWORK ALIGNMENT - MUST BE EXPLICIT:**
-• "Access controls must align with recognized frameworks: NIST CSF PR.AC, CIS Controls 6 & 16, and ISO/IEC 27001 A.9."
+**8. FRAMEWORK ALIGNMENT - Be explicit:**
+• Reference specific controls: "This policy aligns with [NIST CSF, CIS Controls, ISO 27001, SOC 2] - see Appendix A for mappings"
+• Include actual control IDs where possible (e.g., "NIST CSF PR.AC", "CIS Control 6", "ISO 27001 A.9")
+
+**9. ROLES & RESPONSIBILITIES - Name them:**
+• CISO/Security Team: oversight, enforcement, exceptions
+• Managers/System Owners: access approval, reviews
+• All Users: compliance, reporting
+• IT/Engineering: implementation, logging
+
+**10. EXCEPTIONS PROCESS:**
+• "Exceptions require documented risk assessment and written approval from [CISO/Security Lead]"
+• "Exceptions must be reviewed [frequency]"
 
 **MANDATORY SECTIONS WITH REQUIRED CONTENT:**
 
