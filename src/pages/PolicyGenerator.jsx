@@ -190,53 +190,79 @@ ${formData.review_frequency}
 
 ${assessmentContext}
 
-**CRITICAL: AUDIT-READY REQUIREMENTS**
-Every policy MUST include these enterprise-grade elements:
+**CRITICAL: MANDATORY LANGUAGE AND REQUIREMENTS**
 
-1. **Joiner-Mover-Leaver (JML) Coverage:**
-   - Explicit access provisioning process for new users
-   - Access modification within 24 hours of role changes
-   - Periodic access reconciliation to ensure current access matches job function
-   - Immediate access revocation upon termination
+You MUST incorporate these EXACT statements and thresholds into the policy. Do not make these optional or vague:
 
-2. **Time-Bound Access:**
-   - Temporary or elevated access must have expiration dates
-   - Automatic revocation mechanisms
-   - Approval and justification requirements for extensions
+**1. SCOPE SECTION - MUST INCLUDE THIS EXACT LANGUAGE:**
+"Applies to: all employees, contractors, and third parties with access to corporate resources.
+Covers: digital systems, cloud environments, databases, applications, physical facilities, and corporate-managed endpoints (laptops, servers, mobile devices, and cloud workloads)."
 
-3. **Specific Technical Requirements (not vague):**
-   - For Access Control: Passwords must be at least 12 characters and resistant to commonly used or breached passwords (NIST-aligned)
-   - For Logging: Access logs must be retained for a minimum of 90 days (or longer if required by regulation)
-   - For Device Management: Explicitly cover corporate-managed laptops, servers, mobile devices, and cloud workloads
+**2. USER ACCESS MANAGEMENT - MUST INCLUDE THESE EXACT REQUIREMENTS:**
+• "All users must have unique IDs; shared accounts are prohibited."
+• "Access must be modified within 24 hours of role or responsibility changes."
+• "Offboarding: access revoked within 24 hours of termination or contract end."
+• "Temporary or elevated access must include an expiration date."
+• "Access rights must be requested, approved, and documented via a formal process."
 
-4. **Enforceable Language:**
-   - Use "must" instead of "should" for critical controls
-   - Include measurable timeframes (24h, 48h, 90 days, etc.)
-   - Define clear ownership and accountability
+**3. AUTHENTICATION STANDARDS - MUST INCLUDE:**
+• "Passwords must be at least 12 characters and resistant to commonly used or breached passwords."
+• "Multi-Factor Authentication (MFA) required for [critical systems/remote access/privileged accounts - adapt based on policy type]."
 
-5. **Control Mapping Appendix:**
-   - Map each major requirement to specific compliance controls
-   - Include SOC 2 (CC6, CC7), ISO 27001 (A.9, A.12), NIST CSF (PR.AC, DE.CM), CIS Controls
-   - Format as a table at the end of the policy
+**4. ACCESS REVIEWS - MUST INCLUDE:**
+• "Access rights for sensitive systems must be reviewed quarterly by system owners and security."
+• "Evidence of reviews must be retained for audit purposes."
 
-6. **Evidence Guidance:**
-   - Include a brief "Audit Evidence Examples" section
-   - List 3-5 types of evidence auditors will request (screenshots, logs, reports, tickets)
+**5. MONITORING AND LOGGING - MUST INCLUDE:**
+• "Access events (logins, privilege escalations, failed attempts) must be logged and monitored."
+• "Access logs must be retained for a minimum of 90 days."
 
-**MANDATORY SECTIONS:**
-1. Executive Summary (2-3 sentences)
-2. Purpose & Scope (include explicit device/system coverage)
-3. Policy Statement (principles)
-4. Requirements & Controls (numbered, with JML, time-bound access, specific technical reqs)
-5. Roles & Responsibilities (with accountability)
-6. Authentication & Authorization (if relevant - specific password/MFA requirements)
-7. Monitoring, Logging & Retention (with specific retention periods)
-8. Exceptions Process (formal approval workflow)
-9. Enforcement & Consequences
-10. Review & Maintenance (with schedule)
-11. Related Policies & Standards
-12. Appendix A: Control Mapping (table format)
-13. Appendix B: Audit Evidence Examples
+**6. ENFORCEMENT LANGUAGE:**
+• Use "must" not "should" for all critical controls
+• Include specific timeframes: "24 hours", "90 days", "quarterly"
+• State consequences: "Violations may result in disciplinary action, up to and including termination and legal action."
+
+**7. FRAMEWORK ALIGNMENT - MUST BE EXPLICIT:**
+• "Access controls must align with recognized frameworks: NIST CSF PR.AC, CIS Controls 6 & 16, and ISO/IEC 27001 A.9."
+
+**MANDATORY SECTIONS WITH REQUIRED CONTENT:**
+
+1. **Executive Summary** (2-3 sentences about policy purpose and audit-readiness)
+
+2. **Purpose and Scope** - MUST state:
+   • Policy defines access control to [company]'s systems, applications, networks, and facilities
+   • "Applies to: all employees, contractors, and third parties"
+   • "Covers: digital systems, cloud environments, databases, applications, physical facilities, and corporate-managed endpoints (laptops, servers, mobile devices, and cloud workloads)"
+
+3. **Policy Principles** - MUST include:
+   • "Access will be granted on the principle of least privilege and need-to-know"
+   • "Authentication and authorization must be strong, traceable, and auditable"
+   • "Access must be revoked promptly when no longer required"
+   • Framework alignment statement
+
+4. **Requirements and Controls** - MUST include numbered subsections:
+   • 3.1 User Access Management (with JML language: "24 hours", "expiration date", "unique IDs")
+   • 3.2 Privileged Access (privileged account controls)
+   • 3.3 Access Reviews ("quarterly", "retained for audit")
+   • 3.4 Authentication Standards ("12 characters", "MFA required")
+   • 3.5 Network and Physical Access (segmentation, VPN, badge access)
+
+5. **Roles and Responsibilities** (CISO, System Owners, Managers, All Users with specific duties)
+
+6. **Monitoring and Enforcement** - MUST state:
+   • "Access events must be logged and monitored"
+   • "Access logs must be retained for a minimum of 90 days"
+   • "Violations may result in disciplinary action, up to and including termination and legal action"
+
+7. **Exceptions** (documented risk assessment, CISO approval)
+
+8. **Review Cycle** ("reviewed annually or when significant changes occur")
+
+9. **References** (NIST CSF PR.AC, CIS Controls 6 & 16, ISO 27001 A.9, SOC 2 CC6/CC7)
+
+10. **Appendix A: Control Mapping Table**
+
+11. **Appendix B: Audit Evidence Examples**
 
 ${formData.policy_type === 'PCI_DSS_Compliance' ? `
 **PCI DSS SPECIFIC REQUIREMENTS:**
@@ -253,16 +279,42 @@ ${formData.policy_type === 'PCI_DSS_Compliance' ? `
 ` : ''}
 
 ${formData.policy_type === 'Access_Control' ? `
-**ACCESS CONTROL SPECIFIC REQUIREMENTS:**
-- Joiner-Mover-Leaver process with 24-hour SLA for changes
-- Unique user IDs (no shared accounts)
-- MFA for all remote access and privileged accounts
-- Quarterly access reviews with documented approval
-- Temporary/elevated access expiration (maximum 30 days)
-- Privileged account management (separate from standard accounts)
-- Access logging with 90-day minimum retention
-- Failed login attempt thresholds and account lockout
-- Password requirements: 12+ characters, breach-resistant, no complexity rules (NIST-aligned)
+**ACCESS CONTROL POLICY - EXACT LANGUAGE REQUIRED:**
+
+Use this structure and include these EXACT statements:
+
+**Section 3.1 User Access Management MUST include:**
+• "All users must have unique IDs; shared accounts are prohibited."
+• "Multi-Factor Authentication (MFA) required for critical systems, remote access, and privileged accounts."
+• "Access rights must be requested, approved, and documented via a formal process."
+• "Offboarding: access revoked within 24 hours of termination or contract end."
+• "Access must be modified within 24 hours of role or responsibility changes."
+• "Temporary or elevated access must include an expiration date."
+
+**Section 3.2 Privileged Access MUST include:**
+• "Privileged accounts (e.g., system administrators, root accounts) must be used only when necessary and logged."
+• "Privileged sessions should be monitored via Privileged Access Management (PAM) tools where available."
+• "Default accounts must be disabled or renamed and protected with strong credentials."
+
+**Section 3.3 Access Reviews MUST state:**
+• "Access rights for sensitive systems must be reviewed quarterly by system owners and security."
+• "Evidence of reviews must be retained for audit purposes."
+• "Exceptions must be documented and approved by the CISO or delegate."
+
+**Section 3.4 Authentication Standards MUST state:**
+• "Passwords must be at least 12 characters and resistant to commonly used or breached passwords."
+• "Service accounts must be secured with key vaults or secrets managers, not hardcoded in scripts."
+• "Federated SSO should be used to centralize authentication where possible."
+
+**Section 3.5 Network and Physical Access MUST include:**
+• "Segregate user, admin, and guest networks."
+• "Access to production networks must be controlled through VPN, firewalls, and role-based restrictions."
+• "Physical access to data centers or sensitive areas requires badge access, logging, and monitoring."
+
+**Section 5 Monitoring MUST state:**
+• "Access events (logins, privilege escalations, failed attempts) must be logged and monitored."
+• "Access logs must be retained for a minimum of 90 days."
+• "Violations (e.g., unauthorized access, credential sharing) may result in disciplinary action, up to and including termination and legal action."
 ` : ''}
 
 ${formData.policy_type === 'Incident_Response' ? `
@@ -293,13 +345,24 @@ Return ONLY a JSON object with this structure:
   "audit_evidence_examples": ["Evidence type 1", "Evidence type 2", "Evidence type 3", "Evidence type 4", "Evidence type 5"]
 }
 
-**QUALITY STANDARDS:**
-- This policy must be ready for immediate use in a SOC 2 Type II, ISO 27001, or PCI DSS audit
-- Auditors should find ZERO gaps in JML coverage, access controls, or logging requirements
-- Every "must" statement should be measurable and verifiable
-- Include at least 8 specific, enforceable controls with clear owners and timeframes
+**QUALITY CHECKLIST - VERIFY BEFORE RETURNING:**
+✓ Scope section explicitly mentions "corporate-managed endpoints (laptops, servers, mobile devices, and cloud workloads)"
+✓ Contains exact phrase: "Access must be modified within 24 hours of role or responsibility changes"
+✓ Contains exact phrase: "Offboarding: access revoked within 24 hours of termination"
+✓ Contains exact phrase: "Temporary or elevated access must include an expiration date"
+✓ Contains exact phrase: "Passwords must be at least 12 characters and resistant to commonly used or breached passwords"
+✓ Contains exact phrase: "Access logs must be retained for a minimum of 90 days"
+✓ Contains exact phrase: "All users must have unique IDs; shared accounts are prohibited"
+✓ Uses "must" instead of "should" for critical controls
+✓ Includes quarterly access review requirement
+✓ Includes framework alignment (NIST CSF PR.AC, CIS 6 & 16, ISO 27001 A.9)
+✓ Has numbered sections matching the mandatory structure
+✓ Includes Appendix A with control mapping table
+✓ Includes Appendix B with audit evidence examples
 
-Generate an enterprise-grade lite policy that passes real audits without being bloated or overly complex.`;
+This policy must pass a SOC 2 Type II or ISO 27001 audit on first review. Every auditor expectation for JML, time-bound access, logging retention, and authentication must be explicitly addressed with measurable requirements.
+
+Generate an enterprise-grade lite policy that is audit-ready, enforceable, and complete - not bloated, but comprehensive.`;
 
       const response = await base44.integrations.Core.InvokeLLM({
         prompt: prompt,
