@@ -279,42 +279,106 @@ ${formData.policy_type === 'PCI_DSS_Compliance' ? `
 ` : ''}
 
 ${formData.policy_type === 'Access_Control' ? `
-**ACCESS CONTROL POLICY - EXACT LANGUAGE REQUIRED:**
+**ACCESS CONTROL POLICY - USE THIS EXACT TEMPLATE:**
 
-Use this structure and include these EXACT statements:
+Follow this structure EXACTLY. Do not paraphrase - use the exact wording provided:
 
-**Section 3.1 User Access Management MUST include:**
-• "All users must have unique IDs; shared accounts are prohibited."
-• "Multi-Factor Authentication (MFA) required for critical systems, remote access, and privileged accounts."
-• "Access rights must be requested, approved, and documented via a formal process."
-• "Offboarding: access revoked within 24 hours of termination or contract end."
-• "Access must be modified within 24 hours of role or responsibility changes."
-• "Temporary or elevated access must include an expiration date."
+---
 
-**Section 3.2 Privileged Access MUST include:**
-• "Privileged accounts (e.g., system administrators, root accounts) must be used only when necessary and logged."
-• "Privileged sessions should be monitored via Privileged Access Management (PAM) tools where available."
-• "Default accounts must be disabled or renamed and protected with strong credentials."
+## 1. Purpose and Scope
 
-**Section 3.3 Access Reviews MUST state:**
-• "Access rights for sensitive systems must be reviewed quarterly by system owners and security."
-• "Evidence of reviews must be retained for audit purposes."
-• "Exceptions must be documented and approved by the CISO or delegate."
+This policy defines how access to ${formData.company_context.split('\n')[0].replace('Company: ', '')} (the "Company")'s systems, applications, networks, and facilities is controlled to protect information assets and ensure compliance with regulatory and contractual requirements.
 
-**Section 3.4 Authentication Standards MUST state:**
-• "Passwords must be at least 12 characters and resistant to commonly used or breached passwords."
-• "Service accounts must be secured with key vaults or secrets managers, not hardcoded in scripts."
-• "Federated SSO should be used to centralize authentication where possible."
+• **Applies to:** all employees, contractors, and third parties with access to corporate resources.
+• **Covers:** digital systems, cloud environments, databases, applications, physical facilities, and corporate-managed endpoints (laptops, servers, mobile devices, and cloud workloads).
 
-**Section 3.5 Network and Physical Access MUST include:**
-• "Segregate user, admin, and guest networks."
-• "Access to production networks must be controlled through VPN, firewalls, and role-based restrictions."
-• "Physical access to data centers or sensitive areas requires badge access, logging, and monitoring."
+---
 
-**Section 5 Monitoring MUST state:**
-• "Access events (logins, privilege escalations, failed attempts) must be logged and monitored."
-• "Access logs must be retained for a minimum of 90 days."
-• "Violations (e.g., unauthorized access, credential sharing) may result in disciplinary action, up to and including termination and legal action."
+## 2. Policy Principles
+
+• Access will be granted on the principle of least privilege and need-to-know.
+• Authentication and authorization must be strong, traceable, and auditable.
+• Access must be revoked promptly when no longer required.
+• Access controls must align with recognized frameworks: NIST CSF PR.AC, CIS Controls 6 & 16, and ISO/IEC 27001 A.9.
+
+---
+
+## 3. Requirements and Controls
+
+### 3.1 User Access Management
+
+• All users must have unique IDs; shared accounts are prohibited.
+• Multi-Factor Authentication (MFA) required for critical systems, remote access, and privileged accounts.
+• Access rights must be requested, approved, and documented via a formal process.
+• Offboarding: access revoked within 24 hours of termination or contract end.
+• Access must be modified within 24 hours of role or responsibility changes.
+• Temporary or elevated access must include an expiration date.
+
+### 3.2 Privileged Access
+
+• Privileged accounts (e.g., system administrators, root accounts) must be used only when necessary and logged.
+• Privileged sessions should be monitored via Privileged Access Management (PAM) tools where available.
+• Default accounts must be disabled or renamed and protected with strong credentials.
+
+### 3.3 Access Reviews
+
+• Access rights for sensitive systems must be reviewed quarterly by system owners and security.
+• Evidence of reviews must be retained for audit purposes.
+• Exceptions must be documented and approved by the CISO or delegate.
+
+### 3.4 Authentication Standards
+
+• Passwords must be at least 12 characters and resistant to commonly used or breached passwords.
+• Service accounts must be secured with key vaults or secrets managers, not hardcoded in scripts.
+• Federated SSO should be used to centralize authentication where possible.
+
+### 3.5 Network and Physical Access
+
+• Segregate user, admin, and guest networks.
+• Access to production networks must be controlled through VPN, firewalls, and role-based restrictions.
+• Physical access to data centers or sensitive areas requires badge access, logging, and monitoring.
+
+---
+
+## 4. Roles and Responsibilities
+
+• **CISO / Security Team:** define, monitor, and enforce access control measures.
+• **System Owners:** approve and review access to their systems.
+• **Managers:** ensure employees have the correct access for their role.
+• **All Users:** comply with this policy, report suspicious activity, and safeguard credentials.
+
+---
+
+## 5. Monitoring and Enforcement
+
+• Access events (logins, privilege escalations, failed attempts) must be logged and monitored.
+• Access logs must be retained for a minimum of 90 days.
+• Violations (e.g., unauthorized access, credential sharing) may result in disciplinary action, up to and including termination and legal action.
+
+---
+
+## 6. Exceptions
+
+• Any exceptions to this policy require a documented risk assessment and written approval from the CISO.
+
+---
+
+## 7. Review Cycle
+
+• This policy must be reviewed annually or when significant changes occur in technology, risk, or regulatory requirements.
+
+---
+
+## 8. References
+
+• NIST Cybersecurity Framework (PR.AC)
+• CIS Controls v8 (Control 6, 16)
+• ISO/IEC 27001:2022 Annex A.9 (Access Control)
+• SOC 2 Trust Services Criteria (CC6, CC7)
+
+---
+
+USE THIS TEMPLATE AS-IS. Only substitute the company name where indicated. Add any additional company-specific context as needed but preserve ALL the exact language above.
 ` : ''}
 
 ${formData.policy_type === 'Incident_Response' ? `
