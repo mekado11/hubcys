@@ -169,7 +169,7 @@ Description: ${userData.company_description || 'Not specified'}`,
         }
       }
 
-      const prompt = `You are an expert cybersecurity policy writer with deep knowledge of compliance frameworks and industry best practices. Generate a comprehensive, production-ready security policy document based on the following requirements:
+      const prompt = `You are an expert cybersecurity policy writer with deep knowledge of compliance frameworks and industry best practices. Generate a comprehensive, production-ready, AUDIT-GRADE security policy document based on the following requirements:
 
 **POLICY TYPE:** ${formData.policy_type.replace(/_/g, ' ')}
 
@@ -190,49 +190,116 @@ ${formData.review_frequency}
 
 ${assessmentContext}
 
-**INSTRUCTIONS:**
-1. Create a complete, professional policy document suitable for executive approval
-2. Include proper sections: 
-   - Executive Summary
-   - Purpose & Scope
-   - Policy Statement
-   - Roles & Responsibilities
-   - Procedures & Implementation
-   - Compliance & Enforcement
-   - Review & Maintenance
-   - Related Policies & References
-3. Make it specific to the company context and industry
-4. Use clear, actionable language with measurable requirements
-5. Include relevant compliance references and control mappings
-6. Address both technical and administrative controls
-7. Include metrics for policy effectiveness where applicable
-8. Format as a professional document ready for immediate implementation
+**CRITICAL: AUDIT-READY REQUIREMENTS**
+Every policy MUST include these enterprise-grade elements:
+
+1. **Joiner-Mover-Leaver (JML) Coverage:**
+   - Explicit access provisioning process for new users
+   - Access modification within 24 hours of role changes
+   - Periodic access reconciliation to ensure current access matches job function
+   - Immediate access revocation upon termination
+
+2. **Time-Bound Access:**
+   - Temporary or elevated access must have expiration dates
+   - Automatic revocation mechanisms
+   - Approval and justification requirements for extensions
+
+3. **Specific Technical Requirements (not vague):**
+   - For Access Control: Passwords must be at least 12 characters and resistant to commonly used or breached passwords (NIST-aligned)
+   - For Logging: Access logs must be retained for a minimum of 90 days (or longer if required by regulation)
+   - For Device Management: Explicitly cover corporate-managed laptops, servers, mobile devices, and cloud workloads
+
+4. **Enforceable Language:**
+   - Use "must" instead of "should" for critical controls
+   - Include measurable timeframes (24h, 48h, 90 days, etc.)
+   - Define clear ownership and accountability
+
+5. **Control Mapping Appendix:**
+   - Map each major requirement to specific compliance controls
+   - Include SOC 2 (CC6, CC7), ISO 27001 (A.9, A.12), NIST CSF (PR.AC, DE.CM), CIS Controls
+   - Format as a table at the end of the policy
+
+6. **Evidence Guidance:**
+   - Include a brief "Audit Evidence Examples" section
+   - List 3-5 types of evidence auditors will request (screenshots, logs, reports, tickets)
+
+**MANDATORY SECTIONS:**
+1. Executive Summary (2-3 sentences)
+2. Purpose & Scope (include explicit device/system coverage)
+3. Policy Statement (principles)
+4. Requirements & Controls (numbered, with JML, time-bound access, specific technical reqs)
+5. Roles & Responsibilities (with accountability)
+6. Authentication & Authorization (if relevant - specific password/MFA requirements)
+7. Monitoring, Logging & Retention (with specific retention periods)
+8. Exceptions Process (formal approval workflow)
+9. Enforcement & Consequences
+10. Review & Maintenance (with schedule)
+11. Related Policies & Standards
+12. Appendix A: Control Mapping (table format)
+13. Appendix B: Audit Evidence Examples
 
 ${formData.policy_type === 'PCI_DSS_Compliance' ? `
 **PCI DSS SPECIFIC REQUIREMENTS:**
-- Address all 12 PCI DSS requirements
-- Include CDE (Cardholder Data Environment) scope definition
-- Network segmentation requirements
-- Data protection measures (encryption, tokenization, masking)
-- Vulnerability management procedures
-- Access control requirements (MFA, least privilege)
-- Monitoring and logging requirements
-- Incident response procedures for payment data breaches
+- Address all 12 PCI DSS requirements with specific implementation guidance
+- Include detailed CDE (Cardholder Data Environment) scope definition
+- Network segmentation requirements with technical specifications
+- Data protection measures: encryption standards (AES-256), tokenization, masking, secure deletion
+- Vulnerability management: quarterly scans, annual penetration testing, monthly patching
+- Access control: MFA for all CDE access, least privilege, unique IDs, quarterly access reviews
+- Monitoring and logging: SIEM integration, file integrity monitoring, centralized log management, 1-year retention
+- Incident response procedures specifically for payment data breaches (24-hour notification requirements)
+- Physical security for card processing equipment
+- Vendor management for service providers with access to cardholder data
+` : ''}
+
+${formData.policy_type === 'Access_Control' ? `
+**ACCESS CONTROL SPECIFIC REQUIREMENTS:**
+- Joiner-Mover-Leaver process with 24-hour SLA for changes
+- Unique user IDs (no shared accounts)
+- MFA for all remote access and privileged accounts
+- Quarterly access reviews with documented approval
+- Temporary/elevated access expiration (maximum 30 days)
+- Privileged account management (separate from standard accounts)
+- Access logging with 90-day minimum retention
+- Failed login attempt thresholds and account lockout
+- Password requirements: 12+ characters, breach-resistant, no complexity rules (NIST-aligned)
+` : ''}
+
+${formData.policy_type === 'Incident_Response' ? `
+**INCIDENT RESPONSE SPECIFIC REQUIREMENTS:**
+- Incident classification levels with response timeframes (Critical: 15 min, High: 1 hour, etc.)
+- On-call rotation and escalation procedures
+- Evidence preservation and chain of custody
+- Communication templates for stakeholders, customers, regulators
+- Post-incident review requirements (within 5 business days)
+- Lessons learned documentation and action item tracking
+- Annual tabletop exercise requirement
 ` : ''}
 
 **OUTPUT FORMAT:**
 Return ONLY a JSON object with this structure:
 {
   "title": "Complete policy title",
-  "content": "Full policy document content in markdown format with proper headings, bullets, and formatting",
-  "summary": "2-3 sentence executive summary",
-  "key_controls": ["control1", "control2", "control3", "control4", "control5"],
-  "compliance_frameworks": ["framework1", "framework2"],
-  "enforcement_mechanisms": ["mechanism1", "mechanism2", "mechanism3"],
-  "review_recommendations": "Recommendations for policy review and updates"
+  "content": "Full policy document content in markdown format with ALL mandatory sections including appendices",
+  "summary": "2-3 sentence executive summary emphasizing audit-readiness",
+  "key_controls": ["At least 8 specific, measurable controls with JML, time-bound access, retention periods"],
+  "compliance_frameworks": ["Specific frameworks with control IDs where applicable"],
+  "enforcement_mechanisms": ["At least 5 technical or procedural enforcement mechanisms"],
+  "review_recommendations": "Specific recommendations for policy review, including frequency and triggers for updates",
+  "control_mappings": [
+    {"requirement": "Unique user IDs", "soc2": "CC6.1", "iso27001": "A.9.2.1", "nist": "PR.AC-1", "cis": "6.1"},
+    {"requirement": "Access reviews", "soc2": "CC6.2", "iso27001": "A.9.2.5", "nist": "PR.AC-4", "cis": "6.2"}
+  ],
+  "audit_evidence_examples": ["Evidence type 1", "Evidence type 2", "Evidence type 3", "Evidence type 4", "Evidence type 5"]
 }
 
-Generate a policy that would pass an audit and be ready for immediate implementation.`;
+**QUALITY STANDARDS:**
+- This policy must be ready for immediate use in a SOC 2 Type II, ISO 27001, or PCI DSS audit
+- Auditors should find ZERO gaps in JML coverage, access controls, or logging requirements
+- Every "must" statement should be measurable and verifiable
+- Include at least 8 specific, enforceable controls with clear owners and timeframes
+
+Generate an enterprise-grade lite policy that passes real audits without being bloated or overly complex.`;
 
       const response = await base44.integrations.Core.InvokeLLM({
         prompt: prompt,
@@ -245,9 +312,23 @@ Generate a policy that would pass an audit and be ready for immediate implementa
             key_controls: { type: "array", items: { type: "string" } },
             compliance_frameworks: { type: "array", items: { type: "string" } },
             enforcement_mechanisms: { type: "array", items: { type: "string" } },
-            review_recommendations: { type: "string" }
+            review_recommendations: { type: "string" },
+            control_mappings: { 
+              type: "array", 
+              items: { 
+                type: "object",
+                properties: {
+                  requirement: { type: "string" },
+                  soc2: { type: "string" },
+                  iso27001: { type: "string" },
+                  nist: { type: "string" },
+                  cis: { type: "string" }
+                }
+              } 
+            },
+            audit_evidence_examples: { type: "array", items: { type: "string" } }
           },
-          required: ["title", "content", "summary"]
+          required: ["title", "content", "summary", "key_controls"]
         }
       });
 
@@ -623,6 +704,52 @@ Generate a policy that would pass an audit and be ready for immediate implementa
                               {mechanism}
                             </Badge>
                           ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {generatedPolicy.control_mappings && generatedPolicy.control_mappings.length > 0 && (
+                      <div>
+                        <Label className="text-gray-300 mb-2 block">Control Mappings (Appendix A)</Label>
+                        <div className="bg-slate-900/50 rounded-lg border border-gray-700 overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead className="bg-slate-800/50">
+                              <tr>
+                                <th className="text-left p-3 text-gray-300">Requirement</th>
+                                <th className="text-left p-3 text-gray-300">SOC 2</th>
+                                <th className="text-left p-3 text-gray-300">ISO 27001</th>
+                                <th className="text-left p-3 text-gray-300">NIST CSF</th>
+                                <th className="text-left p-3 text-gray-300">CIS</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {generatedPolicy.control_mappings.map((mapping, index) => (
+                                <tr key={index} className="border-t border-gray-700">
+                                  <td className="p-3 text-gray-300">{mapping.requirement}</td>
+                                  <td className="p-3 text-gray-400">{mapping.soc2 || '-'}</td>
+                                  <td className="p-3 text-gray-400">{mapping.iso27001 || '-'}</td>
+                                  <td className="p-3 text-gray-400">{mapping.nist || '-'}</td>
+                                  <td className="p-3 text-gray-400">{mapping.cis || '-'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+
+                    {generatedPolicy.audit_evidence_examples && generatedPolicy.audit_evidence_examples.length > 0 && (
+                      <div>
+                        <Label className="text-gray-300 mb-2 block">Audit Evidence Examples (Appendix B)</Label>
+                        <div className="bg-slate-900/50 p-4 rounded-lg border border-gray-700">
+                          <ul className="space-y-2">
+                            {generatedPolicy.audit_evidence_examples.map((evidence, index) => (
+                              <li key={index} className="flex items-start text-gray-300">
+                                <CheckCircle className="w-4 h-4 mr-2 text-green-400 mt-0.5 flex-shrink-0" />
+                                <span>{evidence}</span>
+                              </li>
+                            ))}
+                          </ul>
                         </div>
                       </div>
                     )}
