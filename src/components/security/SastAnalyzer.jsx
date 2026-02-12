@@ -242,7 +242,7 @@ ${externalFindingsRaw.trim()}
 Reconcile these raw results with your analysis. Do NOT invent results not reflected by the code or tools.`
       : "";
 
-    // UPDATED: prompt augmentation
+    // ENHANCED: prompt with false positive reduction and improved detection
     const prompt = `You are a senior application security engineer performing SAST for JavaScript/TypeScript (React/Vite) and Deno functions.
 Follow OWASP Cheat Sheet Series and ASVS guidance for classification and remediation.
 
@@ -250,19 +250,58 @@ ${owaspDirective}
 
 ${externalToolsNote}
 
-Analyze the provided code for security vulnerabilities and insecure patterns. Focus on:
-- XSS (incl. dangerouslySetInnerHTML, unsanitized HTML, improper React Markdown usage)
-- SSRF / insecure fetch/URL handling
-- Insecure use of localStorage/sessionStorage for sensitive data
-- Hard-coded secrets or tokens
-- Broken access control (client-side only checks)
-- Insecure crypto/randomness
-- Command/file injection (for backend code)
-- Insecure CORS or CSRF surfaces
-- Missing security headers/CSP implications
-- Known bad patterns in React (e.g., ref leaks of secrets, direct DOM sinks)
+CRITICAL ANALYSIS REQUIREMENTS:
+1. FALSE POSITIVE REDUCTION:
+   - Only flag issues where user-controlled data flows to dangerous sinks WITHOUT proper validation/sanitization
+   - Consider framework protections (React auto-escapes JSX, sanitizes props by default)
+   - Verify actual exploitability, not just pattern matching
+   - Distinguish between safe library usage and dangerous patterns
 
-For each issue: include title, severity (critical/high/medium/low), CWE if applicable, description, file (if known), line (if known), a short relevant code_snippet, recommendation (specific code change), confidence.
+2. TAINT ANALYSIS & DATA FLOW:
+   - Track data sources: user input (req.body, query params, URL paths, form data), external APIs
+   - Identify sanitization/validation points: input validators, allow-lists, encoding functions
+   - Trace to dangerous sinks: eval(), innerHTML, DOM manipulation, file ops, SQL queries, command execution
+   - Only flag if tainted data reaches sink without proper sanitization
+
+3. CATEGORY-SPECIFIC DETECTION IMPROVEMENTS:
+
+   PATH TRAVERSAL:
+   - Must show actual file path construction from user input (e.g., filepath = basePath + userInput)
+   - Check for path normalization (path.normalize, path.resolve with proper base)
+   - Verify lack of allow-list or directory traversal prevention (.., absolute paths)
+   - False positive if: paths are hardcoded, from trusted config, or properly validated
+
+   COMMAND INJECTION:
+   - Only flag if user input flows to: child_process.exec, eval(), Function(), Deno.run, shell commands
+   - Check for command parameterization, escaping, or allow-list validation
+   - Safe patterns: subprocess with array args (not shell=true), template literals with no user data
+
+   LDAP INJECTION:
+   - Flag if user input concatenated into LDAP query strings without escaping special chars (*, (, ), \\, /, NUL)
+   - Check for LDAP escaping functions or parameterized queries
+   - Consider if LDAP is actually used in the codebase
+
+   SQL INJECTION:
+   - Focus on string concatenation in SQL queries with user input
+   - Safe: parameterized queries, ORMs with proper escaping
+   - High confidence only if direct concatenation visible
+
+   XSS:
+   - React JSX is auto-escaped (safe by default)
+   - Dangerous: dangerouslySetInnerHTML with unsanitized user data, direct DOM manipulation (innerHTML, insertAdjacentHTML)
+   - Check for sanitization libraries (DOMPurify, xss)
+
+4. CONFIDENCE SCORING:
+   - HIGH: Clear data flow from user input to dangerous sink, no validation visible
+   - MEDIUM: Pattern suggests vulnerability but validation may exist outside visible scope
+   - LOW: Potential issue but likely safe due to framework protections or unclear data flow
+
+5. CONTEXT-AWARE ANALYSIS:
+   - Consider the full execution context (client vs server code)
+   - Account for framework-level protections
+   - Recognize common safe patterns and libraries
+
+Analyze the provided code for security vulnerabilities. For each issue: include title, severity (critical/high/medium/low), CWE if applicable, description, file (if known), line (if known), a short relevant code_snippet, recommendation (specific code change), confidence.
 
 Provide an overall risk_score (0-100) and a concise summary.
 
