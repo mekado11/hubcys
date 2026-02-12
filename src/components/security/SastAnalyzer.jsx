@@ -155,13 +155,16 @@ const SastAnalyzer = () => {
         }));
 
         const allCsvFindings = await Promise.all(csvReaders);
-        const flatFindings = deduplicateFindings(allCsvFindings.flat());
+        const rawFindings = allCsvFindings.flat();
+        const uniqueFindings = deduplicateFindings(rawFindings);
         
-        if (flatFindings.length > 0) {
+        if (uniqueFindings.length > 0) {
           setResults({
-            summary: `Imported ${flatFindings.length} unique findings from CSV file(s)`,
-            risk_score: calculateRiskScore(flatFindings),
-            findings: flatFindings
+            summary: `Imported ${rawFindings.length} findings (${uniqueFindings.length} unique) from CSV file(s)`,
+            risk_score: calculateRiskScore(uniqueFindings),
+            raw_findings: rawFindings.length,
+            unique_findings: uniqueFindings.length,
+            findings: uniqueFindings
           });
           setActiveTab("dashboard");
         }
