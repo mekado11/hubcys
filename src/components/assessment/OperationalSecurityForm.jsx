@@ -1,9 +1,9 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Shield, AlertTriangle, Users, Monitor, Cloud, Key, Eye } from "lucide-react";
+import { Shield, AlertTriangle, Users, Monitor, Cloud, Key, Eye, ArrowLeft, ArrowRight, Save, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function OperationalSecurityForm({ data, onUpdate, onNext, onBack, onSave, saving }) {
   const handleUpdate = (field, value) => {
@@ -324,6 +324,36 @@ export default function OperationalSecurityForm({ data, onUpdate, onNext, onBack
           </Card>
         );
       })}
+
+      {/* Action Buttons */}
+      <div className="flex justify-between items-center pt-6 border-t border-gray-700">
+        <Button
+          onClick={onBack}
+          variant="outline"
+          className="border-gray-600 text-gray-300 hover:bg-gray-800"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+        <div className="flex gap-3">
+          <Button
+            onClick={async () => { await onSave(); }}
+            disabled={saving}
+            variant="outline"
+            className="border-cyan-500/30 text-cyan-300 hover:bg-cyan-900/20"
+          >
+            {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+            Save Draft
+          </Button>
+          <Button
+            onClick={onNext}
+            className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 px-8 py-3 text-lg"
+          >
+            Continue to Maturity Assessment
+            <ArrowRight className="w-5 h-5 ml-2" />
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
