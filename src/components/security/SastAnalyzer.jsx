@@ -73,7 +73,9 @@ const SastAnalyzer = () => {
   const deduplicateFindings = (findings) => {
     const seen = new Set();
     return findings.filter(f => {
-      const key = `${f.rule_id || ''}|${f.file || ''}|${f.title || ''}`;
+      // More specific key: include line number and code snippet hash for better uniqueness
+      const codeHash = f.code_snippet ? f.code_snippet.substring(0, 50) : '';
+      const key = `${f.rule_id || ''}|${f.file || ''}|${f.line || ''}|${f.title || ''}|${codeHash}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
@@ -116,6 +118,7 @@ const SastAnalyzer = () => {
       cwe: row.cwe || '',
       description: row.description || row.category || row.expected_message_contains || '',
       file: row.filepath || row.file || '',
+      line: row.line || row.line_number || undefined,
       code_snippet: row.code || '',
       recommendation: row.recommendation || 'Review and remediate this vulnerability',
       confidence: 'high',
