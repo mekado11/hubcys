@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OwaspKnowledgePanel from "./OwaspKnowledgePanel";
 import SastExternalMerge from "./SastExternalMerge";
 import SastDashboard from "./SastDashboard";
+import SastBenchmark from "./SastBenchmark";
 
 const severityColor = (s) => {
   const v = String(s || "").toLowerCase();
@@ -322,6 +323,7 @@ CODE END`;
               <TabsList className="bg-slate-800/50">
                 <TabsTrigger value="findings">Findings List</TabsTrigger>
                 <TabsTrigger value="dashboard">Dashboard & Analytics</TabsTrigger>
+                <TabsTrigger value="benchmark">Benchmark Testing</TabsTrigger>
               </TabsList>
 
               <TabsContent value="findings" className="mt-4">
@@ -401,6 +403,10 @@ CODE END`;
 
               <TabsContent value="dashboard" className="mt-4">
                 <SastDashboard findings={results.findings || []} />
+              </TabsContent>
+
+              <TabsContent value="benchmark" className="mt-4">
+                <SastBenchmark />
               </TabsContent>
             </Tabs>
           </div>
