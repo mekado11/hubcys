@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Papa from "papaparse";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -51,35 +52,109 @@ const SastAnalyzer = () => {
     return Array.from(ids);
   }, [results]);
 
+  const validateRows = (rows) => {
+    const allowedLang = new Set(["python", "javascript", "java", "go", "typescript", "ruby", "php", "c", "cpp", "csharp"]);
+
+    const emptyCritical = rows.filter(r =>
+      !r.case_id && !r.filepath && !r.expected_rule_id && !r.language
+    ).length;
+
+    const langCorrupt = rows.filter(r => {
+      const lang = String(r.language || "").toLowerCase();
+      return lang && !allowedLang.has(lang);
+    }).length;
+
+    // Validation thresholds
+    if (rows.length < 50) {
+      console.warn(`Warning: Only ${rows.length} rows parsed. Expected more for typical test sets.`);
+    }
+    if (emptyCritical > 0) {
+      throw new Error(`Corrupt rows detected: ${emptyCritical} rows missing critical fields (case_id, filepath, expected_rule_id, language).`);
+    }
+    if (langCorrupt > Math.floor(rows.length * 0.05)) {
+      throw new Error(`Language field corruption suspected: ${langCorrupt} rows have unexpected language values.`);
+    }
+  };
+
+  const parseCSV = (text) => {
+    const result = Papa.parse(text, {
+      header: true,
+      skipEmptyLines: "greedy",
+      dynamicTyping: false,
+      quoteChar: '"',
+      escapeChar: '"',
+    });
+
+    if (result.errors?.length) {
+      const top = result.errors.slice(0, 5).map(e => `${e.code}: ${e.message}${e.row !== undefined ? ` @ row ${e.row}` : ''}`).join("\n");
+      throw new Error(`CSV parse errors:\n${top}`);
+    }
+
+    const rows = (result.data || [])
+      .filter(r => r && (r.case_id || r.filepath || r.expected_rule_id))
+      .map(r => ({
+        ...r,
+        code: (r.code ?? "").replace(/\r\n/g, "\n"),
+      }));
+
+    // Validate data integrity
+    validateRows(rows);
+
+    // Transform to findings format
+    return rows.map(row => ({
+      title: row.category || row.title || 'Security Issue',
+      severity: (row.severity || 'medium').toLowerCase(),
+      cwe: row.cwe || '',
+      description: row.description || row.category || row.expected_message_contains || '',
+      file: row.filepath || row.file || '',
+      code_snippet: row.code || '',
+      recommendation: row.recommendation || 'Review and remediate this vulnerability',
+      confidence: 'high',
+      language: row.language || '',
+      rule_id: row.expected_rule_id || row.rule_id || ''
+    }));
+  };
+
   const handleFiles = async (fileList) => {
     const fileArray = Array.from(fileList || []);
     const csvFiles = fileArray.filter((f) => /\.csv$/i.test(f.name));
     const codeFiles = fileArray.filter((f) => /\.(jsx?|tsx?|json|md|mjs|cjs)$/i.test(f.name)).slice(0, 6);
     
     setFiles([...csvFiles, ...codeFiles]);
+    setError("");
 
     // Handle CSV files - parse and load directly into results
     if (csvFiles.length > 0) {
-      const csvReaders = csvFiles.map((f) => new Promise((resolve) => {
-        const fr = new FileReader();
-        fr.onload = () => {
-          const text = String(fr.result || "");
-          const parsed = parseCSV(text);
-          resolve(parsed);
-        };
-        fr.readAsText(f);
-      }));
+      try {
+        const csvReaders = csvFiles.map((f) => new Promise((resolve, reject) => {
+          const fr = new FileReader();
+          fr.onload = () => {
+            try {
+              const text = String(fr.result || "");
+              const parsed = parseCSV(text);
+              resolve(parsed);
+            } catch (e) {
+              reject(e);
+            }
+          };
+          fr.onerror = () => reject(new Error(`Failed to read file: ${f.name}`));
+          fr.readAsText(f);
+        }));
 
-      const allCsvFindings = await Promise.all(csvReaders);
-      const flatFindings = allCsvFindings.flat();
-      
-      if (flatFindings.length > 0) {
-        setResults({
-          summary: `Imported ${flatFindings.length} findings from CSV file(s)`,
-          risk_score: calculateRiskScore(flatFindings),
-          findings: flatFindings
-        });
-        setActiveTab("dashboard");
+        const allCsvFindings = await Promise.all(csvReaders);
+        const flatFindings = allCsvFindings.flat();
+        
+        if (flatFindings.length > 0) {
+          setResults({
+            summary: `Imported ${flatFindings.length} findings from CSV file(s)`,
+            risk_score: calculateRiskScore(flatFindings),
+            findings: flatFindings
+          });
+          setActiveTab("dashboard");
+        }
+      } catch (e) {
+        console.error("CSV parsing error:", e);
+        setError(`CSV parsing failed: ${e.message}`);
       }
     }
 
@@ -95,53 +170,6 @@ const SastAnalyzer = () => {
       const stitched = contents.map(c => `// FILE: ${c.name}\n${c.text}\n`).join("\n\n");
       setCode(prev => prev ? `${prev}\n\n${stitched}` : stitched);
     }
-  };
-
-  const parseCSV = (text) => {
-    const lines = text.trim().split('\n');
-    if (lines.length < 2) return [];
-    
-    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-    const findings = [];
-
-    for (let i = 1; i < lines.length; i++) {
-      const values = [];
-      let current = '';
-      let inQuotes = false;
-      
-      // Handle quoted fields with commas
-      for (let char of lines[i]) {
-        if (char === '"') {
-          inQuotes = !inQuotes;
-        } else if (char === ',' && !inQuotes) {
-          values.push(current.trim());
-          current = '';
-        } else {
-          current += char;
-        }
-      }
-      values.push(current.trim());
-
-      const row = {};
-      headers.forEach((header, idx) => {
-        row[header] = values[idx] ? values[idx].replace(/^"|"$/g, '') : '';
-      });
-
-      findings.push({
-        title: row.category || row.title || 'Security Issue',
-        severity: (row.severity || 'medium').toLowerCase(),
-        cwe: row.cwe || '',
-        description: row.description || row.category || '',
-        file: row.filepath || row.file || '',
-        code_snippet: row.code || '',
-        recommendation: row.recommendation || 'Review and remediate this vulnerability',
-        confidence: 'high',
-        language: row.language || '',
-        rule_id: row.expected_rule_id || row.rule_id || ''
-      });
-    }
-
-    return findings;
   };
 
   const calculateRiskScore = (findings) => {
