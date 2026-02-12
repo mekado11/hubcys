@@ -242,7 +242,7 @@ ${externalFindingsRaw.trim()}
 Reconcile these raw results with your analysis. Do NOT invent results not reflected by the code or tools.`
       : "";
 
-    // ENHANCED: prompt with false positive reduction and improved detection
+    // ENHANCED: precision-tuned prompt for 92%+ accuracy
     const prompt = `You are a senior application security engineer performing SAST for JavaScript/TypeScript (React/Vite) and Deno functions.
 Follow OWASP Cheat Sheet Series and ASVS guidance for classification and remediation.
 
@@ -250,56 +250,174 @@ ${owaspDirective}
 
 ${externalToolsNote}
 
-CRITICAL ANALYSIS REQUIREMENTS:
-1. FALSE POSITIVE REDUCTION:
-   - Only flag issues where user-controlled data flows to dangerous sinks WITHOUT proper validation/sanitization
-   - Consider framework protections (React auto-escapes JSX, sanitizes props by default)
-   - Verify actual exploitability, not just pattern matching
-   - Distinguish between safe library usage and dangerous patterns
+CRITICAL: ZERO FALSE POSITIVES - Only flag EXPLOITABLE vulnerabilities with HIGH confidence.
 
-2. TAINT ANALYSIS & DATA FLOW:
-   - Track data sources: user input (req.body, query params, URL paths, form data), external APIs
-   - Identify sanitization/validation points: input validators, allow-lists, encoding functions
-   - Trace to dangerous sinks: eval(), innerHTML, DOM manipulation, file ops, SQL queries, command execution
-   - Only flag if tainted data reaches sink without proper sanitization
+1. MANDATORY TAINT ANALYSIS:
+   USER INPUT SOURCES (tainted):
+   - req.body, req.query, req.params, URL.searchParams
+   - form inputs, file uploads, cookies, headers
+   - External API responses (untrusted)
+   
+   SANITIZATION/VALIDATION (breaks taint):
+   - Input validation libraries (joi, yup, zod, validator.js)
+   - Allow-list checks (enum matching, regex validation)
+   - Encoding functions (encodeURIComponent, DOMPurify, escape functions)
+   - Parameterized queries, prepared statements
+   - Framework auto-escaping (React JSX, template engines)
+   
+   DANGEROUS SINKS (require tainted input to flag):
+   - eval(), Function(), vm.runInContext()
+   - child_process.exec/spawn with shell:true
+   - fs operations with dynamic paths
+   - SQL string concatenation
+   - innerHTML, outerHTML, insertAdjacentHTML, document.write
+   - LDAP query concatenation
+   - XPath query concatenation
+   
+   RULE: Only flag if TAINTED data reaches SINK without passing through SANITIZATION
 
-3. CATEGORY-SPECIFIC DETECTION IMPROVEMENTS:
+2. SQL INJECTION - STRICT RULES:
+   ✅ FLAG ONLY IF:
+   - Direct string concatenation: "SELECT * FROM users WHERE id=" + userId
+   - Template literals with user input: \`SELECT * FROM users WHERE name='\${userName}'\`
+   - String building loops with user data
+   
+   ❌ DO NOT FLAG:
+   - Sequelize/TypeORM/Prisma queries (they use parameterization internally)
+   - .where(), .findOne(), .create() ORM methods
+   - Libraries like knex, pg with parameterized queries ($1, $2 placeholders)
+   - Hardcoded queries with no user input
+   
+   CONFIDENCE: HIGH only if literal string concatenation visible
 
-   PATH TRAVERSAL:
-   - Must show actual file path construction from user input (e.g., filepath = basePath + userInput)
-   - Check for path normalization (path.normalize, path.resolve with proper base)
-   - Verify lack of allow-list or directory traversal prevention (.., absolute paths)
-   - False positive if: paths are hardcoded, from trusted config, or properly validated
+3. COMMAND INJECTION - ENHANCED DETECTION:
+   ✅ FLAG IF:
+   - exec/spawn with shell:true AND user input in command string
+   - eval() or Function() with user-controlled code
+   - Indirect paths: user input modifies .env files, config files read by commands
+   - Template literals in Deno.run or child_process with user data
+   
+   ❌ SAFE PATTERNS:
+   - spawn/execFile with args array: spawn('cmd', [arg1, userInput]) ✓
+   - Commands from hardcoded allow-list
+   - User input properly escaped with shellEscape/shellQuote libraries
+   
+   DETECT: Config file injection (user writes to .env → app reads → executes command)
 
-   COMMAND INJECTION:
-   - Only flag if user input flows to: child_process.exec, eval(), Function(), Deno.run, shell commands
-   - Check for command parameterization, escaping, or allow-list validation
-   - Safe patterns: subprocess with array args (not shell=true), template literals with no user data
+4. PATH TRAVERSAL - NO FALSE POSITIVES:
+   ✅ FLAG ONLY IF:
+   - User input DIRECTLY concatenated to file paths: path.join(baseDir, req.query.file)
+   - No validation for '../' sequences
+   - No allow-list of permitted files/directories
+   
+   ❌ DO NOT FLAG:
+   - Hardcoded file paths
+   - Paths from trusted config/database
+   - path.resolve() with proper base directory validation
+   - Explicit allow-list checks before file access
+   
+   CHECK FOR: Path normalization, startsWith() validation, file extension checks
 
-   LDAP INJECTION:
-   - Flag if user input concatenated into LDAP query strings without escaping special chars (*, (, ), \\, /, NUL)
-   - Check for LDAP escaping functions or parameterized queries
-   - Consider if LDAP is actually used in the codebase
+5. LDAP INJECTION - ACCURACY:
+   ✅ FLAG IF:
+   - User input concatenated into LDAP filter strings
+   - Missing escaping of special chars: *, (, ), \\, /, NUL
+   - No use of LDAP escaping libraries
+   
+   ❌ DO NOT FLAG IF:
+   - LDAP is not used in codebase
+   - Using libraries with built-in escaping (ldapjs with proper methods)
+   - User input is validated against allow-list before LDAP query
+   
+   RECALL BOOST: Search for ldap, ldapjs, activedirectory imports
 
-   SQL INJECTION:
-   - Focus on string concatenation in SQL queries with user input
-   - Safe: parameterized queries, ORMs with proper escaping
-   - High confidence only if direct concatenation visible
+6. WEAK CRYPTO - SPECIFIC DETECTION:
+   ✅ FLAG:
+   - crypto.createCipher() (deprecated, uses MD5)
+   - MD5/SHA1 for passwords: crypto.createHash('md5') for authentication
+   - Hardcoded crypto keys/IVs in code
+   - Math.random() for security tokens/session IDs
+   - DES, RC4, ECB mode ciphers
+   - RSA key lengths < 2048 bits
+   - Insufficient PBKDF2 iterations (< 10000)
+   
+   ✅ SAFE:
+   - crypto.createCipheriv with AES-256-GCM
+   - bcrypt, scrypt, argon2 for passwords
+   - crypto.randomBytes() for tokens
+   - SHA-256/SHA-512 for non-password hashing
+   
+   DETECT: Look for crypto imports and analyze algorithm choices
 
-   XSS:
-   - React JSX is auto-escaped (safe by default)
-   - Dangerous: dangerouslySetInnerHTML with unsanitized user data, direct DOM manipulation (innerHTML, insertAdjacentHTML)
-   - Check for sanitization libraries (DOMPurify, xss)
+7. XXE (XML External Entity) - SERVER-SIDE:
+   ✅ FLAG IF:
+   - XML parsing with external entities enabled
+   - libxmljs, xml2js without secure defaults
+   - No disabling of DTDs/external entities
+   
+   CHECK: User-uploaded XML files parsed without sanitization
 
-4. CONFIDENCE SCORING:
-   - HIGH: Clear data flow from user input to dangerous sink, no validation visible
-   - MEDIUM: Pattern suggests vulnerability but validation may exist outside visible scope
-   - LOW: Potential issue but likely safe due to framework protections or unclear data flow
+8. CSRF (Cross-Site Request Forgery):
+   ✅ FLAG IF:
+   - State-changing endpoints (POST/PUT/DELETE) without CSRF tokens
+   - No SameSite cookie attribute
+   - No Origin/Referer header validation
+   
+   SERVER-SIDE FOCUS: Only flag backend endpoints lacking CSRF protection
 
-5. CONTEXT-AWARE ANALYSIS:
-   - Consider the full execution context (client vs server code)
-   - Account for framework-level protections
-   - Recognize common safe patterns and libraries
+9. ACCESS CONTROL - IDOR FOCUS:
+   ✅ FLAG:
+   - Direct object reference without ownership check: User.findById(req.params.id) then modify
+   - Missing authorization: if (user.role !== 'admin') at critical operations
+   - Relying only on client-side checks (React component hiding)
+   
+   ❌ DO NOT FLAG:
+   - Client-side conditional rendering (not a security control)
+   - Server-side authorization present
+   
+   FOCUS: Insecure Direct Object Reference (IDOR) in API endpoints
+
+10. BUFFER OVERFLOW / USE AFTER FREE:
+    ❌ DO NOT FLAG in pure JavaScript/TypeScript (memory-safe languages)
+    ✅ ONLY FLAG IF:
+    - Native addon usage (N-API, node-gyp) with unsafe C/C++ code
+    - WebAssembly with manual memory management
+    - Buffer operations with unchecked lengths in native modules
+    
+    CONSERVATIVE: JS has automatic memory management, very rare in this context
+
+11. INTEGER OVERFLOW:
+    ✅ FLAG IF:
+    - Arithmetic on user input affecting buffer sizes or array indices
+    - No validation of numeric ranges before array access
+    - Large number operations without bounds checking
+    
+    EXAMPLE: array[userInput * 1000] without checking userInput < MAX
+
+12. CONFIDENCE SCORING (STRICT):
+    - HIGH (≥90%): Explicit tainted data flow to sink, no sanitization visible, exploitable
+    - MEDIUM (60-89%): Pattern suggests vulnerability, sanitization unclear from context
+    - LOW (<60%): Theoretical issue, likely mitigated by framework/library defaults
+    
+    BIAS: Prefer MEDIUM over HIGH unless absolutely certain
+
+13. DETECTION RECALL OPTIMIZATION:
+    - Thoroughly scan ALL imported libraries for risky functions
+    - Check indirect flows: user input → database → read back → sink
+    - Examine configuration files that might be manipulated
+    - Look for deserialization of user-controlled data (JSON.parse on untrusted input to dangerous operations)
+    - Race conditions in async operations with security implications
+    - Prototype pollution: obj[userKey] = userValue without hasOwnProperty check
+
+14. FALSE POSITIVE ELIMINATION CHECKLIST:
+    Before flagging, verify:
+    □ Is there ACTUAL user input involved? (not hardcoded data)
+    □ Does it reach a DANGEROUS sink? (not just a pattern)
+    □ Is sanitization/validation ABSENT or INSUFFICIENT?
+    □ Is it EXPLOITABLE in the given context? (not theoretical)
+    □ Are you CERTAIN this isn't a safe library usage pattern?
+    
+    If ANY checkbox is uncertain → Lower confidence or don't flag
 
 Analyze the provided code for security vulnerabilities. For each issue: include title, severity (critical/high/medium/low), CWE if applicable, description, file (if known), line (if known), a short relevant code_snippet, recommendation (specific code change), confidence.
 
