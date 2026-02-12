@@ -52,21 +52,105 @@ const SastAnalyzer = () => {
   }, [results]);
 
   const handleFiles = async (fileList) => {
-    const accepted = Array.from(fileList || []).filter((f) =>
-      /\.(jsx?|tsx?|json|md|mjs|cjs)$/i.test(f.name)
-    ).slice(0, 6); // cap to 6 files per run
-    setFiles(accepted);
+    const fileArray = Array.from(fileList || []);
+    const csvFiles = fileArray.filter((f) => /\.csv$/i.test(f.name));
+    const codeFiles = fileArray.filter((f) => /\.(jsx?|tsx?|json|md|mjs|cjs)$/i.test(f.name)).slice(0, 6);
+    
+    setFiles([...csvFiles, ...codeFiles]);
 
-    // Read contents and append to code input (non-destructive)
-    const readers = accepted.map((f) => new Promise((resolve) => {
-      const fr = new FileReader();
-      fr.onload = () => resolve({ name: f.name, text: String(fr.result || "") });
-      fr.readAsText(f);
-    }));
+    // Handle CSV files - parse and load directly into results
+    if (csvFiles.length > 0) {
+      const csvReaders = csvFiles.map((f) => new Promise((resolve) => {
+        const fr = new FileReader();
+        fr.onload = () => {
+          const text = String(fr.result || "");
+          const parsed = parseCSV(text);
+          resolve(parsed);
+        };
+        fr.readAsText(f);
+      }));
 
-    const contents = await Promise.all(readers);
-    const stitched = contents.map(c => `// FILE: ${c.name}\n${c.text}\n`).join("\n\n");
-    setCode(prev => prev ? `${prev}\n\n${stitched}` : stitched);
+      const allCsvFindings = await Promise.all(csvReaders);
+      const flatFindings = allCsvFindings.flat();
+      
+      if (flatFindings.length > 0) {
+        setResults({
+          summary: `Imported ${flatFindings.length} findings from CSV file(s)`,
+          risk_score: calculateRiskScore(flatFindings),
+          findings: flatFindings
+        });
+        setActiveTab("dashboard");
+      }
+    }
+
+    // Handle code files - append to code input
+    if (codeFiles.length > 0) {
+      const readers = codeFiles.map((f) => new Promise((resolve) => {
+        const fr = new FileReader();
+        fr.onload = () => resolve({ name: f.name, text: String(fr.result || "") });
+        fr.readAsText(f);
+      }));
+
+      const contents = await Promise.all(readers);
+      const stitched = contents.map(c => `// FILE: ${c.name}\n${c.text}\n`).join("\n\n");
+      setCode(prev => prev ? `${prev}\n\n${stitched}` : stitched);
+    }
+  };
+
+  const parseCSV = (text) => {
+    const lines = text.trim().split('\n');
+    if (lines.length < 2) return [];
+    
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const findings = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const values = [];
+      let current = '';
+      let inQuotes = false;
+      
+      // Handle quoted fields with commas
+      for (let char of lines[i]) {
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          values.push(current.trim());
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      values.push(current.trim());
+
+      const row = {};
+      headers.forEach((header, idx) => {
+        row[header] = values[idx] ? values[idx].replace(/^"|"$/g, '') : '';
+      });
+
+      findings.push({
+        title: row.category || row.title || 'Security Issue',
+        severity: (row.severity || 'medium').toLowerCase(),
+        cwe: row.cwe || '',
+        description: row.description || row.category || '',
+        file: row.filepath || row.file || '',
+        code_snippet: row.code || '',
+        recommendation: row.recommendation || 'Review and remediate this vulnerability',
+        confidence: 'high',
+        language: row.language || '',
+        rule_id: row.expected_rule_id || row.rule_id || ''
+      });
+    }
+
+    return findings;
+  };
+
+  const calculateRiskScore = (findings) => {
+    const weights = { critical: 10, high: 7, medium: 4, low: 2, info: 1 };
+    const total = findings.reduce((sum, f) => {
+      const severity = String(f.severity || 'medium').toLowerCase();
+      return sum + (weights[severity] || 4);
+    }, 0);
+    return Math.min(100, Math.round((total / findings.length) * 10));
   };
 
   const analyze = async () => {
@@ -230,12 +314,13 @@ CODE END`;
             <div>
               <Input
                 type="file"
-                accept=".js,.jsx,.ts,.tsx,.json,.md,.mjs,.cjs"
+                accept=".js,.jsx,.ts,.tsx,.json,.md,.mjs,.cjs,.csv"
+                multiple
                 onChange={(e) => handleFiles(e.target.files)}
                 className="bg-slate-800/50 border-gray-600 text-white"
               />
               <div className="text-xs text-gray-400 mt-1 flex items-center">
-                <Upload className="w-3 h-3 mr-1" /> Up to 6 files; large files are truncated for analysis.
+                <Upload className="w-3 h-3 mr-1" /> Upload code files to analyze or CSV files with existing findings
               </div>
             </div>
             {files.length > 0 && (
