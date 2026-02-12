@@ -1,10 +1,10 @@
-
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { User } from '@/entities/User';
+import { base44 } from '@/api/base44Client';
 import { ShieldCheck, ArrowRight, Target, FileText, BookOpen, TrendingUp, Quote, AlertTriangle, Gamepad2 } from 'lucide-react';
 
 const FeatureCard = ({ icon, title, description, gradient }) => (
@@ -42,7 +42,7 @@ export default function LandingPage() {
     if (currentUser) {
       window.location.href = createPageUrl("Dashboard");
     } else {
-      User.loginWithRedirect(window.location.origin + createPageUrl("CompanyOnboarding"));
+      base44.auth.redirectToLogin(window.location.origin + createPageUrl("CompanyOnboarding"));
     }
   };
 
