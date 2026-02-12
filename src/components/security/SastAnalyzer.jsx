@@ -76,6 +76,16 @@ const SastAnalyzer = () => {
     }
   };
 
+  const deduplicateFindings = (findings) => {
+    const seen = new Set();
+    return findings.filter(f => {
+      const key = `${f.rule_id || ''}|${f.file || ''}|${f.title || ''}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  };
+
   const parseCSV = (text) => {
     const result = Papa.parse(text, {
       header: true,
@@ -101,7 +111,7 @@ const SastAnalyzer = () => {
     validateRows(rows);
 
     // Transform to findings format
-    return rows.map(row => ({
+    const findings = rows.map(row => ({
       title: row.category || row.title || 'Security Issue',
       severity: (row.severity || 'medium').toLowerCase(),
       cwe: row.cwe || '',
@@ -113,6 +123,9 @@ const SastAnalyzer = () => {
       language: row.language || '',
       rule_id: row.expected_rule_id || row.rule_id || ''
     }));
+
+    // Deduplicate based on (rule_id, file, title)
+    return deduplicateFindings(findings);
   };
 
   const handleFiles = async (fileList) => {
@@ -142,11 +155,11 @@ const SastAnalyzer = () => {
         }));
 
         const allCsvFindings = await Promise.all(csvReaders);
-        const flatFindings = allCsvFindings.flat();
+        const flatFindings = deduplicateFindings(allCsvFindings.flat());
         
         if (flatFindings.length > 0) {
           setResults({
-            summary: `Imported ${flatFindings.length} findings from CSV file(s)`,
+            summary: `Imported ${flatFindings.length} unique findings from CSV file(s)`,
             risk_score: calculateRiskScore(flatFindings),
             findings: flatFindings
           });
