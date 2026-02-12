@@ -55,10 +55,6 @@ const SastAnalyzer = () => {
   const validateRows = (rows) => {
     const allowedLang = new Set(["python", "javascript", "java", "go", "typescript", "ruby", "php", "c", "cpp", "csharp"]);
 
-    const emptyCritical = rows.filter(r =>
-      !r.case_id && !r.filepath && !r.expected_rule_id && !r.language
-    ).length;
-
     const langCorrupt = rows.filter(r => {
       const lang = String(r.language || "").toLowerCase();
       return lang && !allowedLang.has(lang);
@@ -68,11 +64,9 @@ const SastAnalyzer = () => {
     if (rows.length < 50) {
       console.warn(`Warning: Only ${rows.length} rows parsed. Expected more for typical test sets.`);
     }
-    if (emptyCritical > 0) {
-      throw new Error(`Corrupt rows detected: ${emptyCritical} rows missing critical fields (case_id, filepath, expected_rule_id, language).`);
-    }
-    if (langCorrupt > Math.floor(rows.length * 0.05)) {
-      throw new Error(`Language field corruption suspected: ${langCorrupt} rows have unexpected language values.`);
+    // Allow rows with partial data - not all CSVs have all fields
+    if (langCorrupt > Math.floor(rows.length * 0.1)) {
+      console.warn(`Warning: ${langCorrupt} rows have unexpected language values.`);
     }
   };
 
@@ -101,7 +95,12 @@ const SastAnalyzer = () => {
     }
 
     const rows = (result.data || [])
-      .filter(r => r && (r.case_id || r.filepath || r.expected_rule_id))
+      .filter(r => {
+        // Keep row if it has meaningful data in any key field
+        if (!r) return false;
+        const hasData = r.case_id || r.filepath || r.file || r.expected_rule_id || r.rule_id || r.category || r.title;
+        return hasData;
+      })
       .map(r => ({
         ...r,
         code: (r.code ?? "").replace(/\r\n/g, "\n"),
