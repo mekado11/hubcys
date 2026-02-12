@@ -111,7 +111,7 @@ const SastAnalyzer = () => {
     validateRows(rows);
 
     // Transform to findings format
-    const findings = rows.map(row => ({
+    return rows.map(row => ({
       title: row.category || row.title || 'Security Issue',
       severity: (row.severity || 'medium').toLowerCase(),
       cwe: row.cwe || '',
@@ -123,9 +123,6 @@ const SastAnalyzer = () => {
       language: row.language || '',
       rule_id: row.expected_rule_id || row.rule_id || ''
     }));
-
-    // Deduplicate based on (rule_id, file, title)
-    return deduplicateFindings(findings);
   };
 
   const handleFiles = async (fileList) => {
