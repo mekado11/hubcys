@@ -318,8 +318,15 @@ CODE END`;
               </div>
             )}
 
-            <div className="space-y-3">
-              {results.findings?.length > 0 ? results.findings.map((f, idx) => (
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="bg-slate-800/50">
+                <TabsTrigger value="findings">Findings List</TabsTrigger>
+                <TabsTrigger value="dashboard">Dashboard & Analytics</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="findings" className="mt-4">
+                <div className="space-y-3">
+                  {results.findings?.length > 0 ? results.findings.map((f, idx) => (
                 <div key={idx} className="p-4 rounded-lg bg-slate-900/40 border border-slate-700/50">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -386,10 +393,16 @@ CODE END`;
                     </div>
                   )}
                 </div>
-              )) : (
-                <div className="text-gray-400 text-sm">No issues found in the analyzed content.</div>
-              )}
-            </div>
+                  )) : (
+                    <div className="text-gray-400 text-sm">No issues found in the analyzed content.</div>
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="dashboard" className="mt-4">
+                <SastDashboard findings={results.findings || []} />
+              </TabsContent>
+            </Tabs>
           </div>
         )}
 
