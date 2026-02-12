@@ -42,7 +42,7 @@ export default function LandingPage() {
     if (currentUser) {
       window.location.href = createPageUrl("Dashboard");
     } else {
-      base44.auth.redirectToLogin(window.location.origin + createPageUrl("CompanyOnboarding"));
+      window.location.href = createPageUrl("CompanyOnboarding");
     }
   };
 
