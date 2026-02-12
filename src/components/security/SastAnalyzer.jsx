@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,8 +9,10 @@ import { InvokeLLM } from "@/integrations/Core";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OwaspKnowledgePanel from "./OwaspKnowledgePanel";
 import SastExternalMerge from "./SastExternalMerge";
+import SastDashboard from "./SastDashboard";
 
 const severityColor = (s) => {
   const v = String(s || "").toLowerCase();
@@ -35,6 +36,7 @@ const SastAnalyzer = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showGuidance, setShowGuidance] = useState(false);
   const [showMerge, setShowMerge] = useState(false);
+  const [activeTab, setActiveTab] = useState("findings");
 
   // Derive OWASP IDs from results for contextual guidance
   const guidanceOwaspIds = React.useMemo(() => {
