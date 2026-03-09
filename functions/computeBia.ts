@@ -116,54 +116,39 @@ function calculateControlEffectiveness(assessment) {
   return (avgMaturity / 5) * 100; // Convert 0-5 scale to 0-100
 }
 
-// Get industry-specific benchmarks
-function getIndustryBenchmarks(sector) {
-  const benchmarks = {
-    Healthcare: {
-      avg_breach_frequency: 0.35,
-      avg_cost_per_record: 408,
-      avg_downtime_cost_per_hour: 125000,
-      ransomware_likelihood: 0.42
-    },
-    Financial_Services: {
-      avg_breach_frequency: 0.28,
-      avg_cost_per_record: 321,
-      avg_downtime_cost_per_hour: 200000,
-      ransomware_likelihood: 0.38
-    },
-    Technology: {
-      avg_breach_frequency: 0.32,
-      avg_cost_per_record: 285,
-      avg_downtime_cost_per_hour: 150000,
-      ransomware_likelihood: 0.35
-    },
-    Manufacturing: {
-      avg_breach_frequency: 0.25,
-      avg_cost_per_record: 245,
-      avg_downtime_cost_per_hour: 180000,
-      ransomware_likelihood: 0.40
-    },
-    Retail: {
-      avg_breach_frequency: 0.30,
-      avg_cost_per_record: 298,
-      avg_downtime_cost_per_hour: 110000,
-      ransomware_likelihood: 0.36
-    },
-    Government: {
-      avg_breach_frequency: 0.20,
-      avg_cost_per_record: 195,
-      avg_downtime_cost_per_hour: 85000,
-      ransomware_likelihood: 0.45
-    },
-    Other: {
-      avg_breach_frequency: 0.25,
-      avg_cost_per_record: 250,
-      avg_downtime_cost_per_hour: 100000,
-      ransomware_likelihood: 0.30
-    }
+// Get industry-specific benchmarks, scaled to the company's actual revenue
+function getIndustryBenchmarks(sector, annualRevenue, employeeCount) {
+  // Base ratios (downtime cost as % of hourly revenue, using industry multipliers)
+  const sectorProfiles = {
+    Healthcare:          { breach_freq: 0.35, cost_per_record: 408, downtime_pct: 0.0025, ransomware: 0.42 },
+    Financial_Services:  { breach_freq: 0.28, cost_per_record: 321, downtime_pct: 0.0030, ransomware: 0.38 },
+    Technology:          { breach_freq: 0.32, cost_per_record: 285, downtime_pct: 0.0020, ransomware: 0.35 },
+    Manufacturing:       { breach_freq: 0.25, cost_per_record: 245, downtime_pct: 0.0022, ransomware: 0.40 },
+    Retail:              { breach_freq: 0.30, cost_per_record: 298, downtime_pct: 0.0018, ransomware: 0.36 },
+    Government:          { breach_freq: 0.20, cost_per_record: 195, downtime_pct: 0.0012, ransomware: 0.45 },
+    Other:               { breach_freq: 0.25, cost_per_record: 250, downtime_pct: 0.0018, ransomware: 0.30 }
   };
 
-  return benchmarks[sector] || benchmarks.Other;
+  const profile = sectorProfiles[sector] || sectorProfiles.Other;
+
+  // If the user provided their annual revenue, derive a realistic hourly downtime cost.
+  // Otherwise fall back to a very conservative SMB default ($1,000/hr) instead of $100k/hr.
+  let downtimeCostPerHour;
+  if (annualRevenue && annualRevenue > 0) {
+    const hourlyRevenue = annualRevenue / 8760; // hours in a year
+    downtimeCostPerHour = Math.round(hourlyRevenue * (profile.downtime_pct * 100)); // industry multiplier
+  } else {
+    // Conservative SMB fallback — avoids inflating results for small companies
+    downtimeCostPerHour = 1000;
+  }
+
+  return {
+    avg_breach_frequency: profile.breach_freq,
+    avg_cost_per_record: profile.cost_per_record,
+    avg_downtime_cost_per_hour: downtimeCostPerHour,
+    ransomware_likelihood: profile.ransomware,
+    annual_revenue: annualRevenue || null
+  };
 }
 
 // Infer threat scenario from item data
