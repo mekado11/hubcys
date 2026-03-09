@@ -44,8 +44,8 @@ Deno.serve(async (req) => {
     const controlEffectiveness = calculateControlEffectiveness(assessment);
     const externalThreatScore = assessment?.surface_exposure_score || 0;
 
-    // Get industry benchmarks
-    const industryBenchmarks = getIndustryBenchmarks(assessment?.industry_sector || 'Other');
+    // Get industry benchmarks, scaled to company revenue
+    const industryBenchmarks = getIndustryBenchmarks(assessment?.industry_sector || 'Other', bia.annual_revenue, bia.employee_count);
 
     // Process each BIA item with FAIR methodology
     const processedItems = biaItems.map(item => 
