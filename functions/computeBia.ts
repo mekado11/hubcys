@@ -278,44 +278,52 @@ function calculateSLE(
   
   const hourlyLoss = inputs.bia_impact_revenue_loss_rate_override || 
                      revenueLossMap[inputs.bia_impact_revenue_loss_rate] || 
-                     industryBenchmarks.avg_downtime_cost_per_hour;
+                     industryBenchmarks.avg_downtime_cost_per_hour; // already scaled to company revenue
   
   sle += downtimeHours * hourlyLoss;
   
-  // Data breach costs
+  // Data breach costs — scale record count to company size
   if (threatScenario === 'Data_Breach') {
-    const recordCount = 10000; // Estimate, could be parameterized
+    // Estimate record count from employee count / revenue as a proxy for data footprint
+    const annualRevenue = industryBenchmarks.annual_revenue;
+    let recordCount = 1000; // conservative SMB default
+    if (annualRevenue) {
+      if (annualRevenue > 100_000_000) recordCount = 500000;
+      else if (annualRevenue > 10_000_000) recordCount = 50000;
+      else if (annualRevenue > 1_000_000) recordCount = 10000;
+      else recordCount = 1000;
+    }
     sle += recordCount * industryBenchmarks.avg_cost_per_record;
   }
   
-  // Contract/SLA penalties
+  // Contract/SLA penalties — scale to revenue if available
+  const annualRevenue = industryBenchmarks.annual_revenue;
+  const revenueScale = annualRevenue ? Math.min(1, annualRevenue / 10_000_000) : 0.1;
+
   const contractExposureMap = {
     'none': 0,
-    'low': 50000,
-    'moderate': 150000,
-    'high': 400000,
-    'severe': 1000000
+    'low':      Math.round(5000  + 45000  * revenueScale),
+    'moderate': Math.round(15000 + 135000 * revenueScale),
+    'high':     Math.round(40000 + 360000 * revenueScale),
+    'severe':   Math.round(100000 + 900000 * revenueScale)
   };
   
   sle += contractExposureMap[inputs.bia_impact_contract_exposure] || 0;
   
-  // Regulatory fines
+  // Regulatory fines — scale to revenue
   const regulatoryExposureMap = {
     'none': 0,
-    'low': 75000,
-    'moderate': 500000,
-    'high': 5000000,
-    'severe': 20000000
+    'low':      Math.round(10000  + 65000   * revenueScale),
+    'moderate': Math.round(50000  + 450000  * revenueScale),
+    'high':     Math.round(200000 + 4800000 * revenueScale),
+    'severe':   Math.round(500000 + 19500000 * revenueScale)
   };
   
   sle += regulatoryExposureMap[inputs.bia_data_regulatory_exposure] || 0;
-  
-  // Use breach precedents for calibration
-  if (relevantBreaches && relevantBreaches.length > 0) {
-    const avgBreachCost = relevantBreaches.reduce((sum, b) => sum + (b.estimated_financial_impact || 0), 0) / relevantBreaches.length;
-    if (avgBreachCost > 0) {
-      sle = (sle + avgBreachCost) / 2; // Average with precedent data
-    }
+
+  // Hard cap: a single loss event cannot exceed the company's total annual revenue
+  if (annualRevenue && annualRevenue > 0) {
+    sle = Math.min(sle, annualRevenue);
   }
   
   return sle;
