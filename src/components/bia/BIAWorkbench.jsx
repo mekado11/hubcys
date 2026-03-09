@@ -200,11 +200,21 @@ export default function BIAWorkbench({
       {/* ── Results (auto-appear after calculation) ── */}
       {fairMetrics && (
         <div className="space-y-5 pt-2">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               <Target className="w-5 h-5 text-cyan-400" />
               FAIR Risk Analysis Results
             </h2>
+            {selectedBia?.annual_revenue > 0 && (
+              <span className="text-xs bg-slate-800 border border-slate-700 text-gray-400 px-3 py-1.5 rounded-full">
+                Scaled to <span className="text-cyan-300 font-semibold">${new Intl.NumberFormat('en-US',{notation:'compact'}).format(selectedBia.annual_revenue)}</span> annual revenue
+              </span>
+            )}
+            {!selectedBia?.annual_revenue && (
+              <span className="text-xs bg-amber-900/30 border border-amber-500/30 text-amber-300 px-3 py-1.5 rounded-full">
+                ⚠ No revenue entered — using conservative defaults. Add revenue for accurate results.
+              </span>
+            )}
             <Button
               onClick={handleCalculate}
               disabled={calculating || !canCalculate}
