@@ -56,9 +56,8 @@ Deno.serve(async (req) => {
         assessment,
         controlEffectiveness,
         externalThreatScore,
-        industryBenchmarks,
-        breachCases || [],
-        base44
+        industryBenchmarks, // already revenue-scaled
+        breachCases || []
       )
     );
 
