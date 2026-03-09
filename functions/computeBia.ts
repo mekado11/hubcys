@@ -405,8 +405,7 @@ function processBiaItemWithFAIR(
   controlEffectiveness,
   externalThreatScore,
   industryBenchmarks,
-  relevantBreaches,
-  base44
+  relevantBreaches
 ) {
   // Determine threat scenario type if not already set
   const threatScenario = item.threat_scenario_type || inferThreatScenario(item, inputs);
