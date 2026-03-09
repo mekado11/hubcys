@@ -74,6 +74,29 @@ export default function BIAWorkbench({
               className="bg-slate-900/70 border-slate-600 text-white placeholder-gray-500"
             />
           </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">
+              Annual Revenue (USD) <span className="text-cyan-400">*</span>
+            </label>
+            <Input
+              type="number"
+              value={selectedBia.annual_revenue || ""}
+              onChange={(e) => setSelectedBia((p) => ({ ...p, annual_revenue: Number(e.target.value) }))}
+              placeholder="e.g., 5000000"
+              className="bg-slate-900/70 border-slate-600 text-white placeholder-gray-500"
+            />
+            <p className="text-xs text-gray-500 mt-1">Used to scale loss calculations to your company size</p>
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Employee Count</label>
+            <Input
+              type="number"
+              value={selectedBia.employee_count || ""}
+              onChange={(e) => setSelectedBia((p) => ({ ...p, employee_count: Number(e.target.value) }))}
+              placeholder="e.g., 50"
+              className="bg-slate-900/70 border-slate-600 text-white placeholder-gray-500"
+            />
+          </div>
         </div>
       </div>
 
