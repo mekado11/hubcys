@@ -216,19 +216,26 @@ export default function BIAWorkbench({
                 ⚠ No revenue entered — using conservative defaults. Add revenue for accurate results.
               </span>
             )}
-            <Button
-              onClick={handleCalculate}
-              disabled={calculating || !canCalculate}
-              variant="outline"
-              size="sm"
-              className="border-orange-500/40 text-orange-300 hover:bg-orange-500/10"
-            >
-              {calculating ? (
-                <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Recalculating...</>
-              ) : (
-                <><Zap className="w-3 h-3 mr-1" />Recalculate</>
-              )}
-            </Button>
+            <div className="flex items-center gap-2">
+              <BIAExportPDF
+                selectedBia={selectedBia}
+                fairMetrics={fairMetrics}
+                industryBenchmarks={industryBenchmarks}
+              />
+              <Button
+                onClick={handleCalculate}
+                disabled={calculating || !canCalculate}
+                variant="outline"
+                size="sm"
+                className="border-orange-500/40 text-orange-300 hover:bg-orange-500/10"
+              >
+                {calculating ? (
+                  <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Recalculating...</>
+                ) : (
+                  <><Zap className="w-3 h-3 mr-1" />Recalculate</>
+                )}
+              </Button>
+            </div>
           </div>
 
           <FAIRMetricsDisplay fairMetrics={fairMetrics} />
