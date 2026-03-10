@@ -12,6 +12,7 @@ import BIACard from "./BIACard";
 import StreamlinedBIAWizard from "./StreamlinedBIAWizard";
 import FAIRMetricsDisplay from "./FAIRMetricsDisplay";
 import EnhancedBIASummary from "./EnhancedBIASummary";
+import BIAExportPDF from "./BIAExportPDF";
 
 const formatCurrency = (amount) => {
   if (typeof amount !== "number") return amount;
