@@ -301,23 +301,11 @@ export default function PolicyLibrary() {
                           Edit
                         </Button>
                       </Link>
-                      <Button 
-                        variant="outline" 
+                      <PolicyExportButton
+                        policy={policy}
+                        companyName={currentUser?.company_name}
                         size="sm"
-                        onClick={() => {
-                          // Export/download functionality
-                          const blob = new Blob([policy.content], { type: 'text/markdown' });
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = `${policy.title.replace(/[^a-z0-9]/gi, '_')}.md`;
-                          a.click();
-                          URL.revokeObjectURL(url);
-                        }}
-                        className="border-gray-600 text-gray-300 hover:bg-gray-700"
-                      >
-                        <Download className="w-4 h-4" />
-                      </Button>
+                      />
                     </div>
                   </div>
                 </CardContent>
