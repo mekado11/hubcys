@@ -78,7 +78,8 @@
     "vaul": "^1.1.2",
     "zod": "^3.24.2",
     "papaparse": "^5.4.1",
-    "@types/papaparse": "^5.3.14"
+    "@types/papaparse": "^5.3.14",
+    "docx": "^9.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",
