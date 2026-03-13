@@ -434,6 +434,14 @@ Generate a professional, detailed ${policyTypeName} policy that serves as a robu
                 Generate Policy Template
               </Button>
             )}
+            {policy.content && (
+              <PolicyExportButton
+                policy={policy}
+                companyName={currentUser?.company_name}
+                size="default"
+                variant="outline"
+              />
+            )}
             <Button onClick={handleSave} disabled={saving || !hasChanges} className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-600 hover:to-blue-600">
               {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
               {saving ? 'Saving...' : 'Save Policy'}
