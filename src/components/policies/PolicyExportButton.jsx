@@ -34,20 +34,7 @@ function exportToPdf(policy, companyName = "") {
     if (y + needed > pageH - marginB) {
       doc.addPage();
       y = marginT;
-      addPageFooter();
     }
-  };
-
-  const addPageFooter = () => {
-    const pageNum = doc.internal.getCurrentPageInfo().pageNumber;
-    doc.setFontSize(8);
-    doc.setTextColor(150, 150, 150);
-    doc.text(
-      `${policy.title} | ${companyName} | Version 1.0 | INTERNAL`,
-      pageW / 2, pageH - 8,
-      { align: "center" }
-    );
-    doc.text(`Page ${pageNum}`, pageW - marginR, pageH - 8, { align: "right" });
   };
 
   // ── Cover Page ──────────────────────────────────────────────────────────────
