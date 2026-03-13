@@ -73,7 +73,8 @@ function exportToPdf(policy, companyName = "") {
     ["Version", "1.0", "Status", policy.status || "Draft"],
   ];
 
-  const colW = contentW / 4;
+  // Column widths: label1=30, value1=50, label2=30, value2=60
+  const col1 = 30, col2 = 50, col3 = 30, col4 = contentW - col1 - col2 - col3;
   metaData.forEach(([k1, v1, k2, v2]) => {
     doc.setFillColor(240, 244, 255);
     doc.rect(marginL, y, contentW, 8, "F");
@@ -81,11 +82,13 @@ function exportToPdf(policy, companyName = "") {
     doc.setFontSize(9);
     doc.setTextColor(30, 58, 95);
     doc.text(k1, marginL + 3, y + 5.5);
-    doc.text(k2, marginL + colW * 2 + 3, y + 5.5);
+    doc.text(k2, marginL + col1 + col2 + 3, y + 5.5);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(50, 50, 50);
-    doc.text(v1, marginL + colW + 3, y + 5.5);
-    doc.text(v2, marginL + colW * 3 + 3, y + 5.5);
+    // Truncate value1 to fit its column
+    const v1Text = doc.splitTextToSize(v1, col2 - 4);
+    doc.text(v1Text[0], marginL + col1 + 3, y + 5.5);
+    doc.text(v2, marginL + col1 + col2 + col3 + 3, y + 5.5);
     y += 8;
   });
 
