@@ -43,6 +43,9 @@ export default function TabletopExerciseDraft() {
   const lastParticipantsLoadRef = useRef(0);
   const PARTICIPANTS_REFRESH_MIN_INTERVAL = 5000; // 5 seconds
 
+  const [companyBias, setCompanyBias] = useState([]);
+  const [showBiaImport, setShowBiaImport] = useState(false);
+
   const [exerciseData, setExerciseData] = useState({
     exercise_name: "",
     exercise_description: "",
