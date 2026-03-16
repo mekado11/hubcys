@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,7 +20,7 @@ const safeParseArray = (val, fallback = []) => {
   return fallback;
 };
 
-export default function ExerciseExecution({ exerciseData, onUpdate, onSave }) {
+export default function ExerciseExecution({ exerciseData, onUpdate, onSave, onComplete }) {
   const [isExecuting, setIsExecuting] = useState(false);
   const [injectIndex, setInjectIndex] = useState(0); // Renamed currentInjectIndex to injectIndex
   const [executionStartTime, setExecutionStartTime] = useState(null);
