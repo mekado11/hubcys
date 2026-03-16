@@ -827,7 +827,7 @@ Make the scenarios realistic, industry-specific, and challenging but not overwhe
           </div>
         );
       case 'In_Progress':
-        return <ExerciseExecution exerciseData={exerciseData} onUpdate={updateExerciseData} currentUser={currentUser} onComplete={() => handleStatusChange('Completed')} />;
+        return <ExerciseExecution exerciseData={exerciseData} onUpdate={updateExerciseData} currentUser={currentUser} onComplete={() => handleStatusChange('Completed')} onSave={async (data) => { if (onSave) await onSave(data || exerciseData); }} />;
       case 'Completed':
         return <ExerciseDebrief exerciseData={exerciseData} onUpdate={updateExerciseData} currentUser={currentUser} onSave={async () => { if (onSave) await onSave(exerciseData); }} onExportPdf={onExportPdf} />;
       case 'Archived': // Handle archived state if applicable
