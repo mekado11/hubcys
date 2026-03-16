@@ -165,6 +165,12 @@ export default function ExerciseExecution({ exerciseData, onUpdate, onSave, onCo
           </div>
         </CardHeader>
         <CardContent>
+          <div className="flex items-center justify-between">
+            {onBack && (
+              <Button onClick={onBack} variant="outline" size="sm" className="border-gray-600 text-gray-300 hover:bg-slate-700">
+                ← Back to Prepare
+              </Button>
+            )}
           <div className="flex items-center space-x-3">
             {!isExecuting && elapsedTime === 0 && (
               <Button
