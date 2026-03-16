@@ -222,7 +222,7 @@ export default function ExerciseExecution({ exerciseData, onUpdate, onSave, onCo
               <RotateCcw className="w-4 h-4 mr-2" />
               Reset
             </Button>
-          </div>
+            </div>
           </div>
         </CardContent>
       </Card>
