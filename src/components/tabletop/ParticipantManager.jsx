@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -240,7 +239,7 @@ export default function ParticipantManager({ participants = [], onChange, curren
           <div className="text-center py-8 text-gray-400">
             <Users className="w-12 h-12 mx-auto mb-3 text-gray-500" />
             <p>No participants added yet</p>
-            <p className="text-sm">Add at least one participant to continue with the exercise</p>
+            <p className="text-sm">Optionally add participants to track roles and performance</p>
           </div>
         )}
       </CardContent>
