@@ -226,8 +226,8 @@ export default function TabletopExerciseDetail({
         console.log("TabletopExerciseDetail: Status change saved successfully");
       } catch (error) {
         console.error("TabletopExerciseDetail: Error saving status change:", error);
-        setExerciseData(prev => ({ ...prev, status: currentStatus })); // Revert on save error
-        alert("Failed to save status change. Please try again.");
+        // Don't revert status - keep the new status and notify the user
+        if (onDataChange) onDataChange(updatedData);
       } finally {
         setSaving(false);
       }
