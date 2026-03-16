@@ -394,8 +394,62 @@ export default function TabletopExerciseDraft() {
     }
   };
 
+  const handleImportFromBia = (bia) => {
+    const items = bia.bia_items ? JSON.parse(bia.bia_items) : [];
+    const systemsList = items.map(i => i.inputs?.bia_process_name || i.name).filter(Boolean).join(", ");
+    const rtoRpo = items.length > 0
+      ? `\nRTO targets: ${items.map(i => i.result?.rtoHours ? `${i.inputs?.bia_process_name || 'Function'}: ${i.result.rtoHours}h` : null).filter(Boolean).join(", ")}`
+      : "";
+    setExerciseData(prev => ({
+      ...prev,
+      critical_systems_scope: [prev.critical_systems_scope, systemsList].filter(Boolean).join("\n"),
+      business_context: [prev.business_context, `Imported from BIA: ${bia.title}. Scope: ${bia.scope || "—"}.${rtoRpo}`].filter(Boolean).join("\n"),
+    }));
+    setShowBiaImport(false);
+    toast.success(`Imported critical functions from "${bia.title}"`);
+  };
+
   return (
     <div className="min-h-screen">
+      {/* BIA Import Banner */}
+      {companyBias.length > 0 && !exerciseData.id && (
+        <div className="bg-slate-800/80 border-b border-cyan-500/20 px-6 py-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-sm text-gray-300">
+            <BarChart3 className="w-4 h-4 text-cyan-400" />
+            You have {companyBias.length} BIA record{companyBias.length > 1 ? "s" : ""} — import critical functions to pre-fill this exercise.
+          </div>
+          <Button size="sm" variant="outline" className="border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/10" onClick={() => setShowBiaImport(true)}>
+            Import from BIA
+          </Button>
+        </div>
+      )}
+
+      {/* BIA Import Dialog */}
+      <Dialog open={showBiaImport} onOpenChange={setShowBiaImport}>
+        <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Import Critical Systems from BIA</DialogTitle>
+          </DialogHeader>
+          <p className="text-gray-400 text-sm mb-4">Select a BIA to import its critical functions and RTO/RPO data into this exercise.</p>
+          <div className="space-y-2 max-h-72 overflow-y-auto">
+            {companyBias.map(bia => {
+              const items = bia.bia_items ? (() => { try { return JSON.parse(bia.bia_items); } catch { return []; } })() : [];
+              return (
+                <div key={bia.id} className="flex items-center justify-between p-3 bg-slate-800/60 rounded-lg border border-slate-700 hover:border-cyan-500/40">
+                  <div>
+                    <p className="text-white font-medium text-sm">{bia.title}</p>
+                    <p className="text-gray-400 text-xs">{items.length} function(s) · {bia.scope || "No scope"}</p>
+                  </div>
+                  <Button size="sm" className="bg-cyan-600 hover:bg-cyan-700" onClick={() => handleImportFromBia(bia)}>
+                    Import
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <TabletopExerciseDetail
         initialExerciseData={exerciseData}
         onDataChange={handleDataChange}
