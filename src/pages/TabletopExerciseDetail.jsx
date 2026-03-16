@@ -197,11 +197,6 @@ export default function TabletopExerciseDetail({
     const currentStatus = exerciseData.status; // Store current status to revert on error
 
     // Validation before status change
-    if (newStatus === 'Ready_to_Execute' && getParticipantsCount() === 0) {
-      alert("Please add at least one participant before proceeding.");
-      return;
-    }
-
     if (newStatus === 'In_Progress') {
       const scenarios = safeJsonParse(exerciseData.scenarios, []);
       if (!exerciseData.exercise_name || exerciseData.exercise_name.trim() === '') {
@@ -210,10 +205,6 @@ export default function TabletopExerciseDetail({
       }
       if (scenarios.length === 0) {
         alert("Please add at least one scenario before starting the exercise.");
-        return;
-      }
-      if (getParticipantsCount() === 0) {
-        alert("Please add at least one participant before starting the exercise.");
         return;
       }
       // Add scheduled_date validation here if it's a required field for In_Progress
