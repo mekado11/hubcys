@@ -482,7 +482,7 @@ export default function ExerciseExecution({ exerciseData, onUpdate, onSave, onCo
             onUpdate('participant_decisions', participantDecisions);
             onUpdate('communication_timeline', communicationTimeline);
             onUpdate('response_effectiveness', responseEffectiveness);
-            onSave(exerciseData);
+            if (onSave) onSave(exerciseData);
           }}
           className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
         >
