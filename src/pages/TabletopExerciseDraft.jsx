@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { TabletopExercise } from "@/entities/TabletopExercise";
 import { User } from "@/entities/User";
 import { ExerciseParticipant } from "@/entities/ExerciseParticipant";
+import { BIA } from "@/entities/BIA";
 import { useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import TabletopExerciseDetail from "./TabletopExerciseDetail";
