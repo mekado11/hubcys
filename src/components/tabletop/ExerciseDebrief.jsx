@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,7 +16,7 @@ import {
 import { InvokeLLM } from '@/integrations/Core';
 import ReactMarkdown from 'react-markdown';
 
-export default function ExerciseDebrief({ exerciseData, onUpdate, onSave }) {
+export default function ExerciseDebrief({ exerciseData, onUpdate, onSave, onExportPdf }) {
   // Renamed generatingDebrief to isGeneratingDebrief as per outline
   const [isGeneratingDebrief, setIsGeneratingDebrief] = useState(false);
 

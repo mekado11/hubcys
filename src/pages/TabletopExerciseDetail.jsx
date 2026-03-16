@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 // Kept Link in case it's used internally by createPageUrl or other components, though not directly in this file's JSX header anymore.
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -839,7 +838,7 @@ Make the scenarios realistic, industry-specific, and challenging but not overwhe
       case 'In_Progress':
         return <ExerciseExecution exerciseData={exerciseData} onUpdate={updateExerciseData} currentUser={currentUser} onComplete={() => handleStatusChange('Completed')} />;
       case 'Completed':
-        return <ExerciseDebrief exerciseData={exerciseData} onUpdate={updateExerciseData} currentUser={currentUser} />;
+        return <ExerciseDebrief exerciseData={exerciseData} onUpdate={updateExerciseData} currentUser={currentUser} onSave={async () => { if (onSave) await onSave(exerciseData); }} onExportPdf={onExportPdf} />;
       case 'Archived': // Handle archived state if applicable
       default:
         return renderPlanningTab(); // Fallback to planning
