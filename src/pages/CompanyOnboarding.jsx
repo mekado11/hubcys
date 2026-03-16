@@ -353,7 +353,7 @@ export default function CompanyOnboarding() {
               Join Your Company
             </CardTitle>
             <p className="text-gray-400 mt-2">
-              Enter the access code provided by your company administrator.
+              Enter the access code provided by your company administrator. Your role will be assigned by the admin after you join.
             </p>
           </CardHeader>
           <CardContent>
