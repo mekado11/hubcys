@@ -108,10 +108,9 @@ export default function ExerciseExecution({ exerciseData, onUpdate, onSave, onCo
     onUpdate('participant_decisions', participantDecisions);
     onUpdate('communication_timeline', communicationTimeline);
     onUpdate('response_effectiveness', responseEffectiveness);
-    onUpdate('status', 'Completed');
-
-    // Save the exercise
-    await onSave(exerciseData);
+    // Save first, then trigger completion callback
+    if (onSave) await onSave(exerciseData);
+    if (onComplete) onComplete();
   };
 
   const resetExercise = () => {
