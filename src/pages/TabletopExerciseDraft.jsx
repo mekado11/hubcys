@@ -179,6 +179,12 @@ export default function TabletopExerciseDraft() {
     loadCurrentUser();
   }, [loadCurrentUser]);
 
+  useEffect(() => {
+    if (currentUser?.company_id) {
+      BIA.filter({ company_id: currentUser.company_id }, "-updated_date", 20).then(list => setCompanyBias(list || []));
+    }
+  }, [currentUser]);
+
   // Effect to load participants once exerciseId and currentUser are available
   useEffect(() => {
     if (exerciseId && currentUser) {
