@@ -816,21 +816,34 @@ Make the scenarios realistic, industry-specific, and challenging but not overwhe
                 />
               </CardContent>
             </Card>
-            <div className="flex justify-end mt-8">
+            <div className="flex justify-between items-center mt-8">
               <Button
-                onClick={() => handleStatusChange('In_Progress')}
-                disabled={
-                  saving ||
-                  !exerciseData.exercise_name ||
-                  exerciseData.exercise_name.trim() === '' ||
-                  safeJsonParse(exerciseData.scenarios, []).length === 0
-                }
-                className="bg-green-600 hover:bg-green-700"
+                onClick={() => handleStatusChange('Planning')}
+                variant="outline"
+                className="border-gray-600 text-gray-300 hover:bg-slate-700"
               >
-                <Play className="w-4 h-4 mr-2" />
-                Start Exercise
+                ← Back to Planning
               </Button>
+              <div className="flex flex-col items-end gap-1">
+                <Button
+                  onClick={() => handleStatusChange('In_Progress')}
+                  disabled={
+                    saving ||
+                    !exerciseData.exercise_name ||
+                    exerciseData.exercise_name.trim() === '' ||
+                    safeJsonParse(exerciseData.scenarios, []).length === 0
+                  }
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Start Exercise
+                </Button>
+                {safeJsonParse(exerciseData.scenarios, []).length === 0 && (
+                  <p className="text-yellow-400 text-xs">Add at least one scenario to start</p>
+                )}
+              </div>
             </div>
+            <p className="text-gray-500 text-sm text-center mt-3">Step 2 of 4 — Build scenarios with injects, then start the live exercise.</p>
           </div>
         );
       case 'In_Progress':
