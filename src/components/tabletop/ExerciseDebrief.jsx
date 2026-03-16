@@ -132,11 +132,22 @@ Remember: This is a real debrief, not a hypothetical one. Only reference what ac
     }
   };
 
-  const saveDebrief = () => {
-    // Save the entire debriefContent to the relevant exerciseData fields
+  const [exporting, setExporting] = useState(false);
+
+  const saveDebrief = async () => {
     onUpdate('lessons_learned', debriefContent);
     onUpdate('aar_document', debriefContent);
-    onSave();
+    if (onSave) await onSave();
+  };
+
+  const handleExport = async () => {
+    if (!onExportPdf) return;
+    setExporting(true);
+    try {
+      await onExportPdf();
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (

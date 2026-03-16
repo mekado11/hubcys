@@ -60,6 +60,7 @@ export default function TabletopExerciseDetail({
   initialExerciseData = {},
   onDataChange,
   onSave,
+  onExportPdf,
   currentUser,
   externalParticipantsCount = 0
 }) {
