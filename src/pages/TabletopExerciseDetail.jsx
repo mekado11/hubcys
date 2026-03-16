@@ -825,8 +825,7 @@ Make the scenarios realistic, industry-specific, and challenging but not overwhe
                   saving ||
                   !exerciseData.exercise_name ||
                   exerciseData.exercise_name.trim() === '' ||
-                  safeJsonParse(exerciseData.scenarios, []).length === 0 ||
-                  getParticipantsCount() === 0
+                  safeJsonParse(exerciseData.scenarios, []).length === 0
                 }
                 className="bg-green-600 hover:bg-green-700"
               >
