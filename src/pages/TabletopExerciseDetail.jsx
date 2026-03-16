@@ -847,9 +847,9 @@ Make the scenarios realistic, industry-specific, and challenging but not overwhe
           </div>
         );
       case 'In_Progress':
-        return <ExerciseExecution exerciseData={exerciseData} onUpdate={updateExerciseData} currentUser={currentUser} onComplete={() => handleStatusChange('Completed')} onSave={async (data) => { if (onSave) await onSave(data || exerciseData); }} />;
+        return <ExerciseExecution exerciseData={exerciseData} onUpdate={updateExerciseData} currentUser={currentUser} onComplete={() => handleStatusChange('Completed')} onSave={async (data) => { if (onSave) await onSave(data || exerciseData); }} onBack={() => handleStatusChange('Ready_to_Execute')} />;
       case 'Completed':
-        return <ExerciseDebrief exerciseData={exerciseData} onUpdate={updateExerciseData} currentUser={currentUser} onSave={async () => { if (onSave) await onSave(exerciseData); }} onExportPdf={onExportPdf} />;
+        return <ExerciseDebrief exerciseData={exerciseData} onUpdate={updateExerciseData} currentUser={currentUser} onSave={async () => { if (onSave) await onSave(exerciseData); }} onExportPdf={onExportPdf} onBack={() => handleStatusChange('In_Progress')} />;
       case 'Archived': // Handle archived state if applicable
       default:
         return renderPlanningTab(); // Fallback to planning
