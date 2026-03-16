@@ -16,7 +16,7 @@ import {
 import { InvokeLLM } from '@/integrations/Core';
 import ReactMarkdown from 'react-markdown';
 
-export default function ExerciseDebrief({ exerciseData, onUpdate, onSave, onExportPdf }) {
+export default function ExerciseDebrief({ exerciseData, onUpdate, onSave, onExportPdf, onBack }) {
   // Renamed generatingDebrief to isGeneratingDebrief as per outline
   const [isGeneratingDebrief, setIsGeneratingDebrief] = useState(false);
 
