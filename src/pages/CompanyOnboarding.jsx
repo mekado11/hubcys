@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { User } from "@/entities/User";
 import { Company } from "@/entities/Company";
@@ -200,7 +199,7 @@ export default function CompanyOnboarding() {
         <Card className="glass-effect border-slate-700/50 max-w-2xl w-full">
           <CardHeader>
             <CardTitle className="text-2xl text-cyan-300 text-center">
-              Welcome to Fortigap!
+              Welcome to Hubcys!
             </CardTitle>
             <p className="text-gray-400 text-center mt-2">
               To get started, please choose how you'd like to proceed:
