@@ -191,7 +191,7 @@ export default function BIAWorkbench({
       {/* ── Step 4: Calculate ── */}
       <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-5">
         <p className="text-xs uppercase tracking-widest text-cyan-400 font-semibold mb-4 flex items-center gap-2">
-          <span className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs font-bold">3</span>
+          <span className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs font-bold">4</span>
           Run Analysis
         </p>
 

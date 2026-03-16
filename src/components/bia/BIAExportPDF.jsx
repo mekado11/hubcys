@@ -371,6 +371,39 @@ export default function BIAExportPDF({ selectedBia, fairMetrics, industryBenchma
         }
       });
 
+      // ── RECOVERY PLAN PAGE ─────────────────────────────────────────────────
+      if (selectedBia.recovery_plan || selectedBia.recovery_owner) {
+        doc.addPage();
+        doc.setFillColor(248, 250, 252);
+        doc.rect(0, 0, 210, 297, "F");
+        doc.setFillColor(15, 23, 42);
+        doc.rect(0, 0, 210, 14, "F");
+        doc.setTextColor(14, 165, 233);
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "bold");
+        doc.text("HUBCYS  |  BIA FAIR RISK REPORT  |  CONFIDENTIAL", margin, 9);
+        doc.setTextColor(150, 160, 180);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Page ${doc.internal.getCurrentPageInfo().pageNumber}`, pageW - margin - 20, 9);
+
+        y = 24;
+        y = drawSectionHeader(doc, "DISASTER RECOVERY / BUSINESS CONTINUITY PLAN", y, [15, 23, 42]);
+        if (selectedBia.recovery_owner) {
+          y = drawKV(doc, "Recovery Owner", selectedBia.recovery_owner, margin, y, 60);
+        }
+        if (selectedBia.recovery_contact) {
+          y = drawKV(doc, "Emergency Contact", selectedBia.recovery_contact, margin, y, 60);
+        }
+        y += 4;
+        if (selectedBia.recovery_plan) {
+          y = drawSectionHeader(doc, "RECOVERY STEPS & PROCEDURES", y, [30, 41, 59]);
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(30, 40, 60);
+          y = wrapText(doc, selectedBia.recovery_plan, margin, y, contentW, 5.5);
+        }
+      }
+
       // ── FINAL PAGE: RECOMMENDATIONS ────────────────────────────────────────
       doc.addPage();
       doc.setFillColor(248, 250, 252);
