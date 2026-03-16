@@ -219,6 +219,19 @@ export default function TabletopExerciseDraft() {
           }
         });
         exerciseToSave.scenarios = JSON.stringify(exerciseToSave.scenarios);
+      } else if (typeof exerciseToSave.scenarios === 'string') {
+        // Already stringified - parse injects within each scenario if needed
+        try {
+          const parsed = JSON.parse(exerciseToSave.scenarios);
+          if (Array.isArray(parsed)) {
+            parsed.forEach(scenario => {
+              if (Array.isArray(scenario.injects)) {
+                scenario.injects = JSON.stringify(scenario.injects);
+              }
+            });
+            exerciseToSave.scenarios = JSON.stringify(parsed);
+          }
+        } catch (e) { /* leave as-is */ }
       }
 
       // Removed old logic for stringifying exerciseToSave.participants
