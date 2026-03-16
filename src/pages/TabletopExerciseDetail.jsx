@@ -873,6 +873,16 @@ Make the scenarios realistic, industry-specific, and challenging but not overwhe
               <Badge className={getStatusColor(exerciseData.status)}>
                 {exerciseData.status?.replace(/_/g, ' ') || 'Planning'}
               </Badge>
+              {exerciseData.status === 'Completed' && onExportPdf && (
+                <Button
+                  onClick={onExportPdf}
+                  variant="outline"
+                  className="border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/10"
+                >
+                  <BarChart2 className="w-4 h-4 mr-2" />
+                  Export PDF
+                </Button>
+              )}
               <Button
                 onClick={handleSave}
                 disabled={saving}

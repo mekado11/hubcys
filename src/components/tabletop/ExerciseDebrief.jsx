@@ -225,9 +225,11 @@ Remember: This is a real debrief, not a hypothetical one. Only reference what ac
           <Button
             variant="outline"
             className="border-cyan-500 text-cyan-300"
+            onClick={handleExport}
+            disabled={exporting || !onExportPdf}
           >
-            <Download className="w-4 h-4 mr-2" />
-            Export Report
+            {exporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+            Export PDF Report
           </Button>
         </div>
       </div>
