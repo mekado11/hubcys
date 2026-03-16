@@ -223,6 +223,7 @@ export default function ExerciseExecution({ exerciseData, onUpdate, onSave, onCo
               Reset
             </Button>
           </div>
+          </div>
         </CardContent>
       </Card>
 
