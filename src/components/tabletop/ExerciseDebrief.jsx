@@ -213,7 +213,13 @@ Remember: This is a real debrief, not a hypothetical one. Only reference what ac
 
       {/* Action Buttons */}
       <div className="flex justify-between">
-        <div></div> {/* Empty div to push buttons to the right */}
+        <div>
+          {onBack && (
+            <Button onClick={onBack} variant="outline" className="border-gray-600 text-gray-300 hover:bg-slate-700">
+              ← Back to Execute
+            </Button>
+          )}
+        </div>
         <div className="flex space-x-4">
           <Button
             onClick={saveDebrief}
