@@ -150,7 +150,45 @@ export default function BIAWorkbench({
         )}
       </div>
 
-      {/* ── Step 3: Calculate ── */}
+      {/* ── Step 3: Recovery Plan ── */}
+      <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-5">
+        <p className="text-xs uppercase tracking-widest text-cyan-400 font-semibold mb-3 flex items-center gap-2">
+          <span className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs font-bold">3</span>
+          Recovery Plan
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Recovery Owner</label>
+            <input
+              value={selectedBia.recovery_owner || ""}
+              onChange={(e) => setSelectedBia((p) => ({ ...p, recovery_owner: e.target.value }))}
+              placeholder="e.g., CISO, IT Director"
+              className="w-full bg-slate-900/70 border border-slate-600 text-white placeholder-gray-500 rounded-md px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Emergency Contact</label>
+            <input
+              value={selectedBia.recovery_contact || ""}
+              onChange={(e) => setSelectedBia((p) => ({ ...p, recovery_contact: e.target.value }))}
+              placeholder="e.g., security@company.com / +1-xxx-xxx"
+              className="w-full bg-slate-900/70 border border-slate-600 text-white placeholder-gray-500 rounded-md px-3 py-2 text-sm"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-xs text-gray-400 mb-1">Recovery Steps & Procedures</label>
+          <textarea
+            value={selectedBia.recovery_plan || ""}
+            onChange={(e) => setSelectedBia((p) => ({ ...p, recovery_plan: e.target.value }))}
+            placeholder="Document step-by-step recovery procedures, system restoration order, key contacts, and escalation paths..."
+            rows={5}
+            className="w-full bg-slate-900/70 border border-slate-600 text-white placeholder-gray-500 rounded-md px-3 py-2 text-sm resize-none"
+          />
+        </div>
+      </div>
+
+      {/* ── Step 4: Calculate ── */}
       <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-5">
         <p className="text-xs uppercase tracking-widest text-cyan-400 font-semibold mb-4 flex items-center gap-2">
           <span className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs font-bold">3</span>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { TabletopExercise } from "@/entities/TabletopExercise";
 import { User } from "@/entities/User";
@@ -364,12 +363,34 @@ export default function TabletopExerciseDraft() {
   }
 
   // Render exercise detail and participant section if everything loaded successfully
+  const handleExportPdf = async () => {
+    const id = exerciseData.id || exerciseId;
+    if (!id) { toast.error("Please save the exercise first before exporting."); return; }
+    try {
+      const { generateTabletopReportPdf } = await import("@/functions/generateTabletopReportPdf");
+      const { data } = await generateTabletopReportPdf({ exerciseId: id });
+      const blob = new Blob([data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${exerciseData.exercise_name?.replace(/\s+/g, '_') || 'Tabletop_Exercise'}_Report.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Failed to generate PDF report");
+    }
+  };
+
   return (
     <div className="min-h-screen">
       <TabletopExerciseDetail
         initialExerciseData={exerciseData}
         onDataChange={handleDataChange}
         onSave={handleSave}
+        onExportPdf={handleExportPdf}
         currentUser={currentUser}
         externalParticipantsCount={participants.length}
       />
