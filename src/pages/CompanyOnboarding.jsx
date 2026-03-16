@@ -244,7 +244,7 @@ export default function CompanyOnboarding() {
               Create Your Company
             </CardTitle>
             <p className="text-gray-400 mt-2">
-              Set up your organization's Fortigap account. You will be the administrator.
+              Set up your organization's Hubcys account. You will be the administrator.
             </p>
           </CardHeader>
           <CardContent>
