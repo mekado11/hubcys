@@ -108,14 +108,20 @@ export default function TabletopExerciseDetail({
     setParsedParticipants(safeJsonParse(exerciseData.participants, []));
   }, [exerciseData.participants]);
 
-  // Sync with parent component data changes
+  // Sync with parent component data changes (but never revert status)
   useEffect(() => {
     if (initialExerciseData && Object.keys(initialExerciseData).length > 0) {
       console.log("TabletopExerciseDetail: Syncing with parent data:", initialExerciseData.exercise_name);
       setExerciseData(prevData => {
-        // Only update if there are meaningful changes to prevent infinite loops or unnecessary re-renders
-        if (JSON.stringify(prevData) !== JSON.stringify(initialExerciseData)) {
-          return { ...initialExerciseData };
+        // Preserve current status if it's further along than parent's status
+        const statusOrder = ['Planning', 'Ready_to_Execute', 'In_Progress', 'Completed', 'Archived'];
+        const prevIndex = statusOrder.indexOf(prevData.status);
+        const incomingIndex = statusOrder.indexOf(initialExerciseData.status);
+        const preservedStatus = prevIndex > incomingIndex ? prevData.status : initialExerciseData.status;
+        
+        const merged = { ...initialExerciseData, status: preservedStatus };
+        if (JSON.stringify(prevData) !== JSON.stringify(merged)) {
+          return merged;
         }
         return prevData;
       });
