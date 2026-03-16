@@ -517,6 +517,7 @@ Make the scenarios realistic, industry-specific, and challenging but not overwhe
               Next: Prepare Exercise
             </Button>
           </div>
+          <p className="text-gray-500 text-sm text-center mt-3">Step 1 of 4 — Fill in the exercise details, then proceed to build scenarios.</p>
         </CardContent>
       </Card>
     </div>
