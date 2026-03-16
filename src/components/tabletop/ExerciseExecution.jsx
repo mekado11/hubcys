@@ -20,7 +20,7 @@ const safeParseArray = (val, fallback = []) => {
   return fallback;
 };
 
-export default function ExerciseExecution({ exerciseData, onUpdate, onSave, onComplete }) {
+export default function ExerciseExecution({ exerciseData, onUpdate, onSave, onComplete, onBack }) {
   const [isExecuting, setIsExecuting] = useState(false);
   const [injectIndex, setInjectIndex] = useState(0); // Renamed currentInjectIndex to injectIndex
   const [executionStartTime, setExecutionStartTime] = useState(null);
