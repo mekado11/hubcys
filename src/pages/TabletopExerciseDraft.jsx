@@ -6,7 +6,7 @@ import { BIA } from "@/entities/BIA";
 import { useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import TabletopExerciseDetail from "./TabletopExerciseDetail";
-import { AlertTriangle, Loader2, Users, Plus, Trash2 } from 'lucide-react';
+import { AlertTriangle, Loader2, Users, Plus, Trash2, BarChart3 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
