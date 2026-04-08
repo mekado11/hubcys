@@ -66,6 +66,7 @@ import HTMLReport from './pages/HTMLReport';
 import IOCAnalyzer from './pages/IOCAnalyzer';
 import IncidentDetail from './pages/IncidentDetail';
 import LandingPage from './pages/LandingPage';
+import Login from './pages/Login';
 import PCIScopingGuide from './pages/PCIScopingGuide';
 import PendingApproval from './pages/PendingApproval';
 import PolicyCenter from './pages/PolicyCenter';
@@ -117,6 +118,7 @@ export const PAGES = {
     "IOCAnalyzer": IOCAnalyzer,
     "IncidentDetail": IncidentDetail,
     "LandingPage": LandingPage,
+    "Login": Login,
     "PCIScopingGuide": PCIScopingGuide,
     "PendingApproval": PendingApproval,
     "PolicyCenter": PolicyCenter,
