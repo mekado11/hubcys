@@ -13,6 +13,12 @@ export const AuthProvider = ({ children }) => {
   const [authError, setAuthError]                         = useState(null);
 
   useEffect(() => {
+    if (!auth) {
+      // Firebase not configured — render app unauthenticated immediately
+      setIsLoadingAuth(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
@@ -39,8 +45,10 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const logout = async (shouldRedirect = true) => {
-    const { signOut } = await import('firebase/auth');
-    await signOut(auth);
+    if (auth) {
+      const { signOut } = await import('firebase/auth');
+      await signOut(auth);
+    }
     setUser(null);
     setIsAuthenticated(false);
     if (shouldRedirect) window.location.href = '/';

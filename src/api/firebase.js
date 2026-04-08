@@ -23,10 +23,14 @@ const firebaseConfig = {
   appId:             import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// Guard against double-init in HMR
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+const isConfigured = !!firebaseConfig.apiKey;
 
-export const auth    = getAuth(app);
-export const db      = getFirestore(app);
-export const storage = getStorage(app);
+if (!isConfigured) {
+  console.warn('[firebase] VITE_FIREBASE_API_KEY not set — Firebase disabled. Auth and database features will not work.');
+}
+
+const app     = isConfigured ? (getApps().length ? getApps()[0] : initializeApp(firebaseConfig)) : null;
+export const auth    = isConfigured ? getAuth(app)      : null;
+export const db      = isConfigured ? getFirestore(app) : null;
+export const storage = isConfigured ? getStorage(app)   : null;
 export default app;
