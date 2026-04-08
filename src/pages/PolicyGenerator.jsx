@@ -3,7 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Policy } from '@/entities/Policy';
 import { Assessment } from '@/entities/Assessment';
 import { User } from '@/entities/User';
-import { base44 } from '@/api/base44Client';
+import { InvokeLLM } from '@/integrations/Core';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -450,7 +450,7 @@ This policy must pass a SOC 2 Type II or ISO 27001 audit on first review. Every 
 
 Generate an enterprise-grade lite policy that is audit-ready, enforceable, and complete - not bloated, but comprehensive.`;
 
-      const response = await base44.integrations.Core.InvokeLLM({
+      const response = await InvokeLLM({
         prompt: prompt,
         response_json_schema: {
           type: "object",

@@ -1,2 +1,7 @@
-import { base44 } from '@/api/base44Client';
-export const suggestIncidentClassification = (...args) => base44.functions.invoke('suggestIncidentClassification', ...args);
+/**
+ * suggestIncidentClassification — Cloud Function stub.
+ * Replace this with a real Firebase Cloud Function call or Vercel API route.
+ */
+export const suggestIncidentClassification = async (params) => {
+  throw new Error(`suggestIncidentClassification is not yet implemented. Wire up a backend function or API route.`);
+};

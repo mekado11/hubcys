@@ -1,2 +1,7 @@
-import { base44 } from '@/api/base44Client';
-export const runBackendHealthcheck = (...args) => base44.functions.invoke('runBackendHealthcheck', ...args);
+/**
+ * runBackendHealthcheck — Cloud Function stub.
+ * Replace this with a real Firebase Cloud Function call or Vercel API route.
+ */
+export const runBackendHealthcheck = async (params) => {
+  throw new Error(`runBackendHealthcheck is not yet implemented. Wire up a backend function or API route.`);
+};

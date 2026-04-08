@@ -35,7 +35,8 @@ import {
   FileText, // NEW
   MessageSquare // NEW
 } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { UploadFile } from '@/integrations/Core';
+import { analyzePhishingScreenshot } from '@/functions/analyzePhishingScreenshot';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -205,7 +206,7 @@ export default function PhishingScreenshotAnalyzer() {
       const uploadPromises = selectedFiles.map(async (file, index) => {
         try {
           console.log(`Uploading file ${index + 1}:`, file.name);
-          const result = await base44.integrations.Core.UploadFile({ file });
+          const result = await UploadFile({ file });
           console.log(`File ${index + 1} uploaded successfully:`, result.file_url);
           return result;
         } catch (uploadError) {
@@ -229,7 +230,7 @@ export default function PhishingScreenshotAnalyzer() {
           file_hashes: fileHashes.trim() ? fileHashes.split(/[\s,]+/).filter(hash => hash) : undefined,
         };
         
-        const response = await base44.functions.invoke('analyzePhishingScreenshot', payload);
+        const response = await analyzePhishingScreenshot(payload);
 
         console.log('Analysis response received:', response);
 

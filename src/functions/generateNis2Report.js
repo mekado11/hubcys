@@ -1,2 +1,7 @@
-import { base44 } from '@/api/base44Client';
-export const generateNis2Report = (...args) => base44.functions.invoke('generateNis2Report', ...args);
+/**
+ * generateNis2Report — Cloud Function stub.
+ * Replace this with a real Firebase Cloud Function call or Vercel API route.
+ */
+export const generateNis2Report = async (params) => {
+  throw new Error(`generateNis2Report is not yet implemented. Wire up a backend function or API route.`);
+};

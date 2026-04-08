@@ -1,2 +1,7 @@
-import { base44 } from '@/api/base44Client';
-export const analyzeIocs = (...args) => base44.functions.invoke('analyzeIocs', ...args);
+/**
+ * analyzeIocs — Cloud Function stub.
+ * Replace this with a real Firebase Cloud Function call or Vercel API route.
+ */
+export const analyzeIocs = async (params) => {
+  throw new Error(`analyzeIocs is not yet implemented. Wire up a backend function or API route.`);
+};

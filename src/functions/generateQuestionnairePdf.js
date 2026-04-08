@@ -1,2 +1,7 @@
-import { base44 } from '@/api/base44Client';
-export const generateQuestionnairePdf = (...args) => base44.functions.invoke('generateQuestionnairePdf', ...args);
+/**
+ * generateQuestionnairePdf — Cloud Function stub.
+ * Replace this with a real Firebase Cloud Function call or Vercel API route.
+ */
+export const generateQuestionnairePdf = async (params) => {
+  throw new Error(`generateQuestionnairePdf is not yet implemented. Wire up a backend function or API route.`);
+};

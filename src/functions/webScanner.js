@@ -1,2 +1,7 @@
-import { base44 } from '@/api/base44Client';
-export const webScanner = (...args) => base44.functions.invoke('webScanner', ...args);
+/**
+ * webScanner — Cloud Function stub.
+ * Replace this with a real Firebase Cloud Function call or Vercel API route.
+ */
+export const webScanner = async (params) => {
+  throw new Error(`webScanner is not yet implemented. Wire up a backend function or API route.`);
+};

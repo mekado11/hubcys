@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, AlertTriangle, ExternalLink } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { fetchNcscKev } from '@/functions/fetchNcscKev';
 
 export default function NcscAdvisoryFeed() {
   const [advisories, setAdvisories] = useState([]);
@@ -14,7 +14,7 @@ export default function NcscAdvisoryFeed() {
       setLoading(true);
       setError(null);
       try {
-        const response = await base44.functions.invoke('fetchNcscKev');
+        const response = await fetchNcscKev();
         if (response && response.data && Array.isArray(response.data)) {
           setAdvisories(response.data);
         } else {
