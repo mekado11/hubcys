@@ -623,131 +623,6 @@ export default function Layout({ children, currentPageName }) {
           isLoading={isUpdatingDisclaimer}
         />
       )}
-       <style>{`
-        html, body {
-          background-color: #0F172A;
-        }
-        :root {
-          --cyber-blue: #0EA5E9;
-          --cyber-purple: #7C3AED;
-          --cyber-green: #10B981;
-          --neon-glow: 0 0 20px rgba(14, 165, 233, 0.3);
-          --gradient-bg: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
-        }
-
-        .cyber-glow {
-          box-shadow: var(--neon-glow);
-          animation: pulse-glow 3s ease-in-out infinite alternate;
-        }
-
-        .cyber-glow-sm {
-          box-shadow: 0 0 10px rgba(14, 165, 233, 0.2);
-        }
-
-        .cyber-gradient {
-          background: var(--gradient-bg);
-          animation: gradient-shift 15s ease infinite;
-        }
-
-        @keyframes gradient-shift {
-          0% { background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); }
-          50% { background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%); }
-          100% { background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); }
-        }
-
-        @keyframes pulse-glow {
-          from {
-            box-shadow: 0 0 20px rgba(14, 165, 233, 0.3);
-            transform: scale(1);
-          }
-          to {
-            box-shadow: 0 0 30px rgba(14, 165, 233, 0.6);
-            transform: scale(1.02);
-          }
-        }
-
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          33% { transform: translateY(-10px) rotate(1deg); }
-          66% { transform: translateY(5px) rotate(-1deg); }
-        }
-
-        .glass-effect {
-          backdrop-filter: blur(16px) saturate(180%);
-          -webkit-backdrop-filter: blur(16px) saturate(180%);
-          background: rgba(15, 23, 42, 0.8);
-          border-right: 1px solid rgba(14, 165, 233, 0.2);
-        }
-
-        .glass-effect:hover {
-          background: rgba(15, 23, 42, 0.9);
-        }
-
-        .cyber-text-glow {
-          text-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
-          animation: text-pulse 2s ease-in-out infinite alternate;
-        }
-
-        @keyframes text-pulse {
-          from { text-shadow: 0 0 10px rgba(14, 165, 233, 0.5); }
-          to { text-shadow: 0 0 20px rgba(14, 165, 233, 0.8); }
-        }
-
-        .card-entrance {
-          animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-          opacity: 0;
-          transform: translateY(20px);
-        }
-
-        @keyframes slideUp {
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .stagger-1 { animation-delay: 0.1s; }
-        .stagger-2 { animation-delay: 0.2s; }
-        .stagger-3 { animation-delay: 0.3s; }
-        .stagger-4 { animation-delay: 0.4s; }
-        .stagger-5 { animation-delay: 0.5s; }
-        .stagger-6 { animation-delay: 0.6s; }
-        .stagger-7 { animation-delay: 0.7s; }
-
-        .cyber-gradient label,
-        .glass-effect label {
-          color: #cbd5e1 !important;
-        }
-        .cyber-gradient input,
-        .cyber-gradient select,
-        .cyber-gradient textarea {
-          color: #e5e7eb;
-        }
-        .cyber-gradient input::placeholder,
-        .cyber-gradient textarea::placeholder {
-          color: #94a3b8;
-          opacity: 1;
-        }
-        .cyber-gradient input:disabled,
-        .cyber-gradient textarea:disabled,
-        .cyber-gradient select:disabled {
-          color: #94a3b8;
-          background-color: rgba(148, 163, 184, 0.08);
-        }
-
-        .prose, .prose :where(p, li, strong, em, code, th, td, h1, h2, h3, h4, h5, h6) {
-          color: #e5e7eb !important;
-        }
-        .prose pre, .prose code {
-          background-color: #0b1220 !important;
-          color: #cbd5e1 !important;
-        }
-        .prose a { color: #93c5fd !important; }
-        .prose hr { border-color: rgba(148,163,184,.25) !important; }
-
-        .bia-markdown, .bia-markdown * { color: #e5e7eb !important; }
-        .bia-markdown pre { background-color: #0b1220 !important; }
-      `}</style>
 
       {currentUser && (
         <Dialog open={showSessionWarning} onOpenChange={(open) => { 
@@ -793,10 +668,7 @@ export default function Layout({ children, currentPageName }) {
       )}
 
       {showSidebar && (
-        <nav className="fixed left-0 top-0 h-full w-64 glass-effect flex-col p-4 z-50 overflow-y-auto lg:flex"
-          style={{ display: sidebarOpen ? 'flex' : undefined }}
-          className={`fixed left-0 top-0 h-full w-64 glass-effect flex-col p-4 z-50 overflow-y-auto transition-transform duration-300 ${sidebarOpen ? 'translate-x-0 flex' : '-translate-x-full lg:translate-x-0 lg:flex'}`}
-        >
+        <nav className={`fixed left-0 top-0 h-full w-64 glass-effect flex-col p-4 z-50 overflow-y-auto transition-transform duration-300 ${sidebarOpen ? 'translate-x-0 flex' : '-translate-x-full lg:translate-x-0 lg:flex'}`}>
           <button
             onClick={closeSidebar}
             className="lg:hidden absolute top-4 right-4 text-gray-400 hover:text-white"
@@ -1096,27 +968,6 @@ export default function Layout({ children, currentPageName }) {
       {currentUser && (
         <NathanChat />
       )}
-
-      <style>{`
-        /* Global dropdown/content contrast on dark pages */
-        [role="listbox"] {
-          background-color: #0b1220 !important;
-          color: #e5e7eb !important;
-          border: 1px solid rgba(148,163,184,.25);
-        }
-        [role="option"] {
-          color: #e5e7eb !important;
-        }
-        [role="option"][data-highlighted],
-        [role="option"][data-state="checked"] {
-          background-color: #1f2937 !important;
-          color: #ffffff !important;
-        }
-        /* Select content wrapper (Radix) */
-        [data-radix-popper-content-wrapper] {
-          z-index: 60;
-        }
-      `}</style>
     </div>
   );
 }
