@@ -20,7 +20,8 @@ const _userEntity = createEntity('users');
 const SUPER_ADMIN_EMAIL = import.meta.env.VITE_SUPER_ADMIN_EMAIL?.toLowerCase().trim();
 
 function isSuperAdminEmail(email) {
-  return !!SUPER_ADMIN_EMAIL && email?.toLowerCase().trim() === SUPER_ADMIN_EMAIL;
+  if (!SUPER_ADMIN_EMAIL || !email) return false;
+  return email.toLowerCase().trim() === SUPER_ADMIN_EMAIL;
 }
 
 const SUPER_ADMIN_DEFAULTS = {
@@ -39,7 +40,9 @@ async function fetchMe() {
 
   const userRef = doc(db, 'users', firebaseUser.uid);
   const snap = await getDoc(userRef);
-  const superAdmin = isSuperAdminEmail(firebaseUser.email);
+
+  // Super admin: email must be verified (prevents account takeover via unverified email registration)
+  const superAdmin = isSuperAdminEmail(firebaseUser.email) && firebaseUser.emailVerified !== false;
 
   if (!snap.exists()) {
     // First login — bootstrap the user document

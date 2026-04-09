@@ -16,7 +16,7 @@
  *
  * Omit `feature` and the gateway auto-detects lane from prompt content.
  */
-import { storage } from '@/api/firebase';
+import { auth, storage } from '@/api/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 /** Upload a file to Firebase Storage, return { file_url } */
@@ -49,9 +49,18 @@ export const InvokeLLM = async ({
 } = {}) => {
   if (!prompt) throw new Error('InvokeLLM: prompt is required');
 
+  // Attach Firebase ID token so the server can verify the caller is authenticated
+  let idToken = '';
+  try {
+    if (auth?.currentUser) idToken = await auth.currentUser.getIdToken();
+  } catch (_) { /* no-op — unauthenticated users get 401 from server */ }
+
   const res = await fetch('/api/ai', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+    },
     body: JSON.stringify({ prompt, feature, model, response_json_schema }),
   });
 

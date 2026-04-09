@@ -218,10 +218,40 @@ function logUsage({ feature, model, inputTokens, outTokens, latencyMs, cacheHit,
   }));
 }
 
+// ─── CORS helper ─────────────────────────────────────────────────────────────
+function setCorsHeaders(req, res) {
+  const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'https://hubcys.com,https://www.hubcys.com').split(',').map(o => o.trim());
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Vary', 'Origin');
+}
+
+// ─── Simple token check ───────────────────────────────────────────────────────
+// Verifies the client passes a non-empty Bearer token.
+// Full Firebase token verification requires the Firebase Admin SDK;
+// add that when you wire up server-side Firebase Admin.
+function isAuthenticated(req) {
+  const auth = req.headers.authorization || '';
+  return auth.startsWith('Bearer ') && auth.length > 10;
+}
+
 // ─── Handler ──────────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
+  setCorsHeaders(req, res);
+
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Require a Firebase ID token from the client
+  if (!isAuthenticated(req)) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   const {
@@ -290,6 +320,6 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error('[ai-gateway]', err.message);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: 'AI request failed. Please try again later.' });
   }
 }
