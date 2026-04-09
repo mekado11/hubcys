@@ -130,6 +130,7 @@ export const PUBLIC_PAGES = [
   'Login',
   'Pricing',
   'PricingAndFeatures',
+  'EducationalResources',
   'CompanyOnboarding',
   'PendingApproval',
   'AccessDenied',

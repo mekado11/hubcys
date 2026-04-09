@@ -44,9 +44,8 @@ export default function PendingApproval() {
         console.warn('Error clearing storage:', storageError);
       }
 
-      // Step 2: Clear any Base44-specific storage or cookies
+      // Step 2: Clear cookies
       try {
-        // Clear any potential Base44 tokens or auth data
         const allCookies = document.cookie.split(';');
         allCookies.forEach(cookie => {
           const eqPos = cookie.indexOf('=');

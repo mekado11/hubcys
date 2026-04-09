@@ -53,7 +53,6 @@ import AdminFeatureRequests from './pages/AdminFeatureRequests';
 import AdminThreats from './pages/AdminThreats';
 import Assessment from './pages/Assessment';
 import BIA from './pages/BIA';
-import BoardRiskDashboard from './pages/BoardRiskDashboard';
 import CompanyManagement from './pages/CompanyManagement';
 import CompanyOnboarding from './pages/CompanyOnboarding';
 import Dashboard from './pages/Dashboard';
@@ -105,7 +104,6 @@ export const PAGES = {
     "AdminThreats": AdminThreats,
     "Assessment": Assessment,
     "BIA": BIA,
-    "BoardRiskDashboard": BoardRiskDashboard,
     "CompanyManagement": CompanyManagement,
     "CompanyOnboarding": CompanyOnboarding,
     "Dashboard": Dashboard,

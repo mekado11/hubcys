@@ -478,7 +478,6 @@ export default function Layout({ children, currentPageName }) {
 
   const navItems = [
     { href: "Dashboard", icon: BarChart3, label: "Dashboard" },
-    { href: "BoardRiskDashboard", icon: TrendingUp, label: "Board" },
     { href: "Assessment", icon: Target, label: "Assessment" },
     { href: "BIA", icon: BarChart3, label: "BIA" },
     { href: "ResponseReadiness", icon: Shield, label: "Command Center" },
@@ -504,8 +503,7 @@ export default function Layout({ children, currentPageName }) {
       label: "Overview",
       defaultOpen: true,
       items: [
-        { href: "Dashboard", icon: BarChart3, label: "Dashboard" },
-        { href: "BoardRiskDashboard", icon: TrendingUp, label: "Board Risk Dashboard" }
+        { href: "Dashboard", icon: BarChart3, label: "Dashboard" }
       ]
     },
     {
