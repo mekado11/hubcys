@@ -127,6 +127,7 @@ export const getUpgradeMessage = (currentTier, requiredTier, featureName) => {
 // Public pages that don't require authentication or subscription
 export const PUBLIC_PAGES = [
   'LandingPage',
+  'Login',
   'Pricing',
   'PricingAndFeatures',
   'CompanyOnboarding',
