@@ -94,6 +94,15 @@ async function fetchMe() {
     return { id: firebaseUser.uid, ...data, ...patch };
   }
 
+  // Backfill company_id for any user who completed onboarding or has is_super_admin
+  // but somehow ended up without a company_id (e.g. bootstrapped before this fix,
+  // or VITE_SUPER_ADMIN_EMAIL env var was not set when the account was created).
+  if (!data.company_id && (data.is_super_admin || data.company_onboarding_completed)) {
+    const fallbackCompanyId = firebaseUser.uid;
+    await updateDoc(userRef, { company_id: fallbackCompanyId, updated_date: serverTimestamp() });
+    return { id: firebaseUser.uid, ...data, company_id: fallbackCompanyId };
+  }
+
   return { id: firebaseUser.uid, ...data };
 }
 
@@ -127,6 +136,7 @@ export const User = {
       ? {
           email,
           full_name: fullName || email,
+          company_id: cred.user.uid,
           ...SUPER_ADMIN_DEFAULTS,
           created_date: serverTimestamp(),
           updated_date: serverTimestamp(),
