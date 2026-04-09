@@ -145,24 +145,42 @@ export default function AssessmentPage() {
   const loadFrameworks = async (user) => {
     try {
       setLoadingFrameworks(true);
-      let data = await ComplianceFramework.filter({ company_id: user.company_id }, "-updated_date", 100);
+      let data = [];
 
-      // Backfill: frameworks created before company_id was set have no company_id field
-      // and are invisible to the scoped query. Fetch all and fix them.
+      // Primary: company-scoped equality query (no orderBy → no composite index needed)
+      try {
+        data = await ComplianceFramework.filter({ company_id: user.company_id }, "-updated_date", 100);
+      } catch (e) {
+        // Firestore may reject the query if security rules or indexes are not yet
+        // deployed — fall through to the list() fallback below.
+        console.warn('[loadFrameworks] scoped filter failed, using list fallback:', e?.code, e?.message);
+      }
+
+      // Fallback: list all + filter client-side.
+      // Handles: (a) orphaned frameworks without company_id, (b) index/rules errors above.
       if (data.length === 0 && user.company_id) {
         try {
           const all = await ComplianceFramework.list("-created_date", 200);
-          const orphaned = all.filter(f => !f.company_id);
+          // Include frameworks that match OR have no company_id (orphaned before the fix)
+          const candidates = all.filter(f => !f.company_id || f.company_id === user.company_id);
+
+          // Backfill orphaned documents so future scoped queries find them
+          const orphaned = candidates.filter(f => !f.company_id);
           if (orphaned.length > 0) {
             await Promise.all(
               orphaned.map(f => ComplianceFramework.update(f.id, { company_id: user.company_id }))
             );
-            data = orphaned.map(f => ({ ...f, company_id: user.company_id }));
+            data = candidates.map(f => ({ ...f, company_id: f.company_id || user.company_id }));
+          } else {
+            data = candidates;
           }
-        } catch (_) { /* ignore — fallback query may fail in strict rules environments */ }
+        } catch (_) { /* list also failed — show empty, don't crash */ }
       }
 
       setManagedFrameworks(data || []);
+    } catch (_) {
+      // Never let loadFrameworks crash the entire assessment page load
+      setManagedFrameworks([]);
     } finally {
       setLoadingFrameworks(false);
     }
