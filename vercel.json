@@ -1,4 +1,10 @@
 {
+  "crons": [
+    {
+      "path": "/api/check-nist-updates",
+      "schedule": "0 9 1 1,4,7,10 *"
+    }
+  ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)",     "destination": "/index.html" }
