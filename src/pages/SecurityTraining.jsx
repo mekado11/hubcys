@@ -1657,14 +1657,21 @@ export default function SecurityTraining() {
     if (!user || !module || !user.company_id || !user.email) return;
 
     try {
+      // Fetch both badge checks in parallel
+      const masteryKey = `module_mastery_${module.id}`;
+      const championKey = 'security_champion';
+      const progressRows = Object.values(userProgress || {});
+      const championCount = progressRows.filter(p => p?.completed && (p?.quiz_score || 0) >= 80).length;
+
+      const [existingMastery, existingChampion] = await Promise.all([
+        score >= 90 ? TrainingBadge.filter({ company_id: user.company_id, user_email: user.email, badge_key: masteryKey }, undefined, 1) : Promise.resolve([{ id: 'skip' }]),
+        championCount >= 4 ? TrainingBadge.filter({ company_id: user.company_id, user_email: user.email, badge_key: championKey }, undefined, 1) : Promise.resolve([{ id: 'skip' }]),
+      ]);
+
       // 1) Module Mastery: score >= 90 on a module
       if (score >= 90) {
-        const badgeKey = `module_mastery_${module.id}`;
-        const existing = await TrainingBadge.filter({
-          company_id: user.company_id,
-          user_email: user.email,
-          badge_key: badgeKey
-        }, undefined, 1);
+        const badgeKey = masteryKey;
+        const existing = existingMastery;
         if (existing.length === 0) {
           await TrainingBadge.create({
             company_id: user.company_id,
@@ -1679,26 +1686,16 @@ export default function SecurityTraining() {
         }
       }
 
-      // 2) Security Champion: 4+ modules completed with score >= 80
-      const progressRows = Object.values(userProgress || {});
-      const championCount = progressRows.filter(p => p?.completed && (p?.quiz_score || 0) >= 80).length;
-      if (championCount >= 4) {
-        const badgeKey = 'security_champion';
-        const ex2 = await TrainingBadge.filter({
+      // 2) Security Champion: 4+ modules completed with score >= 80 (uses pre-fetched existingChampion)
+      if (championCount >= 4 && existingChampion.length === 0) {
+        await TrainingBadge.create({
           company_id: user.company_id,
           user_email: user.email,
-          badge_key: badgeKey
-        }, undefined, 1);
-        if (ex2.length === 0) {
-          await TrainingBadge.create({
-            company_id: user.company_id,
-            user_email: user.email,
-            badge_key: badgeKey,
-            label: 'Security Champion',
-            description: 'Completed 4+ modules with scores of 80% or higher.',
-            awarded_date: new Date().toISOString()
-          });
-        }
+          badge_key: championKey,
+          label: 'Security Champion',
+          description: 'Completed 4+ modules with scores of 80% or higher.',
+          awarded_date: new Date().toISOString()
+        });
       }
 
       // refresh badges panel

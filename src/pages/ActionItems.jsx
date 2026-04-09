@@ -115,11 +115,11 @@ export default function ActionItemsPage() { // Renamed from ActionItems in outli
 
       // CRITICAL FIX: Changed from .list() to .filter() to enforce company segregation
       // SECURITY FIX: Using explicit company filtering for better practice
-      const itemsData = await CachedEntityManager.get(ActionItem, 'filter', [companyFilter, "-created_date", 50], 'actionitems_list');
+      const [itemsData, assessmentsData] = await Promise.all([
+        CachedEntityManager.get(ActionItem, 'filter', [companyFilter, "-created_date", 50], 'actionitems_list'),
+        CachedEntityManager.get(Assessment, 'filter', [companyFilter, "-created_date", 20], 'actionitems_assessments'),
+      ]);
       setActionItems(itemsData || []);
-
-      // CRITICAL FIX: Changed from .list() to .filter() to enforce company segregation
-      const assessmentsData = await CachedEntityManager.get(Assessment, 'filter', [companyFilter, "-created_date", 20], 'actionitems_assessments');
       setAssessments(assessmentsData || []);
 
     } catch (err) {

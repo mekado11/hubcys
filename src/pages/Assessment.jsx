@@ -145,7 +145,7 @@ export default function AssessmentPage() {
   const loadFrameworks = async (user) => {
     try {
       setLoadingFrameworks(true);
-      const data = await ComplianceFramework.filter({ company_id: user.company_id }, "-updated_date");
+      const data = await ComplianceFramework.filter({ company_id: user.company_id }, "-updated_date", 100);
       setManagedFrameworks(data || []);
     } finally {
       setLoadingFrameworks(false);

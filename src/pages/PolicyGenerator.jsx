@@ -83,7 +83,7 @@ export default function PolicyGeneratorPage() {
         
         // Load assessments for context
         try {
-          const userAssessments = await Assessment.filter({ company_id: userData.company_id });
+          const userAssessments = await Assessment.filter({ company_id: userData.company_id }, '-created_date', 50);
           setAssessments(userAssessments || []);
         } catch (e) {
           console.warn('Failed to load assessments:', e);

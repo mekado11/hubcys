@@ -96,7 +96,7 @@ export default function TrainingVideoManager() {
 
   const loadVideos = async () => {
     try {
-      const videoList = await TrainingVideo.filter({ company_id: user?.company_id }, '-created_date');
+      const videoList = await TrainingVideo.filter({ company_id: user?.company_id }, '-created_date', 100);
       setVideos(videoList);
     } catch (error) {
       console.error("Error loading videos:", error);

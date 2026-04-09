@@ -116,7 +116,7 @@ export default function ResponseReadiness() {
 
       // Load incidents with company filtering
       const companyFilter = { company_id: userData.company_id };
-      const incidentData = await CachedEntityManager.get(Incident, 'filter', [companyFilter, "-created_date"], 'response_incidents_list');
+      const incidentData = await CachedEntityManager.get(Incident, 'filter', [companyFilter, "-created_date", 100], 'response_incidents_list');
       setIncidents(incidentData || []);
 
     } catch (err) {
@@ -147,7 +147,7 @@ export default function ResponseReadiness() {
 
       // Load exercises with company filtering
       const companyFilter = { company_id: userData.company_id };
-      const exerciseData = await CachedEntityManager.get(TabletopExercise, 'filter', [companyFilter, "-created_date"], 'response_exercises_list');
+      const exerciseData = await CachedEntityManager.get(TabletopExercise, 'filter', [companyFilter, "-created_date", 100], 'response_exercises_list');
       setExercises(exerciseData || []);
 
     } catch (err) {

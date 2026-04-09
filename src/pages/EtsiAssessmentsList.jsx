@@ -32,7 +32,7 @@ export default function EtsiAssessmentsListPage() {
                     return; // Stop execution
                 }
 
-                const data = await EtsiAssessment.filter({ company_id: user.company_id }, '-updated_date');
+                const data = await EtsiAssessment.filter({ company_id: user.company_id }, '-updated_date', 50);
                 setAssessments(data || []); // Ensure data is an array even if filter returns null
             } catch (error) {
                 console.error("Failed to load ETSI assessments:", error);
