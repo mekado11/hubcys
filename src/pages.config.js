@@ -56,7 +56,6 @@ import BIA from './pages/BIA';
 import CompanyManagement from './pages/CompanyManagement';
 import CompanyOnboarding from './pages/CompanyOnboarding';
 import Dashboard from './pages/Dashboard';
-import EarlyCareer from './pages/EarlyCareer';
 import EducationalResources from './pages/EducationalResources';
 import EtsiAssessment from './pages/EtsiAssessment';
 import EtsiAssessmentsList from './pages/EtsiAssessmentsList';
@@ -107,7 +106,6 @@ export const PAGES = {
     "CompanyManagement": CompanyManagement,
     "CompanyOnboarding": CompanyOnboarding,
     "Dashboard": Dashboard,
-    "EarlyCareer": EarlyCareer,
     "EducationalResources": EducationalResources,
     "EtsiAssessment": EtsiAssessment,
     "EtsiAssessmentsList": EtsiAssessmentsList,

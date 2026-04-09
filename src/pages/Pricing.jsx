@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Check,
-  Shield,
   Mail,
   Phone,
   MessageCircle,
@@ -14,13 +13,7 @@ import {
   Star,
   ExternalLink,
   ArrowRight,
-  ArrowLeft,
-  Loader2,
-  Zap,
-  BookOpen,
-  GraduationCap,
-  CheckCircle2,
-  Bug
+  ArrowLeft
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -49,12 +42,14 @@ export default function Pricing() {
   const plans = [
     {
       name: "Starter",
-      price: "$600",
+      price: "$199",
       period: "month",
-      yearlyPrice: "$6,000",
-      description: "Essential gap analysis for startups & small teams (capped usage)",
+      yearlyPrice: "$1,990",
+      companySize: "Up to 25 employees",
+      description: "Essential gap analysis for startups & small teams",
       color: "blue",
       highlights: [
+        "Up to 25 employees",
         "4 Security Assessments/month",
         "2 Compliance Frameworks",
         "PDF Reports & Action Items",
@@ -65,11 +60,14 @@ export default function Pricing() {
       name: "Growth",
       price: "$1,500",
       period: "month",
-      yearlyPrice: "$12,000",
-      description: "Unlimited assessments with AI insights",
+      yearlyDiscount: "$12,000/year",
+      yearlyNote: "Save 2 months — pay annually",
+      companySize: "Up to 200 employees",
+      description: "Unlimited AI-powered assessments & full GRC suite",
       color: "purple",
       popular: true,
       highlights: [
+        "Up to 200 employees",
         "Unlimited Security Assessments",
         "AI Recommendations & BIA",
         "Full Command Center Access",
@@ -80,9 +78,11 @@ export default function Pricing() {
       name: "Enterprise",
       price: "Custom",
       period: "pricing",
+      companySize: "200+ employees",
       description: "Complete GRC platform for large organizations",
       color: "gold",
       highlights: [
+        "200+ employees",
         "All Compliance Frameworks",
         "Advanced Integrations & RBAC",
         "Dedicated Customer Success",
@@ -197,7 +197,12 @@ Please send an invoice and activate my account. Thank you!`;
                       <div>
                         <span className="text-2xl font-bold text-white">{plan.price}</span>
                         <span className="text-gray-400">/{plan.period}</span>
-                        {plan.yearlyPrice && (
+                        {plan.yearlyDiscount && (
+                          <div className="text-xs text-green-400 mt-1 font-semibold">
+                            or {plan.yearlyDiscount} — {plan.yearlyNote}
+                          </div>
+                        )}
+                        {plan.yearlyPrice && !plan.yearlyDiscount && (
                           <div className="text-xs text-green-400 mt-1">
                             {plan.yearlyPrice}/year (save 2 months!)
                           </div>
@@ -309,77 +314,6 @@ Please send an invoice and activate my account. Thank you!`;
               </div>
             </CardContent>
           </Card>
-        </div>
-
-        {/* Early Career section */}
-        <div className="mt-16">
-          <div className="flex items-center gap-2 mb-3">
-            <GraduationCap className="w-5 h-5 text-purple-300" />
-            <h2 className="text-xl font-semibold text-white">Early Career (Individuals)</h2>
-          </div>
-          <p className="text-gray-300 mb-5 text-sm">
-            Professional-grade tools and training for individuals starting their security career. Limited features, personal use only.
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Standard Plan */}
-            <Card className="glass-effect border-slate-700/50">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-white text-base">Early Career Standard</CardTitle>
-                  <Badge className="bg-purple-500/20 text-purple-300 text-xs">Most popular</Badge>
-                </div>
-                <div className="mt-2">
-                  <span className="text-xl font-bold text-white">$699</span>
-                  <span className="text-gray-400 text-xs"> / year</span>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3 text-xs">
-                <Feature text="URL Security Scanner" icon={Shield} />
-                <Feature text="CVE Database Search & analysis" icon={Bug} />
-                <Feature text="Password Generator" icon={Zap} />
-                <Feature text="Security Training & Resources" icon={BookOpen} />
-                <Feature text="Personal reports (basic)" icon={CheckCircle2} />
-                <p className="text-gray-400 text-[11px] mt-1">Best for students and aspiring security professionals.</p>
-                <Button
-                  onClick={() => startEarlyCareerCheckout('standard')}
-                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-sm py-2"
-                  disabled={!!loadingPlan}
-                >
-                  {loadingPlan === 'standard' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                  Get Early Career Standard
-                </Button>
-                <p className="text-[11px] text-gray-500 mt-1">Non-recurring one-year access. You can renew manually next year.</p>
-              </CardContent>
-            </Card>
-
-            {/* Plus Plan */}
-            <Card className="glass-effect border-slate-700/50">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-white text-base">Early Career Plus</CardTitle>
-                <div className="mt-2">
-                  <span className="text-xl font-bold text-white">$899</span>
-                  <span className="text-gray-400 text-xs"> / year</span>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3 text-xs">
-                <Feature text="Everything in Standard" icon={CheckCircle2} />
-                <Feature text="Limited SAST (small code snippets)" icon={Zap} />
-                <Feature text="Extra training content and examples" icon={BookOpen} />
-                <Feature text="Priority email support" icon={Shield} />
-                <p className="text-gray-400 text-[11px] mt-1">For ambitious learners who want more practice and support.</p>
-                <Button
-                  onClick={() => startEarlyCareerCheckout('plus')}
-                  className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-sm py-2"
-                  disabled={!!loadingPlan}
-                >
-                  {loadingPlan === 'plus' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                  Get Early Career Plus
-                </Button>
-                <p className="text-[11px] text-gray-500 mt-1">Non-recurring one-year access. You can renew manually next year.</p>
-              </CardContent>
-            </Card>
-          </div>
         </div>
 
         {/* Contact Information */}
