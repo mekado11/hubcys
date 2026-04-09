@@ -15,7 +15,7 @@ import {
 } from 'firebase/firestore';
 import { createEntity } from './_entity.js';
 
-const _userEntity = createEntity('User');
+const _userEntity = createEntity('users');
 
 const SUPER_ADMIN_EMAIL = import.meta.env.VITE_SUPER_ADMIN_EMAIL?.toLowerCase().trim();
 

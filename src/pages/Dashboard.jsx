@@ -87,8 +87,8 @@ export default function Dashboard() {
   const calculateDashboardStats = useCallback(async (user) => {
     try {
       const [allAssessments, allActionItems] = await Promise.all([
-        Assessment.filter({ company_id: user.company_id }),
-        ActionItem.filter({ company_id: user.company_id })
+        Assessment.filter({ company_id: user.company_id }, '-created_date', 500),
+        ActionItem.filter({ company_id: user.company_id }, '-created_date', 500)
       ]);
 
       const completedAssessments = allAssessments.filter(a => a.status === 'completed');

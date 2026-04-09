@@ -56,7 +56,7 @@ export default function SystemHealth() {
     );
   }
 
-  if (user.company_role !== "admin") {
+  if (user.company_role !== "admin" && user.company_role !== "super_admin" && !user.is_super_admin) {
     return (
       <div className="min-h-screen cyber-gradient flex items-center justify-center text-white p-6">
         <Card className="glass-effect border-yellow-500/30 w-full max-w-lg">
