@@ -8,12 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Check, X, Ban, Loader2, Search } from "lucide-react";
+import { Check, X, Ban, Loader2, Search, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast"; // Added toast import
 // Added RoleGate import
 
 export default function UserManagement() {
+  const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -271,6 +273,9 @@ export default function UserManagement() {
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
           <div>
+            <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-slate-400 hover:text-white text-sm transition-colors mb-1">
+              <ArrowLeft className="w-4 h-4" /> Back
+            </button>
             <h1 className="text-2xl sm:text-3xl font-bold cyber-text-glow">User Management</h1>
             <p className="text-gray-400">Approve, reject, or suspend access to Fortigap.</p>
           </div>

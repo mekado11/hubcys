@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { UploadCloud, ShieldAlert, Bug, AlertTriangle, Loader2, Shield, TrendingUp } from "lucide-react";
+import { UploadCloud, ShieldAlert, Bug, AlertTriangle, Loader2, Shield, TrendingUp, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { UploadFile } from "@/integrations/Core";
 import { analyzeIocs } from "@/functions/analyzeIocs";
 import { Incident } from "@/entities/Incident";
@@ -19,6 +20,7 @@ import GroupedIocReport from "@/components/ioc/GroupedIocReport";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function IOCAnalyzer() {
+  const navigate = useNavigate();
   const [file, setFile] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState(null);
@@ -232,6 +234,9 @@ export default function IOCAnalyzer() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
+      <button onClick={() => navigate(-1)} className="absolute top-4 left-4 z-50 flex items-center gap-1.5 text-slate-300 hover:text-white text-sm transition-colors bg-black/30 hover:bg-black/50 px-3 py-1.5 rounded-lg backdrop-blur-sm">
+        <ArrowLeft className="w-4 h-4" /> Back
+      </button>
       {/* Background Image Layer */}
       <div 
         className="fixed inset-0 z-0"

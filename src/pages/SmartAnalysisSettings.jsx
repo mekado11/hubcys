@@ -6,9 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { AlertTriangle, Save, Loader2, Shield } from "lucide-react";
+import { AlertTriangle, Save, Loader2, Shield, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function SmartAnalysisSettings() {
+  const navigate = useNavigate();
   const [me, setMe] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -88,6 +90,9 @@ export default function SmartAnalysisSettings() {
     <div className="min-h-screen cyber-gradient p-6">
       <div className="mx-auto max-w-3xl">
         <div className="flex items-center gap-3 mb-6">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-slate-400 hover:text-white text-sm transition-colors">
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
           <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-500 flex items-center justify-center">
             <Shield className="w-5 h-5 text-white" />
           </div>

@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Loader2, BarChart3, ExternalLink, Plus, Link2, Info, ChevronRight, FolderOpen } from "lucide-react";
+import { Loader2, BarChart3, ExternalLink, Plus, Link2, Info, ChevronRight, FolderOpen, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { canAccessBIA, SUBSCRIPTION_TIERS } from "@/components/utils/subscriptionUtils";
 import SubscriptionGate from "@/components/ui/SubscriptionGate";
@@ -17,6 +18,7 @@ import FAIRIntroBanner from "@/components/bia/FAIRIntroBanner";
 import BIAWorkbench from "@/components/bia/BIAWorkbench";
 
 export default function BIAPage() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [user, setUser] = useState(null);
@@ -228,6 +230,9 @@ export default function BIAPage() {
         {/* ── Page Header ── */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-3">
+            <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-slate-400 hover:text-white text-sm transition-colors mr-2">
+              <ArrowLeft className="w-4 h-4" /> Back
+            </button>
             <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-900/40">
               <BarChart3 className="w-5 h-5 text-white" />
             </div>

@@ -10,13 +10,15 @@ import {
   Loader2,
   AlertCircle,
   Edit,
+  ArrowLeft,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { generateReportPdf } from "@/functions/generateReportPdf";
 import ProfessionalReport from "../components/report/ProfessionalReport";
 
 export default function ProfessionalReportView() {
+  const navigate = useNavigate();
   const [assessment, setAssessment] = useState(null);
   const [frameworkName, setFrameworkName] = useState('');
   const [frameworkType, setFrameworkType] = useState('');
@@ -227,6 +229,9 @@ export default function ProfessionalReportView() {
         {/* Header with Edit Button and Export PDF */}
         <div className="flex justify-between items-center mb-8 print:hidden">
           <div>
+            <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-slate-400 hover:text-white text-sm transition-colors mb-3">
+              <ArrowLeft className="w-4 h-4" /> Back
+            </button>
             <h1 className="text-3xl font-bold text-white mb-2">Professional Assessment Report</h1>
             <p className="text-gray-400">Comprehensive cybersecurity gap analysis with AI-powered recommendations</p>
           </div>

@@ -4,9 +4,11 @@ import { User } from "@/entities/User";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function AdminFeatureRequests() {
+  const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -51,6 +53,9 @@ export default function AdminFeatureRequests() {
   return (
     <div className="min-h-screen cyber-gradient text-white p-6">
       <div className="max-w-5xl mx-auto space-y-4">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-slate-400 hover:text-white text-sm transition-colors mb-2">
+          <ArrowLeft className="w-4 h-4" /> Back
+        </button>
         <h1 className="text-2xl font-bold">Feature Requests (Admin)</h1>
         {requests.length === 0 ? (
           <p className="text-gray-300">No feature requests yet.</p>

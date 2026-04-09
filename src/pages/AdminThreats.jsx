@@ -8,11 +8,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, ShieldAlert, BookText, AlertTriangle, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, ShieldAlert, BookText, AlertTriangle, Search, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import ThreatAdvisoryForm from "@/components/admin/ThreatAdvisoryForm";
 import RegulatoryRequirementForm from "@/components/admin/RegulatoryRequirementForm";
 
 export default function AdminThreats() {
+  const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("advisories");
@@ -103,6 +105,9 @@ export default function AdminThreats() {
     <div className="min-h-screen cyber-gradient p-4 sm:p-6">
       <div className="max-w-6xl mx-auto">
         <div className="mb-6">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-slate-400 hover:text-white text-sm transition-colors mb-2">
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
           <h1 className="text-2xl sm:text-3xl font-bold text-white">Threats & Regulations (Admin)</h1>
           <p className="text-gray-400">Create, edit, and manage threat advisories and regulatory requirements.</p>
         </div>

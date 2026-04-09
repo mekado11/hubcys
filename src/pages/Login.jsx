@@ -4,7 +4,7 @@ import { User } from '@/entities/User';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ShieldCheck, Loader2, Chrome } from 'lucide-react';
+import { ShieldCheck, Loader2, Chrome, ArrowLeft } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -51,6 +51,15 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0d1117] px-4">
       <div className="w-full max-w-md">
+        {/* Back button */}
+        <button
+          onClick={() => window.location.href = '/'}
+          className="flex items-center gap-1.5 text-slate-400 hover:text-white text-sm mb-6 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to home
+        </button>
+
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 mb-8">
           <ShieldCheck className="w-8 h-8 text-cyan-400" />

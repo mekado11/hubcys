@@ -21,11 +21,14 @@ import {
   Loader2,
   CheckCircle,
   Clock,
-  Eye
+  Eye,
+  ArrowLeft
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function TrainingVideoManager() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -229,6 +232,9 @@ export default function TrainingVideoManager() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
+            <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-slate-400 hover:text-white text-sm transition-colors mb-2">
+              <ArrowLeft className="w-4 h-4" /> Back
+            </button>
             <h1 className="text-4xl font-bold cyber-text-glow mb-2">Training Video Manager</h1>
             <p className="text-gray-400">Upload and manage training videos for your security education program</p>
           </div>
