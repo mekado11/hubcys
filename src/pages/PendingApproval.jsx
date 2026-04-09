@@ -149,10 +149,10 @@ export default function PendingApproval() {
           </CardHeader>
           <CardContent className="space-y-6 text-center">
             <div className="bg-slate-800/50 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-white mb-2">Welcome to Fortigap!</h3>
+              <h3 className="text-lg font-semibold text-white mb-2">Welcome to Hubcys!</h3>
               <p className="text-gray-300 mb-4">
-                Thank you for signing up. Your account has been created successfully, but it requires 
-                administrator approval before you can access the platform.
+                You've successfully joined <strong className="text-white">{user?.company_name || "your organisation"}</strong>.
+                Your company administrator needs to approve your account before you can access the platform.
               </p>
               
               {user && (
@@ -183,9 +183,9 @@ export default function PendingApproval() {
                     <span className="text-cyan-400 text-sm font-bold">1</span>
                   </div>
                   <div>
-                    <p className="text-white font-medium">Administrator Review</p>
+                    <p className="text-white font-medium">Company Administrator Review</p>
                     <p className="text-gray-400 text-sm">
-                      Fortigap Account representative will review your account and verify your information.
+                      Your company administrator will review your request and approve your access.
                     </p>
                   </div>
                 </div>
@@ -196,11 +196,9 @@ export default function PendingApproval() {
                     <span className="text-cyan-400 text-sm font-bold">2</span>
                   </div>
                   <div>
-                    <p className="text-white font-medium">
-                      Please logout now and log back in within 1–24 hours
-                    </p>
+                    <p className="text-white font-medium">Check back shortly</p>
                     <p className="text-gray-400 text-sm">
-                      (Depending on timezone, manual account review takes 1–24 hours for complete review.)
+                      Contact your company administrator to let them know you've signed up. Once they approve you, log back in to access the platform.
                     </p>
                   </div>
                 </div>
@@ -213,7 +211,7 @@ export default function PendingApproval() {
                   <div>
                     <p className="text-white font-medium">Full Access</p>
                     <p className="text-gray-400 text-sm">
-                      Start using all Fortigap features to enhance your cybersecurity posture once approved.
+                      Start using all Hubcys features to enhance your cybersecurity posture once approved.
                     </p>
                   </div>
                 </div>

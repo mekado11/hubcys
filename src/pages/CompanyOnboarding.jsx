@@ -5,14 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Building, Plus, LogIn, AlertCircle } from "lucide-react";
+import { Loader2, Building, Plus, LogIn, AlertCircle, Copy, Check, Users, ShieldCheck } from "lucide-react";
 import { createPageUrl } from "@/utils";
 
 export default function CompanyOnboarding() {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [mode, setMode] = useState(null); // 'create' or 'join'
+  const [mode, setMode] = useState(null); // 'create' | 'join' | 'success'
+  const [createdCompany, setCreatedCompany] = useState(null); // { name, access_code }
+  const [copied, setCopied] = useState(false);
 
   // Create company state
   const [newCompanyName, setNewCompanyName] = useState("");
@@ -114,7 +116,8 @@ export default function CompanyOnboarding() {
         approval_status: "approved"
       });
 
-      window.location.href = createPageUrl("Dashboard");
+      setCreatedCompany({ name: sanitize(newCompanyName), access_code: uniqueCode });
+      setMode("success");
     } catch (err) {
       console.error("Error creating company:", err);
       setError("Failed to create company. Please try again.");
@@ -337,6 +340,68 @@ export default function CompanyOnboarding() {
                 </Button>
               </div>
             </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(createdCompany?.access_code || "");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  if (mode === "success" && createdCompany) {
+    return (
+      <div className="min-h-screen cyber-gradient flex items-center justify-center p-6">
+        <Card className="glass-effect border-emerald-500/30 max-w-lg w-full">
+          <CardHeader className="text-center pb-2">
+            <div className="mx-auto w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mb-4">
+              <ShieldCheck className="w-8 h-8 text-emerald-400" />
+            </div>
+            <CardTitle className="text-2xl text-emerald-300">Company Created!</CardTitle>
+            <p className="text-gray-400 mt-1 text-sm">
+              <span className="font-semibold text-white">{createdCompany.name}</span> is ready. You are the administrator.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Invite Code Box */}
+            <div className="bg-slate-800/60 border border-cyan-500/30 rounded-xl p-5 text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Users className="w-4 h-4 text-cyan-400" />
+                <p className="text-sm text-cyan-300 font-medium">Your Organisation Invite Code</p>
+              </div>
+              <p className="text-xs text-gray-400 mb-3">Share this code with team members so they can join your organisation</p>
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-3xl font-mono font-bold text-white tracking-widest bg-slate-700/60 px-6 py-3 rounded-lg border border-slate-600">
+                  {createdCompany.access_code}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyCode}
+                  className="border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/10"
+                >
+                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  {copied ? "Copied!" : "Copy"}
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2 text-sm text-gray-400">
+              <p className="flex items-start gap-2"><span className="text-cyan-400 mt-0.5">•</span> Send this code to colleagues who need access</p>
+              <p className="flex items-start gap-2"><span className="text-cyan-400 mt-0.5">•</span> New members will appear as "Pending" in User Management until you approve them</p>
+              <p className="flex items-start gap-2"><span className="text-cyan-400 mt-0.5">•</span> You can find this code again in User Management → Invite Code</p>
+            </div>
+
+            <Button
+              onClick={() => window.location.href = createPageUrl("Dashboard")}
+              className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
+            >
+              Go to Dashboard →
+            </Button>
           </CardContent>
         </Card>
       </div>

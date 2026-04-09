@@ -234,7 +234,7 @@ export default function IOCAnalyzer() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <button onClick={() => navigate(-1)} className="absolute top-4 left-4 z-50 flex items-center gap-1.5 text-slate-300 hover:text-white text-sm transition-colors bg-black/30 hover:bg-black/50 px-3 py-1.5 rounded-lg backdrop-blur-sm">
+      <button onClick={() => navigate(-1)} className="fixed top-16 left-4 z-50 flex items-center gap-1.5 text-slate-300 hover:text-white text-sm transition-colors bg-black/40 hover:bg-black/60 px-3 py-1.5 rounded-lg backdrop-blur-sm border border-white/10">
         <ArrowLeft className="w-4 h-4" /> Back
       </button>
       {/* Background Image Layer */}

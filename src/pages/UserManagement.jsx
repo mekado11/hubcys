@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Check, X, Ban, Loader2, Search, ArrowLeft } from "lucide-react";
+import { Check, X, Ban, Loader2, Search, ArrowLeft, Copy, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast"; // Added toast import
@@ -22,6 +22,7 @@ export default function UserManagement() {
   const [updatingId, setUpdatingId] = useState("");
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState("pending");
+  const [copiedCode, setCopiedCode] = useState(false);
   const [reasonDialogOpen, setReasonDialogOpen] = useState(false);
   const [reasonText, setReasonText] = useState("");
   const [reasonTarget, setReasonTarget] = useState(null); // { user, action: 'reject' | 'suspend' }
@@ -36,12 +37,18 @@ export default function UserManagement() {
       try {
         const me = await User.me();
         setCurrentUser(me);
-        if (me.role !== "admin") { // This 'role' is likely the global app role, not company_role or app_role
+
+        if (me.is_super_admin) {
+          // Super admin sees all users
+          const list = await User.list("-created_date", 500);
+          setUsers(list || []);
+        } else if (me.company_role === "admin" && me.company_id) {
+          // Company admin sees only their org's users
+          const list = await User.filter({ company_id: me.company_id }, "-created_date", 200);
+          setUsers(list || []);
+        } else {
           setUsers([]);
-          return;
         }
-        const list = await User.list("-created_date", 500);
-        setUsers(list || []);
       } finally {
         setLoading(false);
       }
@@ -277,7 +284,9 @@ export default function UserManagement() {
               <ArrowLeft className="w-4 h-4" /> Back
             </button>
             <h1 className="text-2xl sm:text-3xl font-bold cyber-text-glow">User Management</h1>
-            <p className="text-gray-400">Approve, reject, or suspend access to Fortigap.</p>
+            <p className="text-gray-400">
+              {currentUser?.is_super_admin ? "All organisations — super admin view" : `${currentUser?.company_name || "Your organisation"} — members only`}
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <div className="relative">
@@ -291,6 +300,26 @@ export default function UserManagement() {
             </div>
           </div>
         </div>
+
+        {/* Invite code banner for company admins */}
+        {currentUser?.company_role === "admin" && !currentUser?.is_super_admin && currentUser?.company_access_code && (
+          <div className="flex items-center justify-between bg-slate-800/60 border border-cyan-500/20 rounded-xl px-5 py-3">
+            <div className="flex items-center gap-3">
+              <Users className="w-5 h-5 text-cyan-400 shrink-0" />
+              <div>
+                <p className="text-xs text-gray-400">Organisation Invite Code</p>
+                <p className="text-white font-mono font-bold tracking-widest text-lg">{currentUser.company_access_code}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => { navigator.clipboard.writeText(currentUser.company_access_code); setCopiedCode(true); setTimeout(() => setCopiedCode(false), 2000); }}
+              className="flex items-center gap-1.5 text-sm text-cyan-300 hover:text-white border border-cyan-500/30 hover:border-cyan-400 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              <Copy className="w-3.5 h-3.5" />
+              {copiedCode ? "Copied!" : "Copy"}
+            </button>
+          </div>
+        )}
 
         <Tabs value={tab} onValueChange={setTab} className="w-full">
           <TabsList className="mb-4 bg-slate-800/50">
