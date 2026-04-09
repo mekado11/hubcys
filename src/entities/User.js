@@ -17,6 +17,10 @@ import { createEntity } from './_entity.js';
 
 const _userEntity = createEntity('users');
 
+// NOTE: VITE_ variables are bundled into the client JS. Keep this value non-sensitive
+// (e.g. set it to an opaque role ID in future). The email itself is used only to
+// bootstrap the super-admin Firestore document on first login; Firestore Security Rules
+// and the is_super_admin flag are the real enforcement layer.
 const SUPER_ADMIN_EMAIL = import.meta.env.VITE_SUPER_ADMIN_EMAIL?.toLowerCase().trim();
 
 function isSuperAdminEmail(email) {
