@@ -42,9 +42,14 @@ function docToObj(snap) {
   return { id: snap.id, ...snap.data() };
 }
 
+function requireDb() {
+  if (!db) throw new Error('Firebase is not configured. Set VITE_FIREBASE_* environment variables and redeploy.');
+  return db;
+}
+
 export function createEntity(entityName) {
   const collName = toCollectionName(entityName);
-  const colRef = () => collection(db, collName);
+  const colRef = () => collection(requireDb(), collName);
 
   return {
     async list(sortField = '-created_date', maxItems = 200) {
@@ -91,7 +96,7 @@ export function createEntity(entityName) {
     },
 
     async get(id) {
-      const snap = await getDoc(doc(db, collName, id));
+      const snap = await getDoc(doc(requireDb(), collName, id));
       if (!snap.exists()) return null;
       return docToObj(snap);
     },
@@ -103,12 +108,12 @@ export function createEntity(entityName) {
     },
 
     async update(id, data) {
-      await updateDoc(doc(db, collName, id), { ...data, updated_date: serverTimestamp() });
+      await updateDoc(doc(requireDb(), collName, id), { ...data, updated_date: serverTimestamp() });
       return { id, ...data };
     },
 
     async delete(id) {
-      await deleteDoc(doc(db, collName, id));
+      await deleteDoc(doc(requireDb(), collName, id));
       return { id };
     },
   };
