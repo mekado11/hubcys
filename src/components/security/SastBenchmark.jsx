@@ -117,6 +117,7 @@ Return JSON with this structure:
 
       const analysis = await InvokeLLM({
         prompt,
+        feature: 'sast_analysis',
         add_context_from_internet: false,
         response_json_schema: {
           type: "object",

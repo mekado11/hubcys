@@ -363,7 +363,8 @@ IMPORTANT: Do not provide unsolicited security assessments or recommendations un
 
       const response = await InvokeLLM({
         prompt: `${systemPrompt}\n\nUser Question: ${currentInput}`,
-        add_context_from_internet: false // Disable for simple conversations
+        feature: 'consultation',
+        add_context_from_internet: false
       });
 
       const assistantMessage = {

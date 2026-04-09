@@ -65,6 +65,7 @@ export default function PolicyGenerator({
 
         const response = await InvokeLLM({
           prompt,
+          feature: 'policy_generate',
           response_json_schema: {
             type: "object",
             properties: {

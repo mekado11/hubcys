@@ -311,6 +311,7 @@ Generate a professional, detailed ${policyTypeName} policy that serves as a robu
 
       const response = await InvokeLLM({
         prompt,
+        feature: 'policy_generate',
         add_context_from_internet: false
       });
 

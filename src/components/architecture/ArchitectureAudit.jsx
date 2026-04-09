@@ -203,6 +203,7 @@ ${contextNotes ? contextNotes : "(no additional context provided)"}
     try {
       const analysis = await InvokeLLM({
         prompt,
+        feature: 'architecture_audit',
         file_urls: [uploadedUrl],
         add_context_from_internet: false,
         response_json_schema: responseSchema,

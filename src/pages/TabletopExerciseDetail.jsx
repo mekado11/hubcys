@@ -276,6 +276,7 @@ Make the scenarios realistic, industry-specific, and challenging but not overwhe
 
       const response = await InvokeLLM({
         prompt,
+        feature: 'tabletop',
         response_json_schema: {
           type: "object",
           properties: {

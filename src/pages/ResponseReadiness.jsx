@@ -360,6 +360,7 @@ Be specific, actionable, and explain technical concepts in business-friendly ter
 
       const response = await InvokeLLM({
         prompt: analysisPrompt,
+        feature: 'smart_analysis',
         add_context_from_internet: false
       });
 

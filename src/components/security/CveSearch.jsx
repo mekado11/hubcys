@@ -144,6 +144,7 @@ Be specific, actionable, and explain technical concepts in business-friendly ter
 
       const analysis = await InvokeLLM({
         prompt,
+        feature: 'cve_lookup',
         add_context_from_internet: true
       });
 

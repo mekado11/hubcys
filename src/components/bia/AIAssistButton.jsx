@@ -13,6 +13,7 @@ const AIAssistButton = React.memo(({ prompt, onResult, className = "" }) => {
     try {
       const response = await InvokeLLM({
         prompt: prompt,
+        feature: 'bia_analysis',
         add_context_from_internet: false
       });
       

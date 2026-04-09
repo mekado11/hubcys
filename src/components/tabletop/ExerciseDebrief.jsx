@@ -113,7 +113,7 @@ Remember: This is a real debrief, not a hypothetical one. Only reference what ac
 
       const response = await InvokeLLM({
         prompt: prompt,
-        // The outline removes response_json_schema, indicating a plain text/markdown response
+        feature: 'tabletop',
       });
 
       // Set the generated content to the single debriefContent state

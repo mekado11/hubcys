@@ -452,6 +452,7 @@ Generate an enterprise-grade lite policy that is audit-ready, enforceable, and c
 
       const response = await InvokeLLM({
         prompt: prompt,
+        feature: 'policy_generate',
         response_json_schema: {
           type: "object",
           properties: {

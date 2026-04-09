@@ -104,6 +104,7 @@ Format your response in markdown for better readability.
 
       const response = await InvokeLLM({
         prompt: contextualPrompt,
+        feature: 'architecture_audit',
         add_context_from_internet: false
       });
 

@@ -76,6 +76,7 @@ Your response MUST be a valid JSON object with exactly this structure:
     try {
       const response = await InvokeLLM({
         prompt: prompt,
+        feature: 'smart_analysis',
         response_json_schema: {
           type: "object",
           properties: {

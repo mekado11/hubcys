@@ -140,6 +140,7 @@ Make this practical and specific to ${selectedIncidentType} incidents, not gener
 
       const response = await InvokeLLM({
         prompt,
+        feature: 'incident_playbook',
         add_context_from_internet: false
       });
 

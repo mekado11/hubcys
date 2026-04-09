@@ -254,6 +254,7 @@ Generate ONLY the policy content in clean markdown format.`;
       const prompt = buildPrompt();
       const response = await InvokeLLM({
         prompt: prompt,
+        feature: 'policy_generate',
         add_context_from_internet: false
       });
 
@@ -332,6 +333,7 @@ ${generated}
     try {
       const response = await InvokeLLM({
         prompt: prompt,
+        feature: 'policy_refine',
         response_json_schema: {
           type: "object",
           properties: {
