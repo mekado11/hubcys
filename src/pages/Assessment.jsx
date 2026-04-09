@@ -366,7 +366,16 @@ export default function AssessmentPage() {
             onNext={handleNext}
             managedFrameworks={managedFrameworks}
             loadingFrameworks={loadingFrameworks}
-            onFrameworkCreated={() => currentUser && loadFrameworks(currentUser)}
+            onFrameworkCreated={async (newFramework) => {
+              // Optimistic update so the new framework appears immediately
+              if (newFramework) setManagedFrameworks(prev => [newFramework, ...prev]);
+              // Re-fetch fresh user (company_id may have just been backfilled) then reload list
+              try {
+                const fresh = await User.me();
+                setCurrentUser(fresh);
+                await loadFrameworks(fresh);
+              } catch (_) {}
+            }}
             onSave={handleSave}
             saving={saving}
             currentUser={currentUser}
