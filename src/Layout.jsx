@@ -228,7 +228,10 @@ export default function Layout({ children, currentPageName }) {
 
       setCurrentUser(user);
       setIsAuthenticated(true);
-      
+
+      // Super admin bypasses all gates
+      if (user.is_super_admin) return;
+
       if (user.approval_status === 'pending') {
         if (currentPageName !== 'PendingApproval' && 
             currentPageName !== 'LandingPage' && 
@@ -543,8 +546,9 @@ export default function Layout({ children, currentPageName }) {
 
   const isPublicPage = PUBLIC_PAGES.includes(currentPageName);
   const isApproved = currentUser?.approval_status === 'approved';
+  const isSuperAdmin = !!currentUser?.is_super_admin;
   const canRender = (!loading || loadError) && (
-    isPublicPage || (isApproved && canAccessPage(currentUser?.subscription_tier, currentPageName))
+    isPublicPage || isSuperAdmin || (isApproved && canAccessPage(currentUser?.subscription_tier, currentPageName, currentUser))
   );
 
   // Show loading error with retry option
@@ -718,7 +722,7 @@ export default function Layout({ children, currentPageName }) {
                 </AccordionItem>
               ))}
 
-              {currentUser?.company_role === 'admin' && (
+              {(currentUser?.company_role === 'admin' || currentUser?.is_super_admin) && (
                 <AccordionItem value="admin" className="border-b border-slate-700/40">
                   <AccordionTrigger className="text-left text-gray-300 hover:text-white py-2 data-[state=open]:text-white">
                     <div className="flex items-center gap-2">
@@ -765,7 +769,7 @@ export default function Layout({ children, currentPageName }) {
                       New Assessment
                   </Button>
               </Link>
-              {currentUser && currentUser.subscription_tier !== 'enterprise' && (
+              {currentUser && !currentUser.is_super_admin && currentUser.subscription_tier !== 'enterprise' && (
                 <Link to={createPageUrl("Pricing")} className="block" onClick={closeSidebar}>
                   <Button variant="outline" className="w-full border-purple-500/50 text-purple-300 hover:bg-purple-500/20 hover:text-purple-200 transition-all duration-300">
                     <TrendingUp className="w-4 h-4 mr-2" />

@@ -199,7 +199,8 @@ export const getAllowedPages = (tier) => {
   return base;
 };
 
-export const canAccessPage = (tier, pageName) => {
+export const canAccessPage = (tier, pageName, user) => {
+  if (user?.is_super_admin) return true;
   if (isFreeTrial(tier) || isEnterprise(tier)) return true;
   if (PUBLIC_PAGES.includes(pageName)) return true;
   return getAllowedPages(tier).includes(pageName);

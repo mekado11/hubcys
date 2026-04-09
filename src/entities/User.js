@@ -17,6 +17,21 @@ import { createEntity } from './_entity.js';
 
 const _userEntity = createEntity('User');
 
+const SUPER_ADMIN_EMAIL = import.meta.env.VITE_SUPER_ADMIN_EMAIL?.toLowerCase().trim();
+
+function isSuperAdminEmail(email) {
+  return !!SUPER_ADMIN_EMAIL && email?.toLowerCase().trim() === SUPER_ADMIN_EMAIL;
+}
+
+const SUPER_ADMIN_DEFAULTS = {
+  approval_status: 'approved',
+  company_onboarding_completed: true,
+  disclaimer_acknowledged: true,
+  subscription_tier: 'enterprise',
+  company_role: 'super_admin',
+  is_super_admin: true,
+};
+
 /** Fetch the Firestore user profile merged with Firebase Auth identity */
 async function fetchMe() {
   const firebaseUser = auth.currentUser;
@@ -24,25 +39,43 @@ async function fetchMe() {
 
   const userRef = doc(db, 'users', firebaseUser.uid);
   const snap = await getDoc(userRef);
+  const superAdmin = isSuperAdminEmail(firebaseUser.email);
 
   if (!snap.exists()) {
     // First login — bootstrap the user document
-    const defaults = {
-      email: firebaseUser.email,
-      full_name: firebaseUser.displayName || firebaseUser.email,
-      approval_status: 'approved',           // Auto-approve on Firebase (no review queue needed unless you want one)
-      company_onboarding_completed: false,
-      disclaimer_acknowledged: false,
-      subscription_tier: 'free_trial',
-      company_role: 'admin',
-      created_date: serverTimestamp(),
-      updated_date: serverTimestamp(),
-    };
+    const defaults = superAdmin
+      ? {
+          email: firebaseUser.email,
+          full_name: firebaseUser.displayName || firebaseUser.email,
+          ...SUPER_ADMIN_DEFAULTS,
+          created_date: serverTimestamp(),
+          updated_date: serverTimestamp(),
+        }
+      : {
+          email: firebaseUser.email,
+          full_name: firebaseUser.displayName || firebaseUser.email,
+          approval_status: 'approved',
+          company_onboarding_completed: false,
+          disclaimer_acknowledged: false,
+          subscription_tier: 'free_trial',
+          company_role: 'admin',
+          is_super_admin: false,
+          created_date: serverTimestamp(),
+          updated_date: serverTimestamp(),
+        };
     await setDoc(userRef, defaults);
     return { id: firebaseUser.uid, ...defaults };
   }
 
-  return { id: firebaseUser.uid, ...snap.data() };
+  const data = snap.data();
+
+  // Ensure existing super admin doc always has the right flags (in case email was set later)
+  if (superAdmin && !data.is_super_admin) {
+    await updateDoc(userRef, { ...SUPER_ADMIN_DEFAULTS, updated_date: serverTimestamp() });
+    return { id: firebaseUser.uid, ...data, ...SUPER_ADMIN_DEFAULTS };
+  }
+
+  return { id: firebaseUser.uid, ...data };
 }
 
 export const User = {
@@ -69,19 +102,29 @@ export const User = {
   /** Email + password sign-up */
   async registerWithEmail(email, password, fullName) {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
-    // Create Firestore profile immediately
     const userRef = doc(db, 'users', cred.user.uid);
-    await setDoc(userRef, {
-      email,
-      full_name: fullName || email,
-      approval_status: 'approved',
-      company_onboarding_completed: false,
-      disclaimer_acknowledged: false,
-      subscription_tier: 'free_trial',
-      company_role: 'admin',
-      created_date: serverTimestamp(),
-      updated_date: serverTimestamp(),
-    });
+    const superAdmin = isSuperAdminEmail(email);
+    await setDoc(userRef, superAdmin
+      ? {
+          email,
+          full_name: fullName || email,
+          ...SUPER_ADMIN_DEFAULTS,
+          created_date: serverTimestamp(),
+          updated_date: serverTimestamp(),
+        }
+      : {
+          email,
+          full_name: fullName || email,
+          approval_status: 'approved',
+          company_onboarding_completed: false,
+          disclaimer_acknowledged: false,
+          subscription_tier: 'free_trial',
+          company_role: 'admin',
+          is_super_admin: false,
+          created_date: serverTimestamp(),
+          updated_date: serverTimestamp(),
+        }
+    );
     return cred;
   },
 
