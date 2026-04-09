@@ -10,7 +10,22 @@ import { ComplianceFramework } from "@/entities/ComplianceFramework";
 import { User } from "@/entities/User";
 import { toast } from "sonner";
 
-// NIST SP 800-53 Rev 5 — all 20 control families (NIST.SP.800-53r5 Update 1, Dec 2022)
+/**
+ * NIST SP 800-53 Release 5.2.0 — August 27, 2025 (current version)
+ *
+ * Changes from Update 1 (Dec 2022 / v5.1.0):
+ *   + SA-24  — Design for Cyber Resiliency (new base control)
+ *   + SA-15(13) — Development Process | Logging Syntax (new enhancement)
+ *   + SI-02(07) — Flaw Remediation | Root Cause Analysis (new enhancement)
+ *
+ * SA family: 23 → 25 controls  |  SI family: 23 → 24 controls
+ * Total: 1,189 → 1,192 controls across 20 families
+ *
+ * 800-53A Release 5.2.0 (same date) adds corresponding assessment procedures
+ * for SA-15(13), SA-24, and SI-02(07).
+ *
+ * Source: csrc.nist.gov/News/2025/nist-releases-revision-to-sp-800-53-controls
+ */
 export const NIST_800_53_CONTROL_FAMILIES = [
   { id: "AC", name: "Access Control",                                        controls: 25 },
   { id: "AT", name: "Awareness and Training",                                controls: 6  },
@@ -26,18 +41,46 @@ export const NIST_800_53_CONTROL_FAMILIES = [
   { id: "PL", name: "Planning",                                              controls: 11 },
   { id: "PM", name: "Program Management",                                    controls: 32 },
   { id: "PS", name: "Personnel Security",                                    controls: 9  },
-  { id: "PT", name: "Personally Identifiable Information Processing and Transparency", controls: 8 },
+  { id: "PT", name: "PII Processing and Transparency",                       controls: 8  },
   { id: "RA", name: "Risk Assessment",                                       controls: 10 },
-  { id: "SA", name: "System and Services Acquisition",                       controls: 23 },
+  { id: "SA", name: "System and Services Acquisition",  controls: 25, note: "+SA-24, +SA-15(13) — Release 5.2.0" },
   { id: "SC", name: "System and Communications Protection",                  controls: 51 },
-  { id: "SI", name: "System and Information Integrity",                      controls: 23 },
+  { id: "SI", name: "System and Information Integrity",  controls: 24, note: "+SI-02(07) — Release 5.2.0" },
   { id: "SR", name: "Supply Chain Risk Management",                          controls: 12 },
+];
+
+// New controls added in Release 5.2.0 (Aug 27, 2025)
+export const NIST_800_53_R520_NEW_CONTROLS = [
+  {
+    id: "SA-24",
+    name: "Design for Cyber Resiliency",
+    family: "SA",
+    type: "Base control",
+    summary: "Require developers/architects to design systems that can anticipate, withstand, respond to, and recover from cyberattacks while maintaining critical functions — resilience by design.",
+    baseline: "Not in SP 800-53B baselines (Low/Mod/High)"
+  },
+  {
+    id: "SA-15(13)",
+    name: "Development Process, Standards, and Tools | Logging Syntax",
+    family: "SA",
+    type: "Control enhancement",
+    summary: "Define an electronic format for recording security-related events throughout the development process to strengthen intrusion detection and incident response capabilities.",
+    baseline: "Not in SP 800-53B baselines"
+  },
+  {
+    id: "SI-02(07)",
+    name: "Flaw Remediation | Root Cause Analysis",
+    family: "SI",
+    type: "Control enhancement",
+    summary: "Require root cause analysis whenever software updates fail or cause issues; form an action plan and implement corrective measures to prevent recurrence.",
+    baseline: "Not in SP 800-53B baselines"
+  },
 ];
 
 const FRAMEWORK_OPTIONS = [
   { value: "NIST_CSF",          label: "NIST Cybersecurity Framework (CSF) 2.0", description: "Risk-based cybersecurity framework — updated Feb 2024" },
-  { value: "NIST_800_53_REV5",  label: "NIST SP 800-53 Rev 5",                  description: "1,189 security & privacy controls across 20 families (Update 1, Dec 2022)" },
-  { value: "NIST_800_53A_REV5", label: "NIST SP 800-53A Rev 5 — Assessment Procedures", description: "Assessing security & privacy controls per NIST SP 800-53 Rev 5 (Dec 2022)", highlighted: true },
+  { value: "NIST_800_53_REV5",  label: "NIST SP 800-53 Release 5.2.0",          description: "1,192 security & privacy controls across 20 families — current version (Aug 2025)" },
+  { value: "NIST_800_53A_REV5", label: "NIST SP 800-53A Release 5.2.0 — Assessment Procedures", description: "Current assessment procedures for all 1,192 controls (Aug 27, 2025)", highlighted: true },
   { value: "ISO_27001",         label: "ISO/IEC 27001:2022",                     description: "Information security management systems" },
   { value: "ISO_27002",         label: "ISO/IEC 27002:2022",                     description: "Information security controls — 93 controls across 4 themes" },
   { value: "CIS_Controls",      label: "CIS Critical Security Controls v8.1",    description: "18 prioritised cybersecurity best practices" },
@@ -173,23 +216,49 @@ export default function AddFrameworkDialog({ onFrameworkCreated }) {
             </Select>
           </div>
 
-          {/* NIST 800-53A control families reference panel */}
+          {/* NIST 800-53 control families reference panel */}
           {(formData.framework_type === 'NIST_800_53A_REV5' || formData.framework_type === 'NIST_800_53_REV5') && (
-            <div className="bg-slate-800/60 border border-purple-500/20 rounded-lg p-3">
-              <p className="text-xs text-purple-300 font-semibold mb-2">
-                NIST SP 800-53 Rev 5 (Update 1, Dec 2022) — 20 Control Families · 1,189 controls
-              </p>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 max-h-40 overflow-y-auto pr-1">
+            <div className="bg-slate-800/60 border border-purple-500/20 rounded-lg p-3 space-y-3">
+              <div>
+                <p className="text-xs text-purple-300 font-semibold">
+                  NIST SP 800-53 Release 5.2.0 — 20 Control Families · 1,192 controls
+                </p>
+                <p className="text-[10px] text-yellow-400/80 mt-0.5">
+                  Current version · Published Aug 27, 2025 · Supersedes Update 1 (Dec 2022)
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 max-h-44 overflow-y-auto pr-1">
                 {NIST_800_53_CONTROL_FAMILIES.map(f => (
                   <div key={f.id} className="flex items-center gap-1.5 text-[11px] text-gray-300">
                     <span className="font-mono text-cyan-400 w-6 shrink-0">{f.id}</span>
                     <span className="truncate">{f.name}</span>
-                    <span className="text-gray-500 ml-auto shrink-0">{f.controls}</span>
+                    <span className={`ml-auto shrink-0 ${f.note ? 'text-yellow-400' : 'text-gray-500'}`}>
+                      {f.controls}
+                    </span>
                   </div>
                 ))}
               </div>
-              <p className="text-[10px] text-gray-500 mt-2">
-                Source: NIST SP 800-53A Rev 5 · csrc.nist.gov/pubs/sp/800/53a/r5/final
+
+              {/* New in Release 5.2.0 callout */}
+              <div className="border-t border-slate-700/60 pt-2">
+                <p className="text-[10px] text-yellow-400 font-semibold mb-1.5">
+                  New in Release 5.2.0 (Aug 2025)
+                </p>
+                {NIST_800_53_R520_NEW_CONTROLS.map(c => (
+                  <div key={c.id} className="mb-1">
+                    <span className="font-mono text-cyan-400 text-[10px]">{c.id}</span>
+                    <span className="text-[10px] text-gray-300 ml-1">{c.name}</span>
+                    <span className="text-[10px] text-gray-500 ml-1">— {c.summary.slice(0, 80)}…</span>
+                  </div>
+                ))}
+                <p className="text-[9px] text-gray-500 mt-1.5">
+                  SA·SI family counts updated · All 3 new controls excluded from SP 800-53B baselines
+                </p>
+              </div>
+
+              <p className="text-[9px] text-gray-500">
+                Source: csrc.nist.gov/News/2025/nist-releases-revision-to-sp-800-53-controls
               </p>
             </div>
           )}
