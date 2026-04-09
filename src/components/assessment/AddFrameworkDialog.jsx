@@ -118,7 +118,12 @@ export default function AddFrameworkDialog({ onFrameworkCreated }) {
     setCreating(true);
     try {
       const user = await User.me();
-      
+
+      if (!user?.company_id) {
+        toast.error("Company setup is not complete. Please complete company onboarding before adding frameworks.");
+        return;
+      }
+
       const newFramework = await ComplianceFramework.create({
         company_id: user.company_id,
         name: formData.name,

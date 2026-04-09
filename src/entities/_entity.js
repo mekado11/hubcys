@@ -102,9 +102,11 @@ export function createEntity(entityName) {
     },
 
     async create(data) {
-      const payload = { ...data, created_date: serverTimestamp(), updated_date: serverTimestamp() };
+      // Strip undefined values — Firestore rejects documents with undefined fields
+      const clean = Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined));
+      const payload = { ...clean, created_date: serverTimestamp(), updated_date: serverTimestamp() };
       const ref = await addDoc(colRef(), payload);
-      return { id: ref.id, ...data };
+      return { id: ref.id, ...clean };
     },
 
     async update(id, data) {

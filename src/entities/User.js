@@ -48,12 +48,18 @@ async function fetchMe() {
   // Super admin: email must be verified (prevents account takeover via unverified email registration)
   const superAdmin = isSuperAdminEmail(firebaseUser.email) && firebaseUser.emailVerified !== false;
 
+  // Super admins use their own UID as their company_id (virtual single-org account).
+  // This ensures they can create/read company-scoped documents without going through
+  // the multi-tenant company onboarding flow.
+  const superAdminCompanyId = firebaseUser.uid;
+
   if (!snap.exists()) {
     // First login — bootstrap the user document
     const defaults = superAdmin
       ? {
           email: firebaseUser.email,
           full_name: firebaseUser.displayName || firebaseUser.email,
+          company_id: superAdminCompanyId,
           ...SUPER_ADMIN_DEFAULTS,
           created_date: serverTimestamp(),
           updated_date: serverTimestamp(),
@@ -77,9 +83,15 @@ async function fetchMe() {
   const data = snap.data();
 
   // Ensure existing super admin doc always has the right flags (in case email was set later)
-  if (superAdmin && !data.is_super_admin) {
-    await updateDoc(userRef, { ...SUPER_ADMIN_DEFAULTS, updated_date: serverTimestamp() });
-    return { id: firebaseUser.uid, ...data, ...SUPER_ADMIN_DEFAULTS };
+  // Also backfill company_id for super admins who were bootstrapped before this fix.
+  if (superAdmin && (!data.is_super_admin || !data.company_id)) {
+    const patch = {
+      ...SUPER_ADMIN_DEFAULTS,
+      company_id: data.company_id || superAdminCompanyId,
+      updated_date: serverTimestamp(),
+    };
+    await updateDoc(userRef, patch);
+    return { id: firebaseUser.uid, ...data, ...patch };
   }
 
   return { id: firebaseUser.uid, ...data };
