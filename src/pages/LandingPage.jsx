@@ -106,7 +106,7 @@ export default function LandingPage() {
     if (currentUser) {
       window.location.href = createPageUrl("Dashboard");
     } else {
-      window.location.href = createPageUrl("CompanyOnboarding");
+      window.location.href = '/Login?mode=register';
     }
   };
 
@@ -158,7 +158,7 @@ export default function LandingPage() {
               <>
                 <Button
                   variant="ghost"
-                  onClick={() => User.loginWithRedirect(createPageUrl("Dashboard"))}
+                  onClick={() => window.location.href = '/Login'}
                   className="text-slate-400 hover:text-white text-sm hidden sm:flex"
                 >
                   Sign in

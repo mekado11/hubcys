@@ -593,7 +593,7 @@ export default function Layout({ children, currentPageName }) {
               
               {loadError.type === 'auth' && (
                 <Button 
-                  onClick={() => User.loginWithRedirect(window.location.href)}
+                  onClick={() => window.location.href = '/Login'}
                   className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
                 >
                   Log In Again

@@ -8,7 +8,8 @@ import { ShieldCheck, Loader2, Chrome } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState('login'); // 'login' | 'register'
+  const initialMode = new URLSearchParams(window.location.search).get('mode') === 'register' ? 'register' : 'login';
+  const [mode, setMode] = useState(initialMode); // 'login' | 'register'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
