@@ -145,7 +145,23 @@ export default function AssessmentPage() {
   const loadFrameworks = async (user) => {
     try {
       setLoadingFrameworks(true);
-      const data = await ComplianceFramework.filter({ company_id: user.company_id }, "-updated_date", 100);
+      let data = await ComplianceFramework.filter({ company_id: user.company_id }, "-updated_date", 100);
+
+      // Backfill: frameworks created before company_id was set have no company_id field
+      // and are invisible to the scoped query. Fetch all and fix them.
+      if (data.length === 0 && user.company_id) {
+        try {
+          const all = await ComplianceFramework.list("-created_date", 200);
+          const orphaned = all.filter(f => !f.company_id);
+          if (orphaned.length > 0) {
+            await Promise.all(
+              orphaned.map(f => ComplianceFramework.update(f.id, { company_id: user.company_id }))
+            );
+            data = orphaned.map(f => ({ ...f, company_id: user.company_id }));
+          }
+        } catch (_) { /* ignore — fallback query may fail in strict rules environments */ }
+      }
+
       setManagedFrameworks(data || []);
     } finally {
       setLoadingFrameworks(false);
