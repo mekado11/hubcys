@@ -218,6 +218,28 @@ function logUsage({ feature, model, inputTokens, outTokens, latencyMs, cacheHit,
   }));
 }
 
+// ─── In-process rate limiter (per Vercel function instance, per IP) ───────────
+// For production, replace with Upstash Redis for cross-instance enforcement.
+const _rateLimitStore = new Map(); // ip → { count, resetAt }
+const RL_WINDOW_MS = 60_000;       // 1 minute window
+const RL_MAX_PER_MIN = 30;         // max requests per IP per minute
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const entry = _rateLimitStore.get(ip);
+  if (!entry || now > entry.resetAt) {
+    _rateLimitStore.set(ip, { count: 1, resetAt: now + RL_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= RL_MAX_PER_MIN) return false;
+  entry.count++;
+  return true;
+}
+
+function getClientIp(req) {
+  return (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket?.remoteAddress || 'unknown';
+}
+
 // ─── CORS helper ─────────────────────────────────────────────────────────────
 function setCorsHeaders(req, res) {
   const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'https://hubcys.com,https://www.hubcys.com').split(',').map(o => o.trim());
@@ -252,6 +274,11 @@ export default async function handler(req, res) {
   // Require a Firebase ID token from the client
   if (!isAuthenticated(req)) {
     return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  // Rate limit: 30 req/min per IP
+  if (!checkRateLimit(getClientIp(req))) {
+    return res.status(429).json({ error: 'Too many requests. Please wait a moment and try again.' });
   }
 
   const {

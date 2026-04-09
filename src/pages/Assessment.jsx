@@ -276,20 +276,9 @@ export default function AssessmentPage() {
   };
 
   const handleExportQuestionnaire = async () => {
-    const savedId = await handleSave(false);
-    const id = savedId || assessmentData.id;
-    if (!id) return;
-
-    const { data } = await generateQuestionnairePdf({ assessmentId: id });
-    const blob = new Blob([data], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `Hubcys_Questionnaire_${assessmentData.company_name?.replace(/\s+/g, "_") || "Assessment"}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    URL.revokeObjectURL(url);
-    a.remove();
+    const doc = await generateQuestionnairePdf();
+    const filename = `Hubcys_Questionnaire_${assessmentData.company_name?.replace(/\s+/g, "_") || "Assessment"}.pdf`;
+    doc.save(filename);
   };
 
   const onStepClick = (step) => {
