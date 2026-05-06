@@ -248,7 +248,7 @@ export default function Layout({ children, currentPageName }) {
         }
       }
 
-      if (user.approval_status === 'suspended' || user.approval_status === 'rejected') {
+      if (user.approval_status === 'suspended' || user.approval_status === 'rejected' || user.approval_status === 'banned') {
         if (currentPageName !== 'AccessDenied' && 
             currentPageName !== 'LandingPage' && 
             currentPageName !== 'PrivacyPolicy' && 

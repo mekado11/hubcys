@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Check, X, Ban, Loader2, Search, ArrowLeft, Copy, Users } from "lucide-react";
+import { Check, X, Ban, ShieldOff, Loader2, Search, ArrowLeft, Copy, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast"; // Added toast import
@@ -63,6 +63,7 @@ export default function UserManagement() {
       if (tab === "approved") return u.approval_status === "approved";
       if (tab === "rejected") return u.approval_status === "rejected";
       if (tab === "suspended") return u.approval_status === "suspended";
+      if (tab === "banned") return u.approval_status === "banned";
       return true;
     });
     if (!q) return byTab;
@@ -93,6 +94,7 @@ export default function UserManagement() {
       approved: "bg-green-500/20 text-green-300 border-green-500/30",
       rejected: "bg-red-500/20 text-red-300 border-red-500/30",
       suspended: "bg-orange-500/20 text-orange-300 border-orange-500/30",
+      banned: "bg-red-900/40 text-red-200 border-red-700/60",
     };
     return <Badge className={map[status] || "bg-slate-700 text-slate-200 border-slate-600"}>{status}</Badge>;
   };
@@ -196,11 +198,18 @@ export default function UserManagement() {
     setReasonDialogOpen(true);
   };
 
+  const confirmBan = (user) => {
+    setReasonTarget({ user, action: "ban" });
+    setReasonText("");
+    setReasonDialogOpen(true);
+  };
+
   const handleReasonConfirm = async () => {
     if (!reasonTarget) return;
     const { user, action } = reasonTarget;
     setReasonDialogOpen(false);
-    await doUpdateStatus(user, action === "reject" ? "rejected" : "suspended", reasonText?.trim() || null);
+    const newStatus = action === "reject" ? "rejected" : action === "ban" ? "banned" : "suspended";
+    await doUpdateStatus(user, newStatus, reasonText?.trim() || null);
     setReasonTarget(null);
     setReasonText("");
   };
@@ -245,6 +254,18 @@ export default function UserManagement() {
           {updatingId === u.id && u.approval_status !== "suspended" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ban className="w-4 h-4 mr-1" />}
           Suspend
         </Button>
+
+        {/* Ban (permanent) */}
+        <Button
+          size="sm"
+          variant="outline"
+          className="border-red-700/50 text-red-400 hover:bg-red-700/20"
+          disabled={disabled || u.approval_status === "banned"}
+          onClick={() => confirmBan(u)}
+        >
+          {updatingId === u.id && u.approval_status === "banned" ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldOff className="w-4 h-4 mr-1" />}
+          Ban
+        </Button>
       </div>
     );
   };
@@ -260,7 +281,7 @@ export default function UserManagement() {
     );
   }
 
-  if (!currentUser || currentUser.role !== "admin") {
+  if (!currentUser || (!currentUser.is_super_admin && currentUser.company_role !== "admin")) {
     return (
       <div className="min-h-screen cyber-gradient flex items-center justify-center">
         <Card className="glass-effect border-red-500/30 max-w-md">
@@ -268,7 +289,7 @@ export default function UserManagement() {
             <CardTitle className="text-red-300">Access Restricted</CardTitle>
           </CardHeader>
           <CardContent className="text-gray-300">
-            Only Fortigap administrators can view and manage users.
+            Only company administrators and platform super admins can manage users.
           </CardContent>
         </Card>
       </div>
@@ -327,6 +348,7 @@ export default function UserManagement() {
             <TabsTrigger value="approved">Approved</TabsTrigger>
             <TabsTrigger value="rejected">Rejected</TabsTrigger>
             <TabsTrigger value="suspended">Suspended</TabsTrigger>
+            <TabsTrigger value="banned">Banned</TabsTrigger>
             <TabsTrigger value="all">All</TabsTrigger>
           </TabsList>
 
@@ -457,7 +479,7 @@ export default function UserManagement() {
         <DialogContent className="bg-slate-900 border-slate-700 text-white">
           <DialogHeader>
             <DialogTitle>
-              {reasonTarget?.action === "reject" ? "Reject user" : "Suspend user"}
+              {reasonTarget?.action === "reject" ? "Reject user" : reasonTarget?.action === "ban" ? "Permanently ban user" : "Suspend user"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-2">
