@@ -37,6 +37,22 @@ const SUPER_ADMIN_DEFAULTS = {
   is_super_admin: true,
 };
 
+// In-memory cache so every component can call User.me() without a Firestore
+// round-trip on each render. Invalidated on update/logout or after 2 minutes.
+let _cachedUser = null;
+let _cacheTs = 0;
+const CACHE_TTL_MS = 120_000;
+
+function _invalidateCache() {
+  _cachedUser = null;
+  _cacheTs = 0;
+}
+
+function _setCache(user) {
+  _cachedUser = user;
+  _cacheTs = Date.now();
+}
+
 /** Fetch the Firestore user profile merged with Firebase Auth identity */
 async function fetchMe() {
   const firebaseUser = auth.currentUser;
@@ -77,7 +93,9 @@ async function fetchMe() {
           updated_date: serverTimestamp(),
         };
     await setDoc(userRef, defaults);
-    return { id: firebaseUser.uid, ...defaults };
+    const result = { id: firebaseUser.uid, ...defaults };
+    _setCache(result);
+    return result;
   }
 
   const data = snap.data();
@@ -91,7 +109,9 @@ async function fetchMe() {
       updated_date: serverTimestamp(),
     };
     await updateDoc(userRef, patch);
-    return { id: firebaseUser.uid, ...data, ...patch };
+    const result = { id: firebaseUser.uid, ...data, ...patch };
+    _setCache(result);
+    return result;
   }
 
   // Backfill company_id for any user who completed onboarding or has is_super_admin
@@ -100,15 +120,23 @@ async function fetchMe() {
   if (!data.company_id && (data.is_super_admin || data.company_onboarding_completed)) {
     const fallbackCompanyId = firebaseUser.uid;
     await updateDoc(userRef, { company_id: fallbackCompanyId, updated_date: serverTimestamp() });
-    return { id: firebaseUser.uid, ...data, company_id: fallbackCompanyId };
+    const result = { id: firebaseUser.uid, ...data, company_id: fallbackCompanyId };
+    _setCache(result);
+    return result;
   }
 
-  return { id: firebaseUser.uid, ...data };
+  const result = { id: firebaseUser.uid, ...data };
+  _setCache(result);
+  return result;
 }
 
 export const User = {
-  /** Returns the current user's full profile (Firebase Auth + Firestore) */
-  async me() {
+  /** Returns the current user's full profile (Firebase Auth + Firestore).
+   *  Results are cached for 2 minutes — call User.me({ force: true }) to bypass. */
+  async me({ force = false } = {}) {
+    if (!force && _cachedUser && Date.now() - _cacheTs < CACHE_TTL_MS) {
+      return _cachedUser;
+    }
     return fetchMe();
   },
 
@@ -154,11 +182,13 @@ export const User = {
           updated_date: serverTimestamp(),
         }
     );
+    _invalidateCache();
     return cred;
   },
 
   /** Sign out */
   async logout() {
+    _invalidateCache();
     await signOut(auth);
     window.location.href = '/';
   },
@@ -169,6 +199,10 @@ export const User = {
     if (!firebaseUser) throw new Error('Not authenticated');
     const userRef = doc(db, 'users', firebaseUser.uid);
     await updateDoc(userRef, { ...data, updated_date: serverTimestamp() });
+    // Merge update into cache so next me() call reflects it without a re-fetch
+    if (_cachedUser) {
+      _setCache({ ..._cachedUser, ...data });
+    }
     return data;
   },
 
