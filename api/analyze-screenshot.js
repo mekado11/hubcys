@@ -77,22 +77,31 @@ function buildPrompt(emailHeaders, suspiciousUrls, fileHashes) {
 
 ${extras.length ? extras.join('\n\n') + '\n\n' : ''}Your task:
 1. Examine the visual content carefully for phishing indicators (brand impersonation, urgency language, suspicious links, fake login forms, typosquatted domains, misleading sender names, etc.)
-2. Cross-reference any URLs/domains in the metadata with known phishing tactics
-3. Return a single JSON object with this exact schema:
+2. Extract all visible text from the screenshot(s).
+3. Cross-reference any URLs/domains in the metadata with known phishing tactics.
+4. Return a single JSON object with this exact schema:
 
 {
   "verdict": "PHISHING" | "SUSPICIOUS" | "LIKELY_SAFE",
-  "risk_level": "high" | "medium" | "low",
-  "confidence": <integer 0-100>,
-  "summary": "<2-3 sentence analyst summary>",
+  "score": <integer 0-100, phishing risk score>,
+  "overall_risk_assessment_narrative": "<2-3 sentence analyst summary of the overall risk>",
   "technique": "<phishing technique name, e.g. 'Credential Harvesting', 'BEC', 'Malware Delivery'>",
-  "indicators": ["<indicator 1>", "<indicator 2>", ...],
+  "reasons": ["<red flag 1>", "<red flag 2>", ...],
+  "extracted_text": "<all visible text extracted from the screenshot(s), preserving line breaks>",
+  "suspicious_phrases": ["<phrase 1>", "<phrase 2>"],
   "artifacts": [
-    { "type": "domain|url|email|ip|hash_sha256|hash_md5", "value": "<value>", "risk": "high|medium|low" }
+    {
+      "type": "domain|url|email|ip|hash_sha256|hash_md5",
+      "value": "<value>",
+      "risk": "high|medium|low",
+      "source": "screenshot|email_header|provided_url|provided_hash",
+      "reasoning": "<why this artifact is suspicious or notable>"
+    }
   ],
   "recommendations": ["<action 1>", "<action 2>", ...]
 }
 
+suspicious_phrases should be short phrases from extracted_text that are particularly suspicious (urgency language, threats, reward claims, etc.).
 Respond with valid JSON only. No markdown, no explanation.`;
 }
 
@@ -167,7 +176,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Analysis returned invalid data. Please try again.' });
     }
 
-    return res.status(200).json({ verdict: analysis.verdict, ...analysis });
+    return res.status(200).json(analysis);
 
   } catch (err) {
     console.error('[analyze-screenshot]', err.message);
