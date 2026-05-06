@@ -1,32 +1,34 @@
 /**
- * cveSearch — queries the NIST NVD API v2 for CVE records.
- * Free, no key required for basic usage (rate limit: 5 req/30s without key).
- * params: { keyword, cveId, limit = 10 }
- * Returns { data: [...cves] }
+ * cveSearch — CVE lookup via the /api/cve-search serverless proxy (OpenCVE).
+ * Credentials are kept server-side; no API key in the browser bundle.
+ *
+ * @param {object} params
+ * @param {string} [params.keyword]  Free-text search (product name, keyword)
+ * @param {string} [params.cveId]   Exact CVE ID, e.g. "CVE-2024-1234"
+ * @param {number} [params.limit]   Max results (default 10)
+ * @returns {{ data: object[], total: number }}
  */
+import { auth } from '@/api/firebase';
+
 export const cveSearch = async ({ keyword, cveId, limit = 10 } = {}) => {
-  const params = new URLSearchParams({ resultsPerPage: limit, startIndex: 0 });
-  if (cveId)   params.set('cveId', cveId.toUpperCase());
-  if (keyword) params.set('keywordSearch', keyword);
+  if (!keyword && !cveId) throw new Error('cveSearch: keyword or cveId is required');
 
-  const res = await fetch(`https://services.nvd.nist.gov/rest/json/cves/2.0?${params}`);
-  if (!res.ok) throw new Error(`NVD CVE search failed: ${res.status}`);
-  const json = await res.json();
+  let idToken = '';
+  try {
+    if (auth?.currentUser) idToken = await auth.currentUser.getIdToken();
+  } catch (_) { /* caller will get 401 */ }
 
-  const cves = (json.vulnerabilities || []).map(({ cve }) => {
-    const desc = cve.descriptions?.find(d => d.lang === 'en')?.value || '';
-    const cvss = cve.metrics?.cvssMetricV31?.[0]?.cvssData
-               ?? cve.metrics?.cvssMetricV30?.[0]?.cvssData
-               ?? cve.metrics?.cvssMetricV2?.[0]?.cvssData;
-    return {
-      id: cve.id,
-      description: desc,
-      severity: cvss?.baseSeverity?.toLowerCase() || 'unknown',
-      score: cvss?.baseScore ?? null,
-      published: cve.published,
-      url: `https://nvd.nist.gov/vuln/detail/${cve.id}`,
-    };
+  const res = await fetch('/api/cve-search', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+    },
+    body: JSON.stringify({ keyword, cveId, limit }),
   });
 
-  return { data: cves, total: json.totalResults };
+  const json = await res.json().catch(() => ({ error: 'Invalid server response' }));
+  if (!res.ok) throw new Error(json.error || `CVE search failed (${res.status})`);
+
+  return { data: json.data || [], total: json.total || 0 };
 };
