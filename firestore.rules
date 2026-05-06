@@ -169,13 +169,18 @@ service cloud.firestore {
     }
 
     // ── Companies ─────────────────────────────────────────────────────────────
+    // Any authenticated user may read (needed for access-code lookups during onboarding)
+    // and create (new users have no company_id yet so sameCompany check would always fail).
+    // Only members of the same company may update or delete.
     match /company/{companyId} {
-      allow read: if isAuthed() && (callerCompanyId() == companyId || isSuperAdmin());
-      allow write: if isAuthed() && (callerCompanyId() == companyId || isSuperAdmin());
+      allow read: if isAuthed();
+      allow create: if isAuthed();
+      allow update, delete: if isAuthed() && (callerCompanyId() == companyId || isSuperAdmin());
     }
     match /companies/{companyId} {
-      allow read: if isAuthed() && (callerCompanyId() == companyId || isSuperAdmin());
-      allow write: if isAuthed() && (callerCompanyId() == companyId || isSuperAdmin());
+      allow read: if isAuthed();
+      allow create: if isAuthed();
+      allow update, delete: if isAuthed() && (callerCompanyId() == companyId || isSuperAdmin());
     }
 
     // ── Global / admin-only collections ───────────────────────────────────────

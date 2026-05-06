@@ -268,10 +268,8 @@ export default function Layout({ children, currentPageName }) {
       }
 
       if (!user.company_onboarding_completed && user.subscription_tier !== 'early_career') {
-        if (!sessionStorage.getItem('layout_onboarding_redirect')) {
-          sessionStorage.setItem('layout_onboarding_redirect', 'true');
+        if (currentPageName !== 'CompanyOnboarding') {
           redirectingRef.current = true;
-          
           setTimeout(() => {
             window.location.href = createPageUrl('CompanyOnboarding');
           }, 100);
