@@ -1,18 +1,15 @@
 /**
  * analyzeIocs — parses and analyses a log/IOC file for indicators of compromise.
  *
- * Fetches the uploaded file from Firebase Storage, extracts IOCs via AI,
- * and returns a structured analysis.
- *
  * @param {object}  params
- * @param {string}  params.file_url         Firebase Storage download URL of the log file
- * @param {boolean} [params.enable_ai_mapping]  Whether to enable full AI MITRE ATT&CK mapping
- * @param {string}  [params.log_type]        Log type hint: 'cyber', 'network', 'endpoint', 'auth'
- * @returns {{ data: object }}   Structured IOC analysis result
+ * @param {string}  params.file_url            Firebase Storage download URL of the log file
+ * @param {boolean} [params.enable_ai_mapping] Whether to enable full AI MITRE ATT&CK mapping
+ * @param {string}  [params.log_type]          Log type hint: 'cyber', 'physical_access', etc.
+ * @returns {{ data: object }}   Structured IOC analysis result matching the IOCAnalyzer UI schema
  */
 import { InvokeLLM } from '@/integrations/Core';
 
-const MAX_FILE_BYTES = 64 * 1024; // Read first 64 KB of the log file
+const MAX_FILE_BYTES = 64 * 1024;
 
 async function fetchFileText(url) {
   const res = await fetch(url, {
@@ -26,7 +23,6 @@ async function fetchFileText(url) {
 export const analyzeIocs = async ({ file_url, enable_ai_mapping = true, log_type = 'cyber' }) => {
   if (!file_url) throw new Error('analyzeIocs: file_url is required');
 
-  // Fetch log content
   let logContent = '';
   try {
     logContent = await fetchFileText(file_url);
@@ -34,8 +30,11 @@ export const analyzeIocs = async ({ file_url, enable_ai_mapping = true, log_type
     throw new Error(`Could not read file for analysis: ${err.message}`);
   }
 
-  // Truncate for AI context window
   const truncated = logContent.slice(0, 48_000);
+
+  const mitreFallback = enable_ai_mapping
+    ? '"mitre_with_names": [{"id": "T1234", "name": "Technique Name"}],'
+    : '"mitre_with_names": [],';
 
   const prompt = `You are a threat intelligence analyst. Analyse the following ${log_type} log file and extract all Indicators of Compromise (IOCs).
 
@@ -44,37 +43,63 @@ LOG CONTENT (first 48KB):
 ${truncated}
 \`\`\`
 
-Extract and return a JSON object with ALL IOCs found:
+Return a JSON object with EXACTLY this structure:
 
 {
-  "iocs": [
+  "results": [
     {
       "type": "ip|domain|url|hash|email|filename|registry_key|user_agent|cve",
       "value": "<the actual IOC value>",
-      "context": "Brief context (which line/event it appeared in)",
-      "severity": "critical|high|medium|low|info",
-      "mitre_tactic": "${enable_ai_mapping ? 'MITRE ATT&CK Tactic (e.g. Initial Access, Execution, Persistence)' : 'N/A'}",
-      "mitre_technique": "${enable_ai_mapping ? 'e.g. T1566.001' : 'N/A'}",
-      "description": "What this IOC suggests"
+      "verdict": "high|medium|low",
+      "score": <integer 0-100, where >=70 is high, >=40 is medium, <40 is low>,
+      "rationale": ["<why this is suspicious, reason 1>", "<reason 2>"],
+      "recommended_actions": ["block_ip|watchlist_ip|open_incident|alert|block_domain_or_sinkhole|watchlist_domain|block_hash_edr|watchlist_hash|investigate_internal_host"],
+      "samples": ["<raw log line where this IOC appeared>"],
+      "event_context": {
+        "source": "<log source name or null>",
+        "event_id": null,
+        "action": "<action taken or null>",
+        "outcome": "<success|failure|null>",
+        "user": "<username if present or null>",
+        "process_name": "<process name if present or null>",
+        "src_ip": "<source IP if applicable or null>",
+        "share_name": null,
+        "access_mask": null
+      },
+      "enrichment": {
+        "country_name": null,
+        "hostname": null,
+        "ti_summary": "<1-sentence threat intel summary>"
+      },
+      ${mitreFallback}
+      "owasp_categories": ${enable_ai_mapping ? '["A01:2021-Broken Access Control"]' : '[]'},
+      "nist_category": ${enable_ai_mapping ? '"PR.AC-3"' : 'null'},
+      "analyst_note": null
     }
   ],
   "summary": {
-    "total_iocs": 0,
-    "by_type": { "ip": 0, "domain": 0, "url": 0, "hash": 0, "email": 0 },
-    "by_severity": { "critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0 },
-    "log_type": "${log_type}",
-    "analysis_notes": "Brief overview of what the log shows"
+    "total_events": <integer — total log lines/events parsed>,
+    "total_iocs": <integer — total distinct IOCs found>,
+    "high": <integer — count of high-verdict IOCs>,
+    "medium": <integer — count of medium-verdict IOCs>,
+    "low": <integer — count of low-verdict IOCs>
   },
-  "threat_assessment": {
-    "overall_severity": "critical|high|medium|low|info",
-    "confidence": "high|medium|low",
-    "likely_attack_type": "Description of suspected attack type or 'No clear attack pattern detected'",
-    "recommended_actions": ["action 1", "action 2"]
-  }
+  "event_groups": [
+    {
+      "group_type": "impossible_travel|privilege_escalation|c2_beaconing|data_exfiltration|off_hours_activity|brute_force|lateral_movement",
+      "severity": "high|medium|low",
+      "narrative": "<2-3 sentence description of the attack pattern detected>",
+      "mitre_techniques": ["T1078", "T1110"]
+    }
+  ]
 }
 
-Be thorough — extract every IP, domain, URL, file hash, email address, and suspicious string.
-Exclude RFC1918 private IPs and localhost unless they appear in a suspicious context.`;
+Rules:
+- verdict = "high" if score >= 70, "medium" if score >= 40, "low" otherwise
+- Extract all suspicious IPs, domains, URLs, hashes, emails, filenames
+- Exclude RFC1918 private IPs and localhost UNLESS in a clearly suspicious context
+- event_groups captures behavioral patterns across multiple IOCs (return 1-3 groups, or [] if none)
+- If log is empty or no IOCs found, return results=[], summary with zeros, event_groups=[]`;
 
   const result = await InvokeLLM({
     prompt,
