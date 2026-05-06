@@ -66,8 +66,13 @@ export default function CveSearch() {
     setCveAnalysis(null);
 
     try {
-      const { data } = await cveSearch({ query: searchTerm.trim() });
-      setResults(data.vulnerabilities || []);
+      const isCveId = /^CVE-\d{4}-\d+$/i.test(searchTerm.trim());
+      const { data } = await cveSearch(
+        isCveId
+          ? { cveId: searchTerm.trim() }
+          : { keyword: searchTerm.trim() }
+      );
+      setResults(data || []);
     } catch (err) {
       setError(err?.message || "Failed to search CVE database");
       setResults([]);
