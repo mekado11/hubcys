@@ -85,24 +85,26 @@ export default function AccessDenied() {
   };
 
   const contactHubcys = () => {
-    const subject = encodeURIComponent('Account Access Appeal - Fortigap');
-    const body = encodeURIComponent(`Hello Fortigap Team,
+    // Strip CR/LF from user-controlled fields to prevent email header injection
+    const sanitise = (s) => String(s || '').replace(/[\r\n]/g, ' ').trim();
+    const subject = encodeURIComponent('Account Access Appeal - Hubcys');
+    const body = encodeURIComponent(`Hello Hubcys Team,
 
-I believe my Fortigap account status may need review.
+I believe my Hubcys account status may need review.
 
 User Details:
-- Name: ${user?.full_name || [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Not provided'}
-- Email: ${user?.email}
-- Company: ${user?.company_name || 'Not provided'}
+- Name: ${sanitise(user?.full_name || [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Not provided')}
+- Email: ${sanitise(user?.email)}
+- Company: ${sanitise(user?.company_name || 'Not provided')}
 - Decision Date: ${user?.approved_date ? new Date(user.approved_date).toLocaleDateString() : 'Unknown'}
-- Current Status: ${user?.approval_status || 'Unknown'}
-- Reason Provided: ${user?.rejection_reason || 'Not specified'}
+- Current Status: ${sanitise(user?.approval_status || 'Unknown')}
+- Reason Provided: ${sanitise(user?.rejection_reason || 'Not specified')}
 
 Please let me know if any additional information is required.
 
 Thank you,
-${user?.full_name || 'User'}`);
-    window.location.href = `mailto:info@cygric.com?subject=${subject}&body=${body}`;
+${sanitise(user?.full_name || 'User')}`);
+    window.location.href = `mailto:sales@hubcys.com?subject=${subject}&body=${body}`;
   };
 
   if (loading) {

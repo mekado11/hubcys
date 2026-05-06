@@ -42,9 +42,14 @@ function docToObj(snap) {
   return { id: snap.id, ...snap.data() };
 }
 
+function requireDb() {
+  if (!db) throw new Error('Firebase is not configured. Set VITE_FIREBASE_* environment variables and redeploy.');
+  return db;
+}
+
 export function createEntity(entityName) {
   const collName = toCollectionName(entityName);
-  const colRef = () => collection(db, collName);
+  const colRef = () => collection(requireDb(), collName);
 
   return {
     async list(sortField = '-created_date', maxItems = 200) {
@@ -56,33 +61,61 @@ export function createEntity(entityName) {
 
     async filter(conditions = {}, sortField = '-created_date', maxItems = 200) {
       const { field, dir } = parseSortField(sortField);
-      const constraints = Object.entries(conditions).map(([k, v]) => where(k, '==', v));
-      constraints.push(orderBy(field, dir));
-      constraints.push(fbLimit(maxItems));
+      const whereConstraints = Object.entries(conditions)
+        .filter(([, v]) => v !== undefined && v !== null)
+        .map(([k, v]) => where(k, '==', v));
+
+      // Firestore requires a composite index for where+orderBy on different fields.
+      // To avoid that infra requirement, fetch with where constraints only and sort client-side.
+      const constraints = [...whereConstraints, fbLimit(maxItems)];
+      if (whereConstraints.length === 0) {
+        // No where clauses — safe to add orderBy server-side
+        constraints.splice(0, 0, orderBy(field, dir));
+        constraints.pop(); // remove the extra limit
+        constraints.push(fbLimit(maxItems));
+      }
+
       const q = query(colRef(), ...constraints);
       const snap = await getDocs(q);
-      return snap.docs.map(docToObj);
+      const docs = snap.docs.map(docToObj);
+
+      // Client-side sort when where constraints are present
+      if (whereConstraints.length > 0) {
+        docs.sort((a, b) => {
+          const av = a[field], bv = b[field];
+          if (av == null && bv == null) return 0;
+          if (av == null) return dir === 'desc' ? 1 : -1;
+          if (bv == null) return dir === 'desc' ? -1 : 1;
+          const cmp = av < bv ? -1 : av > bv ? 1 : 0;
+          return dir === 'desc' ? -cmp : cmp;
+        });
+        return docs.slice(0, maxItems);
+      }
+
+      return docs;
     },
 
     async get(id) {
-      const snap = await getDoc(doc(db, collName, id));
+      const snap = await getDoc(doc(requireDb(), collName, id));
       if (!snap.exists()) return null;
       return docToObj(snap);
     },
 
     async create(data) {
-      const payload = { ...data, created_date: serverTimestamp(), updated_date: serverTimestamp() };
+      // Strip undefined values — Firestore rejects documents with undefined fields
+      const clean = Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined));
+      const payload = { ...clean, created_date: serverTimestamp(), updated_date: serverTimestamp() };
       const ref = await addDoc(colRef(), payload);
-      return { id: ref.id, ...data };
+      return { id: ref.id, ...clean };
     },
 
     async update(id, data) {
-      await updateDoc(doc(db, collName, id), { ...data, updated_date: serverTimestamp() });
+      await updateDoc(doc(requireDb(), collName, id), { ...data, updated_date: serverTimestamp() });
       return { id, ...data };
     },
 
     async delete(id) {
-      await deleteDoc(doc(db, collName, id));
+      await deleteDoc(doc(requireDb(), collName, id));
       return { id };
     },
   };

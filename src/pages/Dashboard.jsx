@@ -64,50 +64,6 @@ export default function Dashboard() {
     };
   }, []);
 
-  const loadAssessments = useCallback(async (user) => {
-    try {
-      const userAssessments = await Assessment.filter({ company_id: user.company_id }, "-created_date", 5);
-      setAssessments(userAssessments || []);
-    } catch (error) {
-      console.error('Error loading assessments:', error);
-      setAssessments([]);
-    }
-  }, []);
-
-  const loadRecentActionItems = useCallback(async (user) => {
-    try {
-      const actionItems = await ActionItem.filter({ company_id: user.company_id }, "-created_date", 5);
-      setRecentActionItems(actionItems || []);
-    } catch (error) {
-      console.error('Error loading action items:', error);
-      setRecentActionItems([]);
-    }
-  }, []);
-
-  const calculateDashboardStats = useCallback(async (user) => {
-    try {
-      const [allAssessments, allActionItems] = await Promise.all([
-        Assessment.filter({ company_id: user.company_id }, '-created_date', 500),
-        ActionItem.filter({ company_id: user.company_id }, '-created_date', 500)
-      ]);
-
-      const completedAssessments = allAssessments.filter(a => a.status === 'completed');
-      const pendingActionItems = allActionItems.filter(a => a.status !== 'completed');
-      const avgScore = completedAssessments.length > 0 
-        ? completedAssessments.reduce((sum, a) => sum + (a.overall_score || 0), 0) / completedAssessments.length 
-        : 0;
-
-      setDashboardStats({
-        totalAssessments: allAssessments.length,
-        completedAssessments: completedAssessments.length,
-        pendingActionItems: pendingActionItems.length,
-        averageScore: Math.round(avgScore)
-      });
-    } catch (error) {
-      console.error('Error calculating dashboard stats:', error);
-    }
-  }, []);
-
   const loadUserData = useCallback(async () => {
     try {
       setLoading(true);
@@ -120,18 +76,35 @@ export default function Dashboard() {
         setShowOnboardingTour(true);
       }
 
-      await Promise.all([
-        loadAssessments(user),
-        loadRecentActionItems(user),
-        calculateDashboardStats(user)
+      // Two queries instead of four: reuse the full result set for both the
+      // recent lists and the aggregate stats.
+      const [allAssessments, allActionItems] = await Promise.all([
+        Assessment.filter({ company_id: user.company_id }, '-created_date', 500).catch(() => []),
+        ActionItem.filter({ company_id: user.company_id }, '-created_date', 500).catch(() => []),
       ]);
+
+      setAssessments(allAssessments.slice(0, 5));
+      setRecentActionItems(allActionItems.slice(0, 5));
+
+      const completedAssessments = allAssessments.filter(a => a.status === 'completed');
+      const pendingActionItems = allActionItems.filter(a => a.status !== 'completed');
+      const avgScore = completedAssessments.length > 0
+        ? completedAssessments.reduce((sum, a) => sum + (a.overall_score || 0), 0) / completedAssessments.length
+        : 0;
+
+      setDashboardStats({
+        totalAssessments: allAssessments.length,
+        completedAssessments: completedAssessments.length,
+        pendingActionItems: pendingActionItems.length,
+        averageScore: Math.round(avgScore),
+      });
     } catch (error) {
       console.error('Dashboard: Error loading user data:', error);
       setIsAuthenticated(false);
     } finally {
       setLoading(false);
     }
-  }, [loadAssessments, loadRecentActionItems, calculateDashboardStats]);
+  }, []);
 
   useEffect(() => {
     loadUserData();

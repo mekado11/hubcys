@@ -145,8 +145,42 @@ export default function AssessmentPage() {
   const loadFrameworks = async (user) => {
     try {
       setLoadingFrameworks(true);
-      const data = await ComplianceFramework.filter({ company_id: user.company_id }, "-updated_date", 100);
+      let data = [];
+
+      // Primary: company-scoped equality query (no orderBy → no composite index needed)
+      try {
+        data = await ComplianceFramework.filter({ company_id: user.company_id }, "-updated_date", 100);
+      } catch (e) {
+        // Firestore may reject the query if security rules or indexes are not yet
+        // deployed — fall through to the list() fallback below.
+        console.warn('[loadFrameworks] scoped filter failed, using list fallback:', e?.code, e?.message);
+      }
+
+      // Fallback: list all + filter client-side.
+      // Handles: (a) orphaned frameworks without company_id, (b) index/rules errors above.
+      if (data.length === 0 && user.company_id) {
+        try {
+          const all = await ComplianceFramework.list("-created_date", 200);
+          // Include frameworks that match OR have no company_id (orphaned before the fix)
+          const candidates = all.filter(f => !f.company_id || f.company_id === user.company_id);
+
+          // Backfill orphaned documents so future scoped queries find them
+          const orphaned = candidates.filter(f => !f.company_id);
+          if (orphaned.length > 0) {
+            await Promise.all(
+              orphaned.map(f => ComplianceFramework.update(f.id, { company_id: user.company_id }))
+            );
+            data = candidates.map(f => ({ ...f, company_id: f.company_id || user.company_id }));
+          } else {
+            data = candidates;
+          }
+        } catch (_) { /* list also failed — show empty, don't crash */ }
+      }
+
       setManagedFrameworks(data || []);
+    } catch (_) {
+      // Never let loadFrameworks crash the entire assessment page load
+      setManagedFrameworks([]);
     } finally {
       setLoadingFrameworks(false);
     }
@@ -276,20 +310,9 @@ export default function AssessmentPage() {
   };
 
   const handleExportQuestionnaire = async () => {
-    const savedId = await handleSave(false);
-    const id = savedId || assessmentData.id;
-    if (!id) return;
-
-    const { data } = await generateQuestionnairePdf({ assessmentId: id });
-    const blob = new Blob([data], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `Hubcys_Questionnaire_${assessmentData.company_name?.replace(/\s+/g, "_") || "Assessment"}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    URL.revokeObjectURL(url);
-    a.remove();
+    const doc = await generateQuestionnairePdf();
+    const filename = `Hubcys_Questionnaire_${assessmentData.company_name?.replace(/\s+/g, "_") || "Assessment"}.pdf`;
+    doc.save(filename);
   };
 
   const onStepClick = (step) => {
@@ -377,7 +400,16 @@ export default function AssessmentPage() {
             onNext={handleNext}
             managedFrameworks={managedFrameworks}
             loadingFrameworks={loadingFrameworks}
-            onFrameworkCreated={() => currentUser && loadFrameworks(currentUser)}
+            onFrameworkCreated={async (newFramework) => {
+              // Optimistic update so the new framework appears immediately
+              if (newFramework) setManagedFrameworks(prev => [newFramework, ...prev]);
+              // Re-fetch fresh user (company_id may have just been backfilled) then reload list
+              try {
+                const fresh = await User.me();
+                setCurrentUser(fresh);
+                await loadFrameworks(fresh);
+              } catch (_) {}
+            }}
             onSave={handleSave}
             saving={saving}
             currentUser={currentUser}

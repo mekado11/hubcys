@@ -17,10 +17,15 @@ import { createEntity } from './_entity.js';
 
 const _userEntity = createEntity('users');
 
+// NOTE: VITE_ variables are bundled into the client JS. Keep this value non-sensitive
+// (e.g. set it to an opaque role ID in future). The email itself is used only to
+// bootstrap the super-admin Firestore document on first login; Firestore Security Rules
+// and the is_super_admin flag are the real enforcement layer.
 const SUPER_ADMIN_EMAIL = import.meta.env.VITE_SUPER_ADMIN_EMAIL?.toLowerCase().trim();
 
 function isSuperAdminEmail(email) {
-  return !!SUPER_ADMIN_EMAIL && email?.toLowerCase().trim() === SUPER_ADMIN_EMAIL;
+  if (!SUPER_ADMIN_EMAIL || !email) return false;
+  return email.toLowerCase().trim() === SUPER_ADMIN_EMAIL;
 }
 
 const SUPER_ADMIN_DEFAULTS = {
@@ -32,6 +37,22 @@ const SUPER_ADMIN_DEFAULTS = {
   is_super_admin: true,
 };
 
+// In-memory cache so every component can call User.me() without a Firestore
+// round-trip on each render. Invalidated on update/logout or after 2 minutes.
+let _cachedUser = null;
+let _cacheTs = 0;
+const CACHE_TTL_MS = 120_000;
+
+function _invalidateCache() {
+  _cachedUser = null;
+  _cacheTs = 0;
+}
+
+function _setCache(user) {
+  _cachedUser = user;
+  _cacheTs = Date.now();
+}
+
 /** Fetch the Firestore user profile merged with Firebase Auth identity */
 async function fetchMe() {
   const firebaseUser = auth.currentUser;
@@ -39,7 +60,14 @@ async function fetchMe() {
 
   const userRef = doc(db, 'users', firebaseUser.uid);
   const snap = await getDoc(userRef);
-  const superAdmin = isSuperAdminEmail(firebaseUser.email);
+
+  // Super admin: email must be verified (prevents account takeover via unverified email registration)
+  const superAdmin = isSuperAdminEmail(firebaseUser.email) && firebaseUser.emailVerified !== false;
+
+  // Super admins use their own UID as their company_id (virtual single-org account).
+  // This ensures they can create/read company-scoped documents without going through
+  // the multi-tenant company onboarding flow.
+  const superAdminCompanyId = firebaseUser.uid;
 
   if (!snap.exists()) {
     // First login — bootstrap the user document
@@ -47,6 +75,7 @@ async function fetchMe() {
       ? {
           email: firebaseUser.email,
           full_name: firebaseUser.displayName || firebaseUser.email,
+          company_id: superAdminCompanyId,
           ...SUPER_ADMIN_DEFAULTS,
           created_date: serverTimestamp(),
           updated_date: serverTimestamp(),
@@ -64,23 +93,50 @@ async function fetchMe() {
           updated_date: serverTimestamp(),
         };
     await setDoc(userRef, defaults);
-    return { id: firebaseUser.uid, ...defaults };
+    const result = { id: firebaseUser.uid, ...defaults };
+    _setCache(result);
+    return result;
   }
 
   const data = snap.data();
 
   // Ensure existing super admin doc always has the right flags (in case email was set later)
-  if (superAdmin && !data.is_super_admin) {
-    await updateDoc(userRef, { ...SUPER_ADMIN_DEFAULTS, updated_date: serverTimestamp() });
-    return { id: firebaseUser.uid, ...data, ...SUPER_ADMIN_DEFAULTS };
+  // Also backfill company_id for super admins who were bootstrapped before this fix.
+  if (superAdmin && (!data.is_super_admin || !data.company_id)) {
+    const patch = {
+      ...SUPER_ADMIN_DEFAULTS,
+      company_id: data.company_id || superAdminCompanyId,
+      updated_date: serverTimestamp(),
+    };
+    await updateDoc(userRef, patch);
+    const result = { id: firebaseUser.uid, ...data, ...patch };
+    _setCache(result);
+    return result;
   }
 
-  return { id: firebaseUser.uid, ...data };
+  // Backfill company_id for any user who completed onboarding or has is_super_admin
+  // but somehow ended up without a company_id (e.g. bootstrapped before this fix,
+  // or VITE_SUPER_ADMIN_EMAIL env var was not set when the account was created).
+  if (!data.company_id && (data.is_super_admin || data.company_onboarding_completed)) {
+    const fallbackCompanyId = firebaseUser.uid;
+    await updateDoc(userRef, { company_id: fallbackCompanyId, updated_date: serverTimestamp() });
+    const result = { id: firebaseUser.uid, ...data, company_id: fallbackCompanyId };
+    _setCache(result);
+    return result;
+  }
+
+  const result = { id: firebaseUser.uid, ...data };
+  _setCache(result);
+  return result;
 }
 
 export const User = {
-  /** Returns the current user's full profile (Firebase Auth + Firestore) */
-  async me() {
+  /** Returns the current user's full profile (Firebase Auth + Firestore).
+   *  Results are cached for 2 minutes — call User.me({ force: true }) to bypass. */
+  async me({ force = false } = {}) {
+    if (!force && _cachedUser && Date.now() - _cacheTs < CACHE_TTL_MS) {
+      return _cachedUser;
+    }
     return fetchMe();
   },
 
@@ -108,6 +164,7 @@ export const User = {
       ? {
           email,
           full_name: fullName || email,
+          company_id: cred.user.uid,
           ...SUPER_ADMIN_DEFAULTS,
           created_date: serverTimestamp(),
           updated_date: serverTimestamp(),
@@ -125,11 +182,13 @@ export const User = {
           updated_date: serverTimestamp(),
         }
     );
+    _invalidateCache();
     return cred;
   },
 
   /** Sign out */
   async logout() {
+    _invalidateCache();
     await signOut(auth);
     window.location.href = '/';
   },
@@ -140,6 +199,10 @@ export const User = {
     if (!firebaseUser) throw new Error('Not authenticated');
     const userRef = doc(db, 'users', firebaseUser.uid);
     await updateDoc(userRef, { ...data, updated_date: serverTimestamp() });
+    // Merge update into cache so next me() call reflects it without a re-fetch
+    if (_cachedUser) {
+      _setCache({ ..._cachedUser, ...data });
+    }
     return data;
   },
 

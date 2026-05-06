@@ -218,10 +218,67 @@ function logUsage({ feature, model, inputTokens, outTokens, latencyMs, cacheHit,
   }));
 }
 
+// ─── In-process rate limiter (per Vercel function instance, per IP) ───────────
+// For production, replace with Upstash Redis for cross-instance enforcement.
+const _rateLimitStore = new Map(); // ip → { count, resetAt }
+const RL_WINDOW_MS = 60_000;       // 1 minute window
+const RL_MAX_PER_MIN = 30;         // max requests per IP per minute
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const entry = _rateLimitStore.get(ip);
+  if (!entry || now > entry.resetAt) {
+    _rateLimitStore.set(ip, { count: 1, resetAt: now + RL_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= RL_MAX_PER_MIN) return false;
+  entry.count++;
+  return true;
+}
+
+function getClientIp(req) {
+  return (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket?.remoteAddress || 'unknown';
+}
+
+// ─── CORS helper ─────────────────────────────────────────────────────────────
+function setCorsHeaders(req, res) {
+  const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'https://hubcys.com,https://www.hubcys.com').split(',').map(o => o.trim());
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Vary', 'Origin');
+}
+
+// ─── Simple token check ───────────────────────────────────────────────────────
+// Verifies the client passes a non-empty Bearer token.
+// Full Firebase token verification requires the Firebase Admin SDK;
+// add that when you wire up server-side Firebase Admin.
+function isAuthenticated(req) {
+  const auth = req.headers.authorization || '';
+  return auth.startsWith('Bearer ') && auth.length > 10;
+}
+
 // ─── Handler ──────────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
+  setCorsHeaders(req, res);
+
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Require a Firebase ID token from the client
+  if (!isAuthenticated(req)) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  // Rate limit: 30 req/min per IP
+  if (!checkRateLimit(getClientIp(req))) {
+    return res.status(429).json({ error: 'Too many requests. Please wait a moment and try again.' });
   }
 
   const {
@@ -290,6 +347,6 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error('[ai-gateway]', err.message);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: 'AI request failed. Please try again later.' });
   }
 }

@@ -137,7 +137,6 @@ export const PUBLIC_PAGES = [
   'PrivacyPolicy',
   'TermsOfService',
   'TrialExpired',
-  'EarlyCareer',
   'SampleAssessmentReportView',
   'SampleIncidentReport',
   'SampleTabletopReport'

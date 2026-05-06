@@ -268,10 +268,8 @@ export default function Layout({ children, currentPageName }) {
       }
 
       if (!user.company_onboarding_completed && user.subscription_tier !== 'early_career') {
-        if (!sessionStorage.getItem('layout_onboarding_redirect')) {
-          sessionStorage.setItem('layout_onboarding_redirect', 'true');
+        if (currentPageName !== 'CompanyOnboarding') {
           redirectingRef.current = true;
-          
           setTimeout(() => {
             window.location.href = createPageUrl('CompanyOnboarding');
           }, 100);
@@ -369,7 +367,7 @@ export default function Layout({ children, currentPageName }) {
     document.head.appendChild(script1);
 
     const script2 = document.createElement('script');
-    script2.innerHTML = `
+    script2.textContent = `
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());

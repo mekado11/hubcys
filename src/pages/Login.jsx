@@ -16,7 +16,9 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const returnUrl = new URLSearchParams(window.location.search).get('returnUrl') || '/Dashboard';
+  // Validate returnUrl to prevent open redirect — only allow same-origin relative paths
+  const rawReturnUrl = new URLSearchParams(window.location.search).get('returnUrl') || '';
+  const returnUrl = rawReturnUrl.startsWith('/') && !rawReturnUrl.startsWith('//') ? rawReturnUrl : '/Dashboard';
 
   const handleEmailSubmit = async (e) => {
     e.preventDefault();

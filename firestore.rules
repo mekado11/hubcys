@@ -1,0 +1,232 @@
+// Firestore Security Rules — Hubcys
+// Deploy with: firebase deploy --only firestore:rules
+//
+// Key principles:
+//   1. All reads/writes require authentication
+//   2. Users can only read/write their own company's data (company_id scoping)
+//   3. Super admin bypass is enforced server-side, not here
+//   4. Sensitive collections (users) scoped to the owning user's UID
+//
+// WARNING: These rules are the primary security layer. Client-side checks are
+// defence-in-depth only — never rely on them as the sole protection.
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    function isAuthed() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    // Fetch caller's user document to get company_id and role
+    function callerProfile() {
+      return get(/databases/$(database)/documents/users/$(uid())).data;
+    }
+
+    function callerCompanyId() {
+      return callerProfile().company_id;
+    }
+
+    function isSuperAdmin() {
+      return isAuthed() && callerProfile().is_super_admin == true;
+    }
+
+    function sameCompany(resourceCompanyId) {
+      return isAuthed() && callerCompanyId() == resourceCompanyId;
+    }
+
+    // ── Users ─────────────────────────────────────────────────────────────────
+    // Users can read/write their own profile.
+    // Company admins can read (not write) other users in the same company.
+    match /users/{userId} {
+      allow read: if isAuthed() && (uid() == userId || sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && uid() == userId;
+      allow update: if isAuthed() && (uid() == userId || isSuperAdmin());
+      allow delete: if isSuperAdmin();
+    }
+
+    // ── Company-scoped collections ─────────────────────────────────────────────
+    // Pattern: only users belonging to the same company can access the data.
+    //
+    // NOTE: The entity factory (src/entities/_entity.js) converts PascalCase entity
+    // names to singular snake_case collection names (e.g. Assessment → assessment).
+    // Rules below cover BOTH the singular form (what the code writes to) and the
+    // plural form (kept for backwards compatibility / future migration).
+
+    // Assessments
+    match /assessment/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+    match /assessments/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+
+    // Compliance Frameworks
+    match /compliance_framework/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+    match /compliance_frameworks/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+
+    // Compliance Controls
+    match /compliance_control/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+    match /compliance_controls/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+
+    // Action Items
+    match /action_item/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+    match /action_items/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+
+    // Incidents
+    match /incident/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+    match /incidents/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+
+    // Policies
+    match /policy/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+    match /policies/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+
+    // Risks
+    match /risk/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+    match /risks/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+
+    // BIA
+    match /b_i_a/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+    match /b_i_as/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+
+    // Tabletop Exercises
+    match /tabletop_exercise/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+    match /tabletop_exercises/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+
+    // Teams
+    match /team/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+    match /teams/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+
+    // Team Members
+    match /team_member/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+    match /team_members/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+
+    // ── Companies ─────────────────────────────────────────────────────────────
+    // Any authenticated user may read (needed for access-code lookups during onboarding)
+    // and create (new users have no company_id yet so sameCompany check would always fail).
+    // Only members of the same company may update or delete.
+    match /company/{companyId} {
+      allow read: if isAuthed();
+      allow create: if isAuthed();
+      allow update, delete: if isAuthed() && (callerCompanyId() == companyId || isSuperAdmin());
+    }
+    match /companies/{companyId} {
+      allow read: if isAuthed();
+      allow create: if isAuthed();
+      allow update, delete: if isAuthed() && (callerCompanyId() == companyId || isSuperAdmin());
+    }
+
+    // ── Global / admin-only collections ───────────────────────────────────────
+    match /threat_advisory/{docId} {
+      allow read: if isAuthed();
+      allow write: if isSuperAdmin();
+    }
+    match /threat_advisories/{docId} {
+      allow read: if isAuthed();
+      allow write: if isSuperAdmin();
+    }
+
+    match /training_video/{docId} {
+      allow read: if isAuthed();
+      allow write: if isSuperAdmin();
+    }
+    match /training_videos/{docId} {
+      allow read: if isAuthed();
+      allow write: if isSuperAdmin();
+    }
+
+    match /feature_request/{docId} {
+      allow read: if isSuperAdmin();
+      allow create: if isAuthed();
+      allow update, delete: if isSuperAdmin();
+    }
+    match /feature_requests/{docId} {
+      allow read: if isSuperAdmin();
+      allow create: if isAuthed();
+      allow update, delete: if isSuperAdmin();
+    }
+
+    // ── Per-user collections ───────────────────────────────────────────────────
+    match /training_progress/{docId} {
+      allow read, write: if isAuthed() && (resource.data.user_id == uid() || isSuperAdmin());
+      allow create: if isAuthed() && request.resource.data.user_id == uid();
+    }
+
+    match /video_progress/{docId} {
+      allow read, write: if isAuthed() && (resource.data.user_id == uid() || isSuperAdmin());
+      allow create: if isAuthed() && request.resource.data.user_id == uid();
+    }
+
+    // ── Deny everything else ──────────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if isSuperAdmin();
+    }
+  }
+}

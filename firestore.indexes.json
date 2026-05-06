@@ -1,0 +1,95 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "assessment",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "company_id", "order": "ASCENDING" },
+        { "fieldPath": "updated_date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "assessment",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "company_id", "order": "ASCENDING" },
+        { "fieldPath": "created_date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "assessment",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "company_id", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "updated_date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "compliance_framework",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "company_id", "order": "ASCENDING" },
+        { "fieldPath": "updated_date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "compliance_framework",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "company_id", "order": "ASCENDING" },
+        { "fieldPath": "created_date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "compliance_control",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "company_id", "order": "ASCENDING" },
+        { "fieldPath": "framework_id", "order": "ASCENDING" },
+        { "fieldPath": "updated_date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "incident",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "company_id", "order": "ASCENDING" },
+        { "fieldPath": "updated_date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "policy",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "company_id", "order": "ASCENDING" },
+        { "fieldPath": "updated_date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "risk",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "company_id", "order": "ASCENDING" },
+        { "fieldPath": "updated_date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "action_item",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "company_id", "order": "ASCENDING" },
+        { "fieldPath": "updated_date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "tabletop_exercise",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "company_id", "order": "ASCENDING" },
+        { "fieldPath": "updated_date", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
