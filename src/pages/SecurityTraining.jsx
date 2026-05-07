@@ -34,8 +34,14 @@ import {
   UserCircle,
   AlertTriangle,
   AlertCircle,
-  Trophy
+  Trophy,
+  Send,
+  Sparkles,
+  ChevronUp,
+  MessageCircle,
+  RefreshCw
 } from "lucide-react";
+import { generateQuizExplanations, generateAdaptiveQuestions, askTrainingCoach } from "@/functions/trainingAI";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CachedEntityManager } from "@/components/utils/networkUtils";
 
@@ -60,6 +66,15 @@ export default function SecurityTraining() {
   const [showQuizResults, setShowQuizResults] = useState(false);
   const [quizFeedback, setQuizFeedback] = useState([]);
   const [savingProgress, setSavingProgress] = useState(false);
+
+  // AI training features
+  const [adaptiveQuiz, setAdaptiveQuiz] = useState(null);
+  const [aiExplaining, setAiExplaining] = useState(false);
+  const [showCoach, setShowCoach] = useState(false);
+  const [coachMessages, setCoachMessages] = useState([]);
+  const [coachInput, setCoachInput] = useState('');
+  const [coachLoading, setCoachLoading] = useState(false);
+  const coachScrollRef = useRef(null);
 
   // NEW: State for personalized content
   const [recommendedModules, setRecommendedModules] = useState([]);
@@ -1740,7 +1755,11 @@ export default function SecurityTraining() {
     setCurrentSection(progress.current_section || 0);
     setQuizAnswers(progress.quiz_answers || {});
     setShowQuizResults(false);
-    setQuizFeedback([]); // Reset feedback
+    setQuizFeedback([]);
+    setAdaptiveQuiz(null);
+    setShowCoach(false);
+    setCoachMessages([]);
+    setCoachInput('');
 
     // Save access timestamp
     await saveTrainingProgress(module.id, {
@@ -1756,29 +1775,89 @@ export default function SecurityTraining() {
     setQuizAnswers({});
     setShowQuizResults(false);
     setQuizFeedback([]);
+    setAdaptiveQuiz(null);
+    setShowCoach(false);
+    setCoachMessages([]);
+    setCoachInput('');
   }, []);
+
+  const handleCoachAsk = useCallback(async () => {
+    if (!coachInput.trim() || coachLoading || !currentTraining) return;
+    const question = coachInput.trim();
+    setCoachInput('');
+    const newMsg = { role: 'user', content: question };
+    const updatedHistory = [...coachMessages, newMsg];
+    setCoachMessages(updatedHistory);
+    setCoachLoading(true);
+    try {
+      const sectionTitle = currentSection < currentTraining.content.sections.length
+        ? currentTraining.content.sections[currentSection]?.title
+        : 'Quiz';
+      const reply = await askTrainingCoach(currentTraining.title, sectionTitle, coachMessages, question);
+      setCoachMessages(prev => [...prev, { role: 'assistant', content: reply }]);
+    } catch {
+      setCoachMessages(prev => [...prev, { role: 'assistant', content: 'I had trouble connecting. Please try again.' }]);
+    } finally {
+      setCoachLoading(false);
+    }
+  }, [coachInput, coachLoading, currentTraining, currentSection, coachMessages]);
+
+  // Auto-scroll coach chat on new messages
+  useEffect(() => {
+    if (coachScrollRef.current && showCoach) {
+      coachScrollRef.current.scrollTop = coachScrollRef.current.scrollHeight;
+    }
+  }, [coachMessages, coachLoading, showCoach]);
 
   const handleQuizSubmit = useCallback(async (module) => {
     if (!module || !module.content.quiz || savingProgress) return;
 
-    const quiz = module.content.quiz;
+    // Use adaptive questions if available (generated for a previous failed attempt)
+    const quiz = adaptiveQuiz || module.content.quiz;
     const correctCount = Object.entries(quizAnswers).filter(([qIndex, answer]) =>
-      quiz[parseInt(qIndex)].correct === answer
+      quiz[parseInt(qIndex)]?.correct === answer
     ).length;
     const score = Math.round((correctCount / quiz.length) * 100);
     const passed = score >= 70;
 
-    // Generate feedback for all questions
-    const newQuizFeedback = quiz.map((q, qIndex) => {
-      if (quizAnswers[qIndex] === q.correct) {
-        return null; // Correct answer
-      } else {
-        return "This answer was incorrect. Please review the training material to understand the correct concept.";
-      }
-    });
-
-    setQuizFeedback(newQuizFeedback);
+    // Set placeholder feedback immediately; AI will replace it asynchronously
+    const placeholderFeedback = quiz.map((q, qIndex) =>
+      quizAnswers[qIndex] === q.correct ? null : '...'
+    );
+    setQuizFeedback(placeholderFeedback);
     setShowQuizResults(true);
+
+    // Generate AI explanations for wrong answers (non-blocking)
+    const hasWrong = quiz.some((q, i) => quizAnswers[i] !== q.correct);
+    if (hasWrong) {
+      setAiExplaining(true);
+      generateQuizExplanations(module.title, quiz, quizAnswers)
+        .then(explanations => {
+          setQuizFeedback(prev => {
+            const updated = [...prev];
+            Object.entries(explanations).forEach(([idx, text]) => {
+              updated[parseInt(idx)] = text;
+            });
+            return updated;
+          });
+        })
+        .catch(() => {
+          setQuizFeedback(prev => prev.map(f =>
+            f === '...' ? 'Review the training material to understand this concept better.' : f
+          ));
+        })
+        .finally(() => setAiExplaining(false));
+    }
+
+    // On fail: generate adaptive questions for the next attempt (non-blocking)
+    if (!passed) {
+      const weakQuestions = quiz
+        .filter((q, i) => quizAnswers[i] !== q.correct)
+        .map(q => q.question);
+      generateAdaptiveQuestions(module.title, weakQuestions)
+        .then(questions => { if (questions.length) setAdaptiveQuiz(questions); })
+        .catch(() => {});
+    }
 
     const moduleProgress = userProgress[module.id] || {};
     let sectionsCompleted = [...(moduleProgress.sections_completed || [])];
@@ -1802,7 +1881,7 @@ export default function SecurityTraining() {
 
     // NEW: award badges based on performance/milestones
     await awardBadgesIfEligible(module, score);
-  }, [quizAnswers, savingProgress, userProgress, currentSection, saveTrainingProgress, awardBadgesIfEligible]);
+  }, [quizAnswers, savingProgress, userProgress, currentSection, saveTrainingProgress, awardBadgesIfEligible, adaptiveQuiz]);
 
 
   const handleNextSection = useCallback(async () => {
@@ -2008,10 +2087,11 @@ export default function SecurityTraining() {
     setQuizAnswers,
     showQuizResults,
     quizFeedback,
-    onSubmitQuiz
+    onSubmitQuiz,
+    aiExplaining
   }) => {
     const correctCount = Object.entries(quizAnswers).filter(([qIndex, answer]) =>
-      quiz[parseInt(qIndex)].correct === answer
+      quiz[parseInt(qIndex)]?.correct === answer
     ).length;
     const score = Math.round((correctCount / quiz.length) * 100);
 
@@ -2089,6 +2169,18 @@ export default function SecurityTraining() {
                   Training Not Completed (Score below 70%)
                 </Badge>
               )}
+              {aiExplaining && (
+                <p className="mt-3 text-xs text-purple-400 flex items-center justify-center gap-1">
+                  <Sparkles className="w-3 h-3 animate-pulse" />
+                  AI coach is analysing your answers...
+                </p>
+              )}
+              {!aiExplaining && score < 70 && (
+                <p className="mt-3 text-xs text-purple-400 flex items-center justify-center gap-1">
+                  <RefreshCw className="w-3 h-3" />
+                  AI has prepared fresh questions for your retake targeting your weak areas.
+                </p>
+              )}
             </div>
 
             {/* Detailed Feedback for All Answers */}
@@ -2127,8 +2219,18 @@ export default function SecurityTraining() {
                       ))}
                     </div>
                     {quizFeedback[qIndex] && (
-                      <div className="mt-3 p-2 bg-slate-700/50 rounded text-sm text-gray-300">
-                        {quizFeedback[qIndex]}
+                      <div className="mt-3 p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg text-sm text-gray-300">
+                        {quizFeedback[qIndex] === '...' ? (
+                          <span className="flex items-center gap-2 text-purple-300">
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            AI coach is generating an explanation...
+                          </span>
+                        ) : (
+                          <span className="flex items-start gap-2">
+                            <Sparkles className="w-3 h-3 text-purple-400 mt-0.5 flex-shrink-0" />
+                            {quizFeedback[qIndex]}
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
@@ -2261,14 +2363,92 @@ export default function SecurityTraining() {
               </div>
             ) : (
               // Quiz section
-              <QuizSection
-                quiz={quiz}
-                quizAnswers={quizAnswers}
-                setQuizAnswers={setQuizAnswers}
-                showQuizResults={showQuizResults}
-                quizFeedback={quizFeedback}
-                onSubmitQuiz={handleQuizSubmit}
-              />
+              <div>
+                {adaptiveQuiz && (
+                  <div className="mb-4 flex items-center gap-2 px-4 py-2 bg-purple-500/10 border border-purple-500/30 rounded-lg text-sm text-purple-300">
+                    <Sparkles className="w-4 h-4 flex-shrink-0" />
+                    <span>AI has generated a fresh set of questions targeting your weak areas. Good luck!</span>
+                  </div>
+                )}
+                <QuizSection
+                  quiz={adaptiveQuiz || quiz}
+                  quizAnswers={quizAnswers}
+                  setQuizAnswers={setQuizAnswers}
+                  showQuizResults={showQuizResults}
+                  quizFeedback={quizFeedback}
+                  onSubmitQuiz={handleQuizSubmit}
+                  aiExplaining={aiExplaining}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* AI Training Coach Panel */}
+          <div className="flex-shrink-0 border-t border-slate-700">
+            <button
+              onClick={() => setShowCoach(v => !v)}
+              className="w-full flex items-center justify-between px-4 py-2.5 bg-purple-500/10 hover:bg-purple-500/20 transition-colors text-sm font-medium text-purple-300"
+            >
+              <span className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                AI Training Coach
+                {coachMessages.length > 0 && (
+                  <span className="bg-purple-500/30 text-purple-200 text-xs px-1.5 py-0.5 rounded-full">
+                    {coachMessages.length}
+                  </span>
+                )}
+              </span>
+              <ChevronUp className={`w-4 h-4 transition-transform duration-200 ${showCoach ? '' : 'rotate-180'}`} />
+            </button>
+            {showCoach && (
+              <div className="flex flex-col h-48 bg-slate-900">
+                <div
+                  ref={coachScrollRef}
+                  className="flex-1 overflow-y-auto px-4 py-2 space-y-2"
+                >
+                  {coachMessages.length === 0 && (
+                    <p className="text-xs text-gray-500 text-center mt-4">
+                      Ask about anything in this module — concepts, examples, real-world scenarios.
+                    </p>
+                  )}
+                  {coachMessages.map((msg, i) => (
+                    <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <span className={`inline-block text-xs px-3 py-1.5 rounded-lg max-w-xs leading-relaxed ${
+                        msg.role === 'user'
+                          ? 'bg-cyan-500/20 text-cyan-100'
+                          : 'bg-purple-500/10 text-gray-200'
+                      }`}>
+                        {msg.content}
+                      </span>
+                    </div>
+                  ))}
+                  {coachLoading && (
+                    <div className="flex justify-start">
+                      <span className="inline-block px-3 py-1.5 rounded-lg bg-purple-500/10 text-purple-300 text-xs">
+                        <Loader2 className="w-3 h-3 animate-spin inline" />
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-2 px-4 py-2 border-t border-slate-700">
+                  <input
+                    className="flex-1 bg-slate-700 text-white text-sm rounded px-3 py-1.5 border border-gray-600 focus:border-purple-500 outline-none placeholder-gray-500"
+                    placeholder="Ask a question about this topic..."
+                    value={coachInput}
+                    onChange={e => setCoachInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleCoachAsk()}
+                    disabled={coachLoading}
+                  />
+                  <Button
+                    size="sm"
+                    onClick={handleCoachAsk}
+                    disabled={coachLoading || !coachInput.trim()}
+                    className="bg-purple-500 hover:bg-purple-600 px-3"
+                  >
+                    <Send className="w-3 h-3" />
+                  </Button>
+                </div>
+              </div>
             )}
           </div>
 
