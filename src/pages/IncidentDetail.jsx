@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Incident } from "@/entities/Incident";
 import { User } from "@/entities/User";
@@ -11,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save, Loader2, AlertTriangle, Calendar, User as UserIcon, FileText } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 import IncidentNotesManager from "../components/incident/IncidentNotesManager";
 import SmartAnalysisDisplay from "../components/incident/SmartAnalysisDisplay";
 import NIS2ComplianceSection from "../components/incident/NIS2ComplianceSection";
@@ -19,7 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { generateIncidentReportPdf } from "@/functions/generateIncidentReportPdf";
 import EditingWarning from '../components/collaboration/EditingWarning';
 import RoleGate, { canEditEntity } from '../components/collaboration/RoleGate';
-import AIEnrichmentPanel from '../components/incident/AIEnrichmentPanel'; // New import
+import AIEnrichmentPanel from '../components/incident/AIEnrichmentPanel';
 
 export default function IncidentDetail() {
   const navigate = useNavigate();
@@ -98,139 +98,94 @@ export default function IncidentDetail() {
     const initializeIncident = async () => {
       try {
         setLoading(true);
-        setError(null); // Clear previous errors
+        setError(null);
 
-        // Get current user first
         const user = await User.me();
         setCurrentUser(user);
 
-        // Check URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         const incidentId = urlParams.get('id');
         const isNew = urlParams.get('new') === 'true';
 
         if (isNew) {
-          // Creating new incident
-          console.log('Creating new incident');
           setIsNewIncident(true);
-          const newIncidentData = {
-            ...incident, // Start with initial default state (renamed incidentData)
+          setIncident(prev => ({
+            ...prev,
             company_id: user.company_id,
             incident_id: `INC-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
             detection_timestamp: new Date().toISOString(),
             reporter_name: user.full_name || "",
             reporter_email: user.email || "",
             assigned_to: user.email
-          };
-          setIncident(newIncidentData); // Updated setIncidentData to setIncident
-          console.log('New incident data set:', newIncidentData);
+          }));
         } else if (incidentId) {
-          // Loading existing incident
-          console.log('Loading existing incident:', incidentId);
           const existingIncident = await Incident.get(incidentId);
-          console.log('Loaded incident data from database:', existingIncident);
 
           if (existingIncident.company_id !== user.company_id) {
             throw new Error("Access denied: This incident belongs to a different company.");
           }
 
-          // CRITICAL FIX: Merge existing data with defaults to ensure all fields are populated
-          const mergedData = {
-            ...incident, // Start with defaults (renamed incidentData)
-            ...existingIncident, // Override with saved data
-            // Ensure critical fields are properly set
+          setIncident(prev => ({
+            ...prev,
+            ...existingIncident,
             company_id: existingIncident.company_id || user.company_id
-          };
-
-          setIncident(mergedData); // Updated setIncidentData to setIncident
+          }));
           setIsNewIncident(false);
-          console.log('Existing incident data merged and set:', mergedData);
         } else {
-            // No incident ID and not a new incident, redirect
-            console.warn("No incident ID or 'new' parameter found. Redirecting.");
-            navigate(createPageUrl("ResponseReadiness"));
+          console.warn("No incident ID or 'new' parameter found. Redirecting.");
+          navigate(createPageUrl("ResponseReadiness"));
         }
 
       } catch (error) {
         console.error("Error initializing incident:", error);
-        setError(error.message); // Set error state
-        // alert(`Error loading incident: ${error.message}`); // Removed alert
-        // navigate(createPageUrl("ResponseReadiness")); // Removed direct navigation
+        setError(error.message);
       } finally {
         setLoading(false);
       }
     };
 
     initializeIncident();
-  }, [navigate, incident.company_id, incident.incident_id, incident.title, incident.description, incident.status, incident.priority, incident.category, incident.threat_actor_type, incident.threat_actor_name, incident.threat_actor_motivation, incident.threat_actor_confidence, incident.detection_timestamp, incident.nis2_significance, incident.nis2_initial_notification_sent_at, incident.nis2_interim_update_sent_at, incident.nis2_final_report_sent_at, incident.nis2_notified_authorities, incident.nis2_cross_border_impact, incident.nis2_affected_services, incident.detection_source, incident.reporter_name, incident.reporter_email, incident.affected_systems, incident.affected_users, incident.affected_data, incident.business_impact, incident.containment_actions, incident.containment_timestamp, incident.containment_effective, incident.stakeholders_notified, incident.root_cause, incident.eradication_actions, incident.eradication_timestamp, incident.tools_used, incident.iocs_identified, incident.patches_applied, incident.systems_restored, incident.recovery_timestamp, incident.verification_steps, incident.monitoring_enabled, incident.return_to_service, incident.incident_timeline, incident.what_worked, incident.what_failed, incident.communication_issues, incident.escalation_timeline, incident.team_performance, incident.lessons_learned, incident.action_items_generated, incident.control_gaps_identified, incident.runbooks_updated, incident.training_needs, incident.final_report, incident.assigned_to, incident.closed_timestamp, incident.mttr_minutes, incident.mttd_minutes, incident.external_notifications, incident.cost_estimate]); // Added incident dependencies for completeness, though specific fields might not be necessary for initial load
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleInputChange = (field, value) => {
-    console.log(`Updating field ${field} with value:`, value);
-    setIncident(prev => { // Updated setIncidentData to setIncident
-      const updated = {
-        ...prev,
-        [field]: value
-      };
-      console.log('Updated incident data:', updated);
-      return updated;
-    });
+    setIncident(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSaveIncident = async () => { // Renamed from handleSaveIncident to handleSave for consistency with outline
+  const handleSaveIncident = async () => {
     try {
       setSaving(true);
-      console.log('=== SAVING INCIDENT ===');
-      console.log('Current incident data:', incident); // Updated incidentData to incident
 
-      // Validate required fields
-      if (!incident.title?.trim()) { // Updated incidentData to incident
-        alert('Please enter a title for the incident');
+      if (!incident.title?.trim()) {
+        toast.error('Please enter a title for the incident');
         return;
       }
 
-      // Prepare data for saving - ensure all fields are included
       const dataToSave = {
-        ...incident, // Updated incidentData to incident
+        ...incident,
         company_id: currentUser.company_id,
-        // Ensure proper data types for specific fields
-        nis2_cross_border_impact: Boolean(incident.nis2_cross_border_impact), // Updated incidentData to incident
-        containment_effective: incident.containment_effective === null ? null : Boolean(incident.containment_effective), // Updated incidentData to incident
-        mttr_minutes: incident.mttr_minutes ? Number(incident.mttr_minutes) : null, // Updated incidentData to incident
-        mttd_minutes: incident.mttd_minutes ? Number(incident.mttd_minutes) : null, // Updated incidentData to incident
-        cost_estimate: incident.cost_estimate ? Number(incident.cost_estimate) : null // Updated incidentData to incident
+        nis2_cross_border_impact: Boolean(incident.nis2_cross_border_impact),
+        containment_effective: incident.containment_effective === null ? null : Boolean(incident.containment_effective),
+        mttr_minutes: incident.mttr_minutes ? Number(incident.mttr_minutes) : null,
+        mttd_minutes: incident.mttd_minutes ? Number(incident.mttd_minutes) : null,
+        cost_estimate: incident.cost_estimate ? Number(incident.cost_estimate) : null
       };
-
-      console.log('Data being saved to database:', dataToSave);
 
       let savedIncident;
 
       if (isNewIncident) {
-        // Create new incident with all data
-        console.log('Creating new incident with data:', dataToSave);
         savedIncident = await Incident.create(dataToSave);
-        console.log('New incident created with ID:', savedIncident.id);
         setIsNewIncident(false);
-
-        // Update URL to reflect the new incident ID
         window.history.replaceState({}, '', createPageUrl(`IncidentDetail?id=${savedIncident.id}`));
       } else {
-        // Update existing incident with all data
-        console.log('Updating existing incident ID:', incident.id); // Updated incidentData to incident
-        savedIncident = await Incident.update(incident.id, dataToSave); // Updated incidentData to incident
-        console.log('Incident updated successfully');
+        savedIncident = await Incident.update(incident.id, dataToSave);
       }
 
-      // Update local state with saved data to ensure consistency (e.g., ID for new incidents)
-      setIncident(prev => ({ // Updated setIncidentData to setIncident
-        ...prev,
-        ...savedIncident
-      }));
-
-      alert('Incident saved successfully!');
+      setIncident(prev => ({ ...prev, ...savedIncident }));
+      toast.success('Incident saved successfully');
 
     } catch (error) {
       console.error("Error saving incident:", error);
-      alert(`Failed to save incident: ${error.message}`);
+      toast.error(`Failed to save incident: ${error.message}`);
     } finally {
       setSaving(false);
     }
@@ -249,21 +204,20 @@ export default function IncidentDetail() {
   };
 
   const handleGenerateIncidentReport = async () => {
-    if (!incident?.id) { // Updated incidentData to incident
-      alert('Please save the incident first before generating a report.');
+    if (!incident?.id) {
+      toast.error('Please save the incident first before generating a report.');
       return;
     }
     setReportGenerating(true);
     try {
-      const { data } = await generateIncidentReportPdf({ incidentId: incident.id }); // Updated incidentData to incident
-      const blob = new Blob([data], { type: "application/pdf" }); // Assuming PDF is the actual type
+      const { data } = await generateIncidentReportPdf({ incidentId: incident.id });
+      const blob = new Blob([data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
       window.open(url, "_blank");
-      // optional: revoke after a short delay
       setTimeout(() => window.URL.revokeObjectURL(url), 60_000);
     } catch (error) {
       console.error("Error generating incident report:", error);
-      alert(`Failed to generate report: ${error.message}`);
+      toast.error(`Failed to generate report: ${error.message}`);
     } finally {
       setReportGenerating(false);
     }
@@ -328,10 +282,7 @@ export default function IncidentDetail() {
   }
 
 
-  // Debug log before rendering
-  console.log('Rendering IncidentDetail with incident:', incident); // Updated incidentData to incident
-
-  const canEdit = canEditEntity(currentUser, 'incidents', incident); // New canEdit variable
+  const canEdit = canEditEntity(currentUser, 'incidents', incident);
 
   return (
     <div className="min-h-screen cyber-gradient"> {/* Changed outer div class */}

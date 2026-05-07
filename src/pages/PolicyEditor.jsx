@@ -24,6 +24,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { InvokeLLM } from '@/integrations/Core';
+import { toast } from 'sonner';
 import { POLICY_TEMPLATES } from '@/components/policies/PolicyTemplates';
 import PolicyExportButton from '@/components/policies/PolicyExportButton';
 
@@ -124,13 +125,36 @@ export default function PolicyEditor() {
   const generateLitePolicy = async (policyType, companyContext = {}) => {
     setGeneratingLitePolicy(true);
     try {
-      // First check if we have a hardcoded template
+      const companyName = companyContext.name || currentUser?.company_name || '[INSERT ORGANIZATION NAME]';
+      const industry = companyContext.industry || 'not specified';
+      const size = companyContext.size || 'not specified';
+
+      // When a template exists, use it as the base structure and let Claude enrich it
+      // with company-specific context rather than returning static text
       if (POLICY_TEMPLATES[policyType]) {
         const template = POLICY_TEMPLATES[policyType];
-        const companyName = companyContext.name || currentUser?.company_name || '[INSERT ORGANIZATION NAME]';
-        const generatedContent = template.content(companyName);
-        
-        return generatedContent;
+        const baseDraft = template.content(companyName);
+
+        const enrichPrompt = `You are a cybersecurity policy writer. Refine this draft ${policyType.replace(/_/g, ' ')} policy to be specific to ${companyName}.
+
+Company context:
+- Name: ${companyName}
+- Industry: ${industry}
+- Size: ${size}
+
+Instructions:
+- Replace every generic placeholder (e.g., "[INSERT ORGANIZATION NAME]", "[COMPANY]", "[ORG]") with "${companyName}"
+- Where the industry is known, tailor risk language and examples to that sector (e.g., financial data for finance, PHI for healthcare)
+- Strengthen any controls that use weak language ("should") to mandatory language ("must") throughout
+- Preserve all specific timeframes, SLAs, and control IDs already in the draft
+- Do not remove sections or change the overall structure
+- Return ONLY the refined policy markdown, no preamble or explanation
+
+DRAFT POLICY:
+${baseDraft}`;
+
+        const refined = await InvokeLLM({ prompt: enrichPrompt, feature: 'policy_generate' });
+        return refined;
       }
 
       // If no template exists, fall back to LLM generation
@@ -326,7 +350,7 @@ Generate a professional, detailed ${policyTypeName} policy that serves as a robu
 
   const handleGenerateLitePolicy = async () => {
     if (!policy.policy_type) {
-      alert("Please select a policy type first.");
+      toast.error("Please select a policy type first.");
       return;
     }
 
@@ -350,8 +374,8 @@ Generate a professional, detailed ${policyTypeName} policy that serves as a robu
       setHasChanges(true);
       setShowLitePolicyGenerator(false);
     } catch (error) {
-      console.error("Error generating comprehensive policy:", error);
-      alert("Failed to generate policy template. Please try again.");
+      console.error("Error generating policy:", error);
+      toast.error("Failed to generate policy. Please try again.");
     }
   };
 
