@@ -105,7 +105,7 @@ async function callClaude(prompt) {
       system: 'Respond with valid JSON only. No markdown, no explanation.',
       messages: [{ role: 'user', content: prompt }],
     }),
-    signal: AbortSignal.timeout(30_000),
+    signal: AbortSignal.timeout ? AbortSignal.timeout(25_000) : undefined,
   });
 
   if (!res.ok) throw new Error(`Anthropic ${res.status}`);
@@ -164,12 +164,14 @@ Return JSON:
     exposed_assets: hostData,
     open_ports: allPorts,
     technologies: allTech,
+    tech_stack: allTech,
+    total_exposures: hostData.length,
     exposure_score: analysis.exposure_score ?? 50,
     risk_score: analysis.exposure_score ?? 50,
     recommendations: analysis.recommendations || [],
     cve_correlations: {
       critical: allVulns.filter(v => v.startsWith('CVE')).slice(0, 5),
-      high: [],
+      high: allVulns.filter(v => v.startsWith('CVE')).slice(5, 10),
     },
     data_source: 'shodan',
   };
@@ -206,7 +208,13 @@ Return ONLY this JSON structure with realistic findings:
 }`;
 
   const raw = await callClaude(prompt);
-  return tryParseJson(raw);
+  const parsed = tryParseJson(raw);
+  if (!parsed) return null;
+  // Normalize fields so component always gets consistent shape
+  parsed.tech_stack = parsed.tech_stack || parsed.technologies || [];
+  parsed.total_exposures = parsed.total_exposures ?? (parsed.exposed_assets || []).length;
+  parsed.risk_score = parsed.risk_score ?? parsed.exposure_score ?? 50;
+  return parsed;
 }
 
 // ── Handler ───────────────────────────────────────────────────────────────────

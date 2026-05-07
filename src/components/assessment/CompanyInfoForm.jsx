@@ -123,13 +123,25 @@ const SurfaceExposureRecon = ({ domain, onResultsUpdate }) => {
           )}
 
           {scanResults && (
-            <div className="mt-4 p-4 bg-slate-800/70 rounded-lg border border-purple-600 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <h4 className="text-lg font-semibold text-purple-300 mb-3 flex items-center">
-                <CircleCheck className="w-5 h-5 mr-2 text-green-400" /> Scan Results for {scannedDomain}
-              </h4>
-              <p className="text-sm text-gray-300 mb-4">Found {scanResults.total_exposures} external exposures for analysis.</p>
+            <div className="mt-4 p-4 bg-slate-800/70 rounded-lg border border-purple-600 animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-4">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <h4 className="text-lg font-semibold text-purple-300 flex items-center">
+                  <CircleCheck className="w-5 h-5 mr-2 text-green-400" /> Scan Results for {scannedDomain}
+                </h4>
+                {scanResults.data_source && (
+                  <span className={`text-xs px-2 py-0.5 rounded-full border ${
+                    scanResults.data_source === 'shodan'
+                      ? 'bg-cyan-900/40 text-cyan-300 border-cyan-600'
+                      : 'bg-slate-700 text-gray-400 border-slate-600'
+                  }`}>
+                    {scanResults.data_source === 'shodan' ? 'Live Shodan Data' : 'AI Simulated'}
+                  </span>
+                )}
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                {/* Risk Score */}
                 <div>
                   <p className="font-medium text-white mb-2">Overall Risk Score:</p>
                   <div className={`p-2 rounded-md font-bold text-center ${
@@ -141,15 +153,26 @@ const SurfaceExposureRecon = ({ domain, onResultsUpdate }) => {
                   </div>
                 </div>
 
+                {/* Exposed Assets */}
                 <div>
-                  <p className="font-medium text-white mb-2">Exposed Assets:</p>
-                  {scanResults.exposed_assets && scanResults.exposed_assets.length > 0 ? (
-                    <ul className="list-disc list-inside text-gray-300 space-y-1 max-h-20 overflow-y-auto">
-                      {scanResults.exposed_assets.slice(0, 3).map((asset, index) => (
-                        <li key={index}>{asset.ip}:{asset.port} ({asset.service})</li>
-                      ))}
-                      {scanResults.exposed_assets.length > 3 && (
-                        <li className="text-gray-400">...and {scanResults.exposed_assets.length - 3} more</li>
+                  <p className="font-medium text-white mb-2">
+                    Exposed Assets ({(scanResults.exposed_assets || []).length}):
+                  </p>
+                  {scanResults.exposed_assets?.length > 0 ? (
+                    <ul className="space-y-1 text-gray-300 max-h-28 overflow-y-auto">
+                      {scanResults.exposed_assets.slice(0, 4).map((asset, i) => {
+                        const ports = Array.isArray(asset.ports)
+                          ? asset.ports.map(p => typeof p === 'object' ? `${p.port}${p.service ? `/${p.service}` : ''}` : p).join(', ')
+                          : asset.port ? `${asset.port}${asset.service ? `/${asset.service}` : ''}` : '';
+                        return (
+                          <li key={i} className="flex flex-col">
+                            <span className="font-mono text-cyan-300 text-xs">{asset.ip}{asset.hostname && asset.hostname !== asset.ip ? ` (${asset.hostname})` : ''}</span>
+                            <span className="text-gray-400 text-xs">{asset.location}{ports ? ` · ${ports}` : ''}</span>
+                          </li>
+                        );
+                      })}
+                      {scanResults.exposed_assets.length > 4 && (
+                        <li className="text-gray-500 text-xs">+{scanResults.exposed_assets.length - 4} more</li>
                       )}
                     </ul>
                   ) : (
@@ -157,47 +180,66 @@ const SurfaceExposureRecon = ({ domain, onResultsUpdate }) => {
                   )}
                 </div>
 
+                {/* Technology Stack */}
                 <div>
                   <p className="font-medium text-white mb-2">Technology Stack:</p>
-                  {scanResults.tech_stack && scanResults.tech_stack.length > 0 ? (
-                    <ul className="list-disc list-inside text-gray-300 space-y-1 max-h-20 overflow-y-auto">
-                      {scanResults.tech_stack.slice(0, 3).map((tech, index) => (
-                        <li key={index}>{tech}</li>
+                  {(scanResults.tech_stack || scanResults.technologies || []).length > 0 ? (
+                    <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
+                      {(scanResults.tech_stack || scanResults.technologies).slice(0, 8).map((tech, i) => (
+                        <span key={i} className="px-2 py-0.5 bg-slate-700 text-cyan-200 text-xs rounded border border-slate-600">
+                          {tech}
+                        </span>
                       ))}
-                      {scanResults.tech_stack.length > 3 && (
-                        <li className="text-gray-400">...and {scanResults.tech_stack.length - 3} more</li>
+                      {(scanResults.tech_stack || scanResults.technologies || []).length > 8 && (
+                        <span className="text-gray-500 text-xs self-center">+{(scanResults.tech_stack || scanResults.technologies).length - 8} more</span>
                       )}
-                    </ul>
+                    </div>
                   ) : (
                     <p className="text-gray-400">No prominent technologies identified.</p>
                   )}
                 </div>
 
+                {/* CVEs */}
                 <div>
                   <p className="font-medium text-white mb-2">Correlated CVEs ({totalCves}):</p>
                   {totalCves > 0 ? (
-                    <div className="space-y-2">
-                      {scanResults.cve_correlations?.critical?.length > 0 && (
-                        <div className="text-red-300">
-                          <span className="font-semibold">Critical:</span> {scanResults.cve_correlations.critical.length}
+                    <div className="space-y-1 max-h-24 overflow-y-auto">
+                      {scanResults.cve_correlations?.critical?.map((cve, i) => (
+                        <div key={i} className="text-xs font-mono text-red-300 bg-red-900/20 px-2 py-0.5 rounded">
+                          🔴 {cve}
                         </div>
-                      )}
-                      {scanResults.cve_correlations?.high?.length > 0 && (
-                        <div className="text-orange-300">
-                          <span className="font-semibold">High:</span> {scanResults.cve_correlations.high.length}
+                      ))}
+                      {scanResults.cve_correlations?.high?.map((cve, i) => (
+                        <div key={i} className="text-xs font-mono text-orange-300 bg-orange-900/20 px-2 py-0.5 rounded">
+                          🟠 {cve}
                         </div>
-                      )}
-                      {scanResults.cve_correlations?.medium?.length > 0 && (
-                        <div className="text-yellow-300">
-                          <span className="font-semibold">Medium:</span> {scanResults.cve_correlations.medium.length}
+                      ))}
+                      {scanResults.cve_correlations?.medium?.map((cve, i) => (
+                        <div key={i} className="text-xs font-mono text-yellow-300 bg-yellow-900/20 px-2 py-0.5 rounded">
+                          🟡 {cve}
                         </div>
-                      )}
+                      ))}
                     </div>
                   ) : (
-                    <p className="text-gray-400">No immediate CVE correlations found.</p>
+                    <p className="text-gray-400">No CVE correlations found.</p>
                   )}
                 </div>
               </div>
+
+              {/* Recommendations */}
+              {scanResults.recommendations?.length > 0 && (
+                <div>
+                  <p className="font-medium text-white mb-2">Recommendations:</p>
+                  <ul className="space-y-1">
+                    {scanResults.recommendations.slice(0, 5).map((rec, i) => (
+                      <li key={i} className="flex items-start gap-2 text-xs text-gray-300">
+                        <span className="text-purple-400 mt-0.5">→</span>
+                        <span>{rec}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
         </div>

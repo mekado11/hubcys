@@ -1,4 +1,8 @@
 {
+  "functions": {
+    "api/surface-recon.js": { "maxDuration": 60 },
+    "api/ai.js": { "maxDuration": 60 }
+  },
   "crons": [
     {
       "path": "/api/check-nist-updates",
