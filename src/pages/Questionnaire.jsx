@@ -14,7 +14,7 @@ export default function Questionnaire() {
     const pdfUrl = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/686c4c7cddeaa31e94f721d6/a107556f2_FortigapCybersecurityAssessmentQuestions.pdf";
     const a = document.createElement("a");
     a.href = pdfUrl;
-    a.download = "Fortigap_Assessment_Questionnaire.pdf";
+    a.download = "Hubcys_Assessment_Questionnaire.pdf";
     a.target = "_blank";
     document.body.appendChild(a);
     a.click();
@@ -31,7 +31,7 @@ export default function Questionnaire() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "fortigap_assessment_questionnaire.md";
+      a.download = "hubcys_assessment_questionnaire.md";
       document.body.appendChild(a);
       a.click();
       a.remove();

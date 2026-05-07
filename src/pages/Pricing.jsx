@@ -132,7 +132,7 @@ My details:
 
 Please send an invoice and activate my account. Thank you!`;
 
-      window.location.href = `mailto:sales@fortigap.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.location.href = `mailto:sales@hubcys.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     } finally {
       // small delay so users see the button state change before mail client opens
       setTimeout(() => setLoadingPlan(null), 400);
@@ -233,7 +233,7 @@ Please send an invoice and activate my account. Thank you!`;
                     onClick={() => {
                       const subject = `Inquiry about ${plan.name} Plan`;
                       const body = `Hello,\n\nI'm interested in the ${plan.name} plan for my organization. Could you please provide more information about pricing and setup?\n\nThank you!`;
-                      window.location.href = `mailto:sales@fortigap.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                      window.location.href = `mailto:sales@hubcys.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
                     }}
                   >
                     {plan.price === "Custom" ? (
@@ -306,7 +306,7 @@ Please send an invoice and activate my account. Thank you!`;
                   </Button>
                 </a>
                 <Button
-                  onClick={() => window.location.href = 'mailto:sales@fortigap.com'}
+                  onClick={() => window.location.href = 'mailto:sales@hubcys.com'}
                   className="bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 w-full sm:w-auto"
                 >
                   Learn about Enterprise + CyGRiC
@@ -333,10 +333,10 @@ Please send an invoice and activate my account. Thank you!`;
                 <Button
                   variant="outline"
                   className="border-cyan-500/30 bg-white text-slate-800 hover:bg-gray-100 text-sm py-2"
-                  onClick={() => window.location.href = 'mailto:sales@fortigap.com'}
+                  onClick={() => window.location.href = 'mailto:sales@hubcys.com'}
                 >
                   <Mail className="w-4 h-4 mr-2" />
-                  sales@fortigap.com
+                  sales@hubcys.com
                 </Button>
                 <Button
                   variant="outline"

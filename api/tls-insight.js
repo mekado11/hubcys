@@ -24,6 +24,19 @@ function isAuthenticated(req) {
   return auth.startsWith('Bearer ') && auth.length > 10;
 }
 
+const _rl = new Map();
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const e = _rl.get(ip);
+  if (!e || now > e.resetAt) { _rl.set(ip, { count: 1, resetAt: now + 60_000 }); return true; }
+  if (e.count >= 10) return false;
+  e.count++;
+  return true;
+}
+function getIp(req) {
+  return (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+}
+
 // ── TLS cert fetcher ──────────────────────────────────────────────────────────
 
 function fetchTlsCert(hostname, port = 443) {
@@ -37,8 +50,9 @@ function fetchTlsCert(hostname, port = 443) {
       clearTimeout(timeout);
       try {
         const cert = socket.getPeerCertificate(true);
+        const cipher = socket.getCipher();
         socket.end();
-        resolve(cert);
+        resolve({ cert, tlsVersion: cipher?.version || 'TLS' });
       } catch (e) {
         socket.destroy();
         reject(e);
@@ -72,6 +86,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   if (!isAuthenticated(req)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!checkRateLimit(getIp(req))) return res.status(429).json({ error: 'Too many requests' });
 
   const { host } = req.body || {};
   if (!host || typeof host !== 'string') return res.status(400).json({ error: 'host is required' });
@@ -81,7 +96,7 @@ export default async function handler(req, res) {
   if (!sanitised || sanitised.length > 253) return res.status(400).json({ error: 'Invalid hostname' });
 
   try {
-    const cert = await fetchTlsCert(sanitised);
+    const { cert, tlsVersion } = await fetchTlsCert(sanitised);
 
     if (!cert || Object.keys(cert).length === 0) {
       return res.status(200).json({ data: { host: sanitised, error: 'No certificate returned' } });
@@ -107,14 +122,14 @@ export default async function handler(req, res) {
       san,
       fingerprint_sha256: formatFingerprint(cert.fingerprint256?.replace(/:/g, '')),
       fingerprint_sha1: formatFingerprint(cert.fingerprint?.replace(/:/g, '')),
-      signature_algorithm: cert.infoAccess ? null : (cert.sigalg || null),
+      signature_algorithm: cert.sigalg || null,
       serial_number: cert.serialNumber || null,
-      protocol: req.connection?.getPeerCertificate ? 'TLS' : 'TLS',
+      protocol: tlsVersion,
     };
 
     return res.status(200).json({ data });
   } catch (err) {
     console.error('[tls-insight]', err.message);
-    return res.status(500).json({ error: `TLS lookup failed: ${err.message}` });
+    return res.status(500).json({ error: 'TLS lookup failed. Check the hostname and try again.' });
   }
 }

@@ -407,23 +407,6 @@ export default function Layout({ children, currentPageName }) {
     };
   }, [currentUser, handleUserActivity, scheduleInactivityTimers, clearAllSessionTimers]); 
 
-  // Replace lingering brand mentions on specific pages without rewriting their content
-  useEffect(() => {
-    if (!mainRef.current) return;
-    const pagesNeedingReplace = ['PrivacyPolicy', 'TermsOfService', 'PricingAndFeatures', 'Assessment'];
-    if (!pagesNeedingReplace.includes(currentPageName)) return;
-
-    const root = mainRef.current;
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-    let node;
-    while ((node = walker.nextNode())) {
-      const val = node.nodeValue;
-      if (val && val.toLowerCase().includes('fortigap')) {
-        // Avoid RegExp lastIndex issues by creating a fresh regex per replace
-        node.nodeValue = val.replace(/fortigap/gi, 'Hubcys');
-      }
-    }
-  }, [currentPageName]);
 
   const checkTrialStatus = (user) => {
     if (!user || !user.created_date) return { expired: false, daysRemaining: 28, isPaid: false };

@@ -574,7 +574,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-6 text-xs text-slate-500">
             <Link to={createPageUrl('PrivacyPolicy')} className="hover:text-cyan-400 transition-colors">Privacy Policy</Link>
             <Link to={createPageUrl('TermsOfService')} className="hover:text-cyan-400 transition-colors">Terms of Service</Link>
-            <a href="mailto:careers@fortigap.com?subject=Career Opportunity Inquiry" className="hover:text-cyan-400 transition-colors">Careers</a>
+            <a href="mailto:careers@hubcys.com?subject=Career Opportunity Inquiry" className="hover:text-cyan-400 transition-colors">Careers</a>
           </div>
         </div>
       </footer>

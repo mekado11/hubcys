@@ -49,7 +49,7 @@ export default function CompanyOnboarding() {
       if (is401Error) {
         console.log('User not authenticated on CompanyOnboarding page. Redirecting to login.');
         // Redirect to login with return URL
-        User.loginWithRedirect(window.location.origin + createPageUrl("CompanyOnboarding"));
+        await User.loginWithRedirect(window.location.origin + createPageUrl("CompanyOnboarding"));
         return;
       }
       

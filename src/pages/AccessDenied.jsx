@@ -8,7 +8,7 @@ import { createPageUrl } from '@/utils';
 
 export default function AccessDenied() {
   const [user, setUser] = useState(null);
-  const [company, setCompany] = useState(null); // company state is still fetched but not used in display due to Fortigap contact change
+  const [company, setCompany] = useState(null); // company state is still fetched but not used in display due to Hubcys contact change
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -152,7 +152,7 @@ ${sanitise(user?.full_name || 'User')}`);
 
               <div className="space-y-2">
                 <p className="text-gray-400">
-                  If you believe this decision was made in error, please contact Fortigap for further review.
+                  If you believe this decision was made in error, please contact Hubcys for further review.
                 </p>
                 
                 {user?.approved_date && (
@@ -184,7 +184,7 @@ ${sanitise(user?.full_name || 'User')}`);
 
             <div className="pt-4 border-t border-gray-700">
               <p className="text-sm text-gray-500">
-                Your request was reviewed by the administrator of Fortigap.
+                Your request was reviewed by the administrator of Hubcys.
               </p>
             </div>
           </CardContent>

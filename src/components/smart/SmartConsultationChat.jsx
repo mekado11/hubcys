@@ -56,7 +56,7 @@ export default function SmartConsultationChat({ assessmentId, assessmentData }) 
         };
         currentSession = await SmartConsultation.create(newSessionData);
         
-        const introPrompt = `You are Fortigap's Smart Security Consultant. Your task is to initiate a consultation based on a user's security assessment. The user is from "${assessmentData.company_name}". Their overall security score is ${assessmentData.overall_score}% which is rated as "${assessmentData.maturity_level}". Start the conversation with a warm and professional greeting. Briefly state their score and maturity level. Then, list the top 2-3 most critical areas for improvement based on their smart_analysis: ${JSON.stringify(assessmentData.smart_analysis)}. Conclude by asking an open-ended question like, "Where would you like to begin?" or "Which of these areas would you like to discuss first?". Your entire response should be formatted using markdown.`;
+        const introPrompt = `You are Hubcys's Smart Security Consultant. Your task is to initiate a consultation based on a user's security assessment. The user is from "${assessmentData.company_name}". Their overall security score is ${assessmentData.overall_score}% which is rated as "${assessmentData.maturity_level}". Start the conversation with a warm and professional greeting. Briefly state their score and maturity level. Then, list the top 2-3 most critical areas for improvement based on their smart_analysis: ${JSON.stringify(assessmentData.smart_analysis)}. Conclude by asking an open-ended question like, "Where would you like to begin?" or "Which of these areas would you like to discuss first?". Your entire response should be formatted using markdown.`;
         
         const response = await InvokeLLM({ prompt: introPrompt, feature: 'consultation' });
         const initialMessage = { role: 'assistant', content: response, timestamp: new Date().toISOString() };
@@ -92,7 +92,7 @@ export default function SmartConsultationChat({ assessmentId, assessmentData }) 
         timestamp: msg.timestamp // Preserve timestamp for history
       }));
       
-      const prompt = `Continue the conversation as Fortigap's Smart Security Consultant. Here is the conversation history: ${JSON.stringify(conversationHistory)}. The user's latest message is: "${inputValue}". Provide a helpful response based on the entire conversation context and the initial assessment data: ${JSON.stringify(assessmentData)}. Keep your answer concise, helpful, and formatted in markdown.`;
+      const prompt = `Continue the conversation as Hubcys's Smart Security Consultant. Here is the conversation history: ${JSON.stringify(conversationHistory)}. The user's latest message is: "${inputValue}". Provide a helpful response based on the entire conversation context and the initial assessment data: ${JSON.stringify(assessmentData)}. Keep your answer concise, helpful, and formatted in markdown.`;
       
       const response = await InvokeLLM({ prompt, feature: 'consultation' });
       const assistantMessage = { role: 'assistant', content: response, timestamp: new Date().toISOString() };

@@ -18,7 +18,7 @@ export default function ContextualSidebar({ currentStep }) {
             <div className="luxury-icon-wrapper">
               <Info className="w-5 h-5 floating-icon" />
             </div>
-            <span className="luxury-gradient-text">Fortigap Insights</span>
+            <span className="luxury-gradient-text">Hubcys Insights</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-8 relative z-10 flex-grow overflow-y-auto custom-scrollbar">

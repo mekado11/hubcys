@@ -74,7 +74,6 @@ export default function UserManagement() {
         u.first_name,
         u.last_name,
         u.company_name,
-        u.role,
         u.approval_status,
         u.subscription_tier,
         u.company_role,

@@ -65,7 +65,7 @@ Return a JSON object:
     };
 
     if (enrichment.threat_actor_type && !incident.threat_actor_type) {
-      updates.threat_actor_type = enrichment.likely_motivation || incident.threat_actor_type;
+      updates.threat_actor_type = enrichment.threat_actor_type || incident.threat_actor_type;
     }
 
     await Incident.update(incidentId, updates);
