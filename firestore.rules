@@ -4,8 +4,8 @@
 // Key principles:
 //   1. All reads/writes require authentication
 //   2. Users can only read/write their own company's data (company_id scoping)
-//   3. Super admin bypass is enforced server-side, not here
-//   4. Sensitive collections (users) scoped to the owning user's UID
+//   3. Super admin bypass via is_super_admin field on user document
+//   4. Per-user collections (training, notifications) scoped by user_email
 //
 // WARNING: These rules are the primary security layer. Client-side checks are
 // defence-in-depth only — never rely on them as the sole protection.
@@ -23,7 +23,12 @@ service cloud.firestore {
       return request.auth.uid;
     }
 
-    // Fetch caller's user document to get company_id and role
+    function userEmail() {
+      return request.auth.token.email;
+    }
+
+    // Fetch caller's user document to get company_id and role.
+    // Uses exists() guard so missing documents don't throw.
     function callerProfile() {
       return get(/databases/$(database)/documents/users/$(uid())).data;
     }
@@ -33,16 +38,21 @@ service cloud.firestore {
     }
 
     function isSuperAdmin() {
-      return isAuthed() && callerProfile().is_super_admin == true;
+      return isAuthed()
+        && exists(/databases/$(database)/documents/users/$(uid()))
+        && callerProfile().is_super_admin == true;
     }
 
     function sameCompany(resourceCompanyId) {
       return isAuthed() && callerCompanyId() == resourceCompanyId;
     }
 
+    // Owner by user_email (training progress, badges, notifications, etc.)
+    function isOwnerByEmail(resourceUserEmail) {
+      return isAuthed() && userEmail() == resourceUserEmail;
+    }
+
     // ── Users ─────────────────────────────────────────────────────────────────
-    // Users can read/write their own profile.
-    // Company admins can read (not write) other users in the same company.
     match /users/{userId} {
       allow read: if isAuthed() && (uid() == userId || sameCompany(resource.data.company_id) || isSuperAdmin());
       allow create: if isAuthed() && uid() == userId;
@@ -51,12 +61,9 @@ service cloud.firestore {
     }
 
     // ── Company-scoped collections ─────────────────────────────────────────────
-    // Pattern: only users belonging to the same company can access the data.
-    //
-    // NOTE: The entity factory (src/entities/_entity.js) converts PascalCase entity
-    // names to singular snake_case collection names (e.g. Assessment → assessment).
-    // Rules below cover BOTH the singular form (what the code writes to) and the
-    // plural form (kept for backwards compatibility / future migration).
+    // Pattern: only members of the same company can access their data.
+    // Rules cover both singular form (what the entity factory writes) and
+    // plural form (kept for backwards compat / direct Firestore access).
 
     // Assessments
     match /assessment/{docId} {
@@ -108,6 +115,12 @@ service cloud.firestore {
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
+    // Incident Notes
+    match /incident_note/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+
     // Policies
     match /policy/{docId} {
       allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
@@ -128,7 +141,7 @@ service cloud.firestore {
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
-    // BIA
+    // BIA (entity factory generates 'b_i_a')
     match /b_i_a/{docId} {
       allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
@@ -144,6 +157,12 @@ service cloud.firestore {
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
     match /tabletop_exercises/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+
+    // Exercise Participants
+    match /exercise_participant/{docId} {
       allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
@@ -168,10 +187,91 @@ service cloud.firestore {
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
+    // ETSI Assessments
+    match /etsi_assessment/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+
+    // Evidence
+    match /evidence/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+
+    // PCI Scope
+    match /pci_scope/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+
+    // Regulatory Requirements
+    match /regulatory_requirement/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+
+    // Org Units
+    match /org_unit/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+
+    // Asset Types
+    match /asset_type/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+
+    // Subtasks
+    match /subtask/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+
+    // Comments
+    match /comment/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+
+    // Editing Sessions (collaborative editing)
+    match /editing_session/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+
+    // Smart Analysis Config
+    match /smart_analysis_config/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+
+    // IOC Analyzer Config (entity generates 'i_o_c_analyzer_config')
+    match /i_o_c_analyzer_config/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+    // Backwards-compat alias
+    match /ioc_analyzer_config/{docId} {
+      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
+    }
+
+    // Smart Consultation (AI chat sessions — per company + per user)
+    match /smart_consultation/{docId} {
+      allow read, write: if isAuthed() && (
+        sameCompany(resource.data.company_id) ||
+        isOwnerByEmail(resource.data.user_email) ||
+        isSuperAdmin()
+      );
+      allow create: if isAuthed() && (
+        sameCompany(request.resource.data.company_id) ||
+        isSuperAdmin()
+      );
+    }
+
     // ── Companies ─────────────────────────────────────────────────────────────
-    // Any authenticated user may read (needed for access-code lookups during onboarding)
-    // and create (new users have no company_id yet so sameCompany check would always fail).
-    // Only members of the same company may update or delete.
     match /company/{companyId} {
       allow read: if isAuthed();
       allow create: if isAuthed();
@@ -214,14 +314,66 @@ service cloud.firestore {
     }
 
     // ── Per-user collections ───────────────────────────────────────────────────
+    // These use user_email (not UID) for ownership — match the entity fields.
+
     match /training_progress/{docId} {
-      allow read, write: if isAuthed() && (resource.data.user_id == uid() || isSuperAdmin());
-      allow create: if isAuthed() && request.resource.data.user_id == uid();
+      allow read, write: if isAuthed() && (
+        isOwnerByEmail(resource.data.user_email) ||
+        sameCompany(resource.data.company_id) ||
+        isSuperAdmin()
+      );
+      allow create: if isAuthed() && (
+        request.resource.data.user_email == userEmail() ||
+        isSuperAdmin()
+      );
+    }
+
+    match /training_badge/{docId} {
+      allow read, write: if isAuthed() && (
+        isOwnerByEmail(resource.data.user_email) ||
+        sameCompany(resource.data.company_id) ||
+        isSuperAdmin()
+      );
+      allow create: if isAuthed() && (
+        request.resource.data.user_email == userEmail() ||
+        isSuperAdmin()
+      );
     }
 
     match /video_progress/{docId} {
-      allow read, write: if isAuthed() && (resource.data.user_id == uid() || isSuperAdmin());
-      allow create: if isAuthed() && request.resource.data.user_id == uid();
+      allow read, write: if isAuthed() && (
+        isOwnerByEmail(resource.data.user_email) ||
+        sameCompany(resource.data.company_id) ||
+        isSuperAdmin()
+      );
+      allow create: if isAuthed() && (
+        request.resource.data.user_email == userEmail() ||
+        isSuperAdmin()
+      );
+    }
+
+    match /ioc_feedback/{docId} {
+      allow read, write: if isAuthed() && (
+        isOwnerByEmail(resource.data.user_email) ||
+        sameCompany(resource.data.company_id) ||
+        isSuperAdmin()
+      );
+      allow create: if isAuthed() && (
+        request.resource.data.user_email == userEmail() ||
+        isSuperAdmin()
+      );
+    }
+
+    match /notification/{docId} {
+      allow read, write: if isAuthed() && (
+        isOwnerByEmail(resource.data.user_email) ||
+        sameCompany(resource.data.company_id) ||
+        isSuperAdmin()
+      );
+      allow create: if isAuthed() && (
+        request.resource.data.user_email == userEmail() ||
+        isSuperAdmin()
+      );
     }
 
     // ── Deny everything else ──────────────────────────────────────────────────

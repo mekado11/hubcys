@@ -6,6 +6,7 @@
 import { auth, db } from '@/api/firebase';
 import {
   collection,
+  doc,
   addDoc,
   getDoc,
   updateDoc,
@@ -13,11 +14,10 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 
-const TEST_COLLECTIONS = [
+const WRITE_COLLECTIONS = [
   { name: 'Assessments',  col: 'assessments' },
   { name: 'Action Items', col: 'action_items' },
   { name: 'Incidents',    col: 'incidents' },
-  { name: 'Users (read)', col: 'users' },
 ];
 
 export const runBackendHealthcheck = async () => {
@@ -26,20 +26,55 @@ export const runBackendHealthcheck = async () => {
   const firebaseUser = auth.currentUser;
   if (!firebaseUser) throw new Error('Not authenticated — please log in first.');
 
+  // Fetch the caller's user document to get company_id — required for sameCompany() rules.
+  const userDocRef = doc(db, 'users', firebaseUser.uid);
+  const userDocSnap = await getDoc(userDocRef);
+  if (!userDocSnap.exists()) {
+    throw new Error('User profile document not found in Firestore. Cannot determine company_id.');
+  }
+  const { company_id } = userDocSnap.data();
+  if (!company_id) {
+    throw new Error('User profile is missing company_id. Cannot run healthcheck.');
+  }
+
   const startedAt = new Date().toISOString();
   const results = [];
 
-  for (const { name, col } of TEST_COLLECTIONS) {
+  // ── Users: read-only test (create rules require uid() == userId path, not addDoc) ──
+  {
+    const t0 = Date.now();
+    let read = false;
+    let error = null;
+    try {
+      const snap = await getDoc(userDocRef);
+      read = snap.exists();
+    } catch (e) {
+      error = e.message;
+    }
+    results.push({
+      entity: 'Users (read)',
+      created: null,
+      updated: null,
+      read,
+      deleted: null,
+      error,
+      duration_ms: Date.now() - t0,
+    });
+  }
+
+  // ── Write/read/delete tests for company-scoped collections ──
+  for (const { name, col } of WRITE_COLLECTIONS) {
     const t0 = Date.now();
     let created = false, updated = false, read = false, deleted = false;
     let error = null;
     let docRef = null;
 
     try {
-      // Create
+      // Create — include company_id so sameCompany() succeeds
       docRef = await addDoc(collection(db, col), {
         _healthcheck: true,
         _uid: firebaseUser.uid,
+        company_id,
         created_at: serverTimestamp(),
       });
       created = true;
@@ -57,7 +92,6 @@ export const runBackendHealthcheck = async () => {
       deleted = true;
     } catch (e) {
       error = e.message;
-      // Best-effort cleanup
       if (docRef && !deleted) {
         try { await deleteDoc(docRef); } catch (_) { /* ignore */ }
       }
@@ -67,7 +101,7 @@ export const runBackendHealthcheck = async () => {
   }
 
   const finishedAt = new Date().toISOString();
-  const ok = results.every(r => !r.error && r.created && r.updated && r.read && r.deleted);
+  const ok = results.every(r => !r.error && r.read);
 
   return {
     data: {
@@ -78,8 +112,8 @@ export const runBackendHealthcheck = async () => {
       results,
       user: {
         email: firebaseUser.email,
-        company_id: firebaseUser.uid,
-        company_role: 'checked via Firebase Auth',
+        company_id,
+        company_role: userDocSnap.data().company_role ?? 'unknown',
       },
     },
   };
