@@ -3,8 +3,8 @@
  * Uses the biaEngine to score each BIA item, aggregates FAIR metrics,
  * saves results back to Firestore, and returns the updated BIA record.
  */
-import { db } from '@/api/firebase';
-import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { BIA } from '@/entities/BIA';
+import { Assessment } from '@/entities/Assessment';
 import { runBIA } from '@/components/bia/biaEngine';
 
 // Industry benchmark annualised loss ranges by risk tier (USD)
@@ -15,22 +15,18 @@ const BENCHMARKS = {
 };
 
 export const computeBia = async ({ biaId, assessmentId }) => {
-  if (!db) throw new Error('Firebase is not configured.');
-  if (!biaId)  throw new Error('biaId is required.');
+  if (!biaId) throw new Error('biaId is required.');
 
-  // Load BIA record
-  const biaRef = doc(db, 'bias', biaId);
-  const biaSnap = await getDoc(biaRef);
-  if (!biaSnap.exists()) throw new Error(`BIA record ${biaId} not found.`);
-  const biaData = { id: biaSnap.id, ...biaSnap.data() };
+  // Load BIA record via entity (uses correct Firestore collection)
+  const biaData = await BIA.get(biaId);
+  if (!biaData) throw new Error(`BIA record ${biaId} not found.`);
 
   // Load linked assessment risk profile (optional)
   let riskProfile = null;
   if (assessmentId) {
     try {
-      const aRef = doc(db, 'assessments', assessmentId);
-      const aSnap = await getDoc(aRef);
-      if (aSnap.exists()) riskProfile = aSnap.data().risk_profile || null;
+      const assessment = await Assessment.get(assessmentId);
+      if (assessment) riskProfile = assessment.risk_profile || null;
     } catch (_) { /* non-fatal */ }
   }
 
@@ -82,13 +78,12 @@ export const computeBia = async ({ biaId, assessmentId }) => {
     vs_median:   totalALE > bench.p50 ? 'above' : totalALE < bench.p25 ? 'below' : 'within',
   };
 
-  // Persist results back to Firestore
-  await updateDoc(biaRef, {
-    fair_metrics:       JSON.stringify(fairMetrics),
+  // Persist results back to Firestore via entity (uses correct collection)
+  await BIA.update(biaId, {
+    fair_metrics:        JSON.stringify(fairMetrics),
     industry_benchmarks: JSON.stringify(industryBenchmarks),
-    bia_items:          JSON.stringify(scoredItems),
-    status:             'calculated',
-    updated_date:       serverTimestamp(),
+    bia_items:           JSON.stringify(scoredItems),
+    status:              'calculated',
   });
 
   const updatedBia = {
