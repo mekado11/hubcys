@@ -67,14 +67,13 @@ const SurfaceExposureRecon = ({ domain, onResultsUpdate }) => {
       console.log('[components/assessment/CompanyInfoForm.js] Surface exposure scan for:', sanitized);
       const response = await surfaceExposureRecon({ target: sanitized });
 
-      if (response?.status === 200) {
-        const results = response.data;
+      const results = response?.data;
+      if (results) {
         setScanResults(results);
         setScannedDomain(sanitized);
         onResultsUpdate(results);
       } else {
-        const msg = response?.data?.error || 'Surface exposure scan failed';
-        setScanError(msg);
+        setScanError('Surface exposure scan returned no data. Please try again.');
       }
     } catch (err) {
       console.error("[components/assessment/CompanyInfoForm.js] Surface exposure scan failed:", err?.response || err);
