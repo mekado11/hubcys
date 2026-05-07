@@ -62,7 +62,7 @@ export default function RequestFeature() {
           </Link>
         </div>
 
-        <p className="text-gray-300 mb-6">Tell us what would make Fortigap better for you. Your request is visible only to admins.</p>
+        <p className="text-gray-300 mb-6">Tell us what would make Hubcys better for you. Your request is visible only to admins.</p>
 
         {submittedId ? (
           <div className="bg-green-900/20 border border-green-600/40 rounded-lg p-4 flex items-start gap-3">

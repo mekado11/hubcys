@@ -19,7 +19,7 @@ export default function ReportCustomization({
     includeActionItems: true,
     includeComplianceMapping: true,
     includeRecommendations: true,
-    includeFortigapBranding: true,
+    includeHubcysBranding: true,
   });
 
   useEffect(() => {
@@ -124,11 +124,11 @@ export default function ReportCustomization({
                 <label className="flex items-center space-x-2">
                   <input
                     type="checkbox"
-                    checked={customizations.includeFortigapBranding}
-                    onChange={(e) => updateCustomization('includeFortigapBranding', e.target.checked)}
+                    checked={customizations.includeHubcysBranding}
+                    onChange={(e) => updateCustomization('includeHubcysBranding', e.target.checked)}
                     className="rounded"
                   />
-                  <span className="text-white">Include "Powered by Fortigap" footer</span>
+                  <span className="text-white">Include "Powered by Hubcys" footer</span>
                 </label>
               </div>
             </div>
@@ -151,7 +151,7 @@ export default function ReportCustomization({
                 <li>• Custom company branding</li>
                 <li>• Section visibility controls</li>
                 <li>• Professional styling options</li>
-                <li>• Remove Fortigap branding</li>
+                <li>• Remove Hubcys branding</li>
               </ul>
             </div>
             <p className="text-xs text-gray-500">

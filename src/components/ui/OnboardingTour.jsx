@@ -83,11 +83,11 @@ export default function OnboardingTour({ isOpen, onClose, onComplete }) {
                 <div className="flex justify-center mb-6">
                    <img 
                       src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/27b05ae20_fortigap.png" 
-                      alt="Fortigap Logo" 
+                      alt="Hubcys Logo" 
                       className="w-20 h-20 object-contain"
                     />
                 </div>
-                <h2 className="text-3xl font-bold text-white mb-3">Welcome to Fortigap</h2>
+                <h2 className="text-3xl font-bold text-white mb-3">Welcome to Hubcys</h2>
                 <p className="text-gray-400 mb-8">
                   Let's begin with a quick tour to get you started on your cybersecurity journey.
                 </p>

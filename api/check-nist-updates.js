@@ -132,11 +132,13 @@ export default async function handler(req, res) {
   const authHeader = req.headers.authorization || '';
   const querySecret = new URL(req.url, 'http://localhost').searchParams.get('secret');
 
-  if (cronSecret) {
-    const provided = authHeader.replace('Bearer ', '') || querySecret;
-    if (provided !== cronSecret) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+  // Require secret — if not configured, deny all requests rather than open the endpoint
+  if (!cronSecret) {
+    return res.status(503).json({ error: 'CRON_SECRET not configured' });
+  }
+  const provided = authHeader.replace('Bearer ', '').trim() || querySecret;
+  if (!provided || provided !== cronSecret) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   const knownVersion = (process.env.NIST_800_53_KNOWN_VERSION || '5.2.0').trim();

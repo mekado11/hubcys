@@ -290,7 +290,7 @@ export default function PricingAndFeatures() {
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <Button 
                       className="bg-cyan-500 hover:bg-cyan-600 text-white"
-                      onClick={() => window.location.href = 'mailto:sales@fortigap.com'}
+                      onClick={() => window.location.href = 'mailto:sales@hubcys.com'}
                     >
                       Contact Sales
                     </Button>
@@ -373,7 +373,7 @@ export default function PricingAndFeatures() {
                   onClick={() => {
                     const subject = `Inquiry about ${plan.name} Plan`;
                     const body = `Hello,\n\nI'm interested in the ${plan.name} plan for my organization. Could you please provide more information about pricing and setup?\n\nThank you!`;
-                    window.location.href = `mailto:sales@fortigap.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                    window.location.href = `mailto:sales@hubcys.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
                   }}
                 >
                   {plan.price === "Custom" ? (

@@ -11,7 +11,7 @@ import { User } from "@/entities/User";
 import { toast } from "sonner";
 
 /**
- * Fortigap – IOC Analyzer Settings
+ * Hubcys – IOC Analyzer Settings
  *
  * Key features:
  * - Strong typing + defaults
