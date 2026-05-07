@@ -59,6 +59,11 @@ const ROUTES = {
   smart_analysis:        { lane: 'deep', maxTokens: 2000 },
   consultation:          { lane: 'deep', maxTokens: 1500 },
   ioc_analysis:          { lane: 'deep', maxTokens: 1500 },
+
+  // Training AI features
+  quiz_explain:          { lane: 'fast', maxTokens: 900  },
+  quiz_adaptive:         { lane: 'fast', maxTokens: 1200 },
+  training_coach:        { lane: 'deep', maxTokens: 1200 },
 };
 
 // Keywords that force the DEEP lane when auto-detecting (no explicit feature)
