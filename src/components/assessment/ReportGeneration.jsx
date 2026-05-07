@@ -38,7 +38,7 @@ export default function ReportGeneration({ data, onSave }) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `FortiGaP_Report_${data?.company_name?.replace(/\s+/g, "_") || "Assessment"}.pdf`;
+      a.download = `Hubcys_Report_${data?.company_name?.replace(/\s+/g, "_") || "Assessment"}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -59,7 +59,7 @@ export default function ReportGeneration({ data, onSave }) {
           Smart Analysis
         </CardTitle>
         <p className="text-gray-400">
-          Generate an AI-driven executive summary and prioritized recommendations from your inputs.
+          Generate a polished executive summary and prioritized recommendations from your assessment inputs.
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -82,7 +82,7 @@ export default function ReportGeneration({ data, onSave }) {
             disabled={aiRunning}
             className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600"
           >
-            {aiRunning ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Running AI…</> : <>Run AI Analysis</>}
+            {aiRunning ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating Summary…</> : <>Generate Summary</>}
           </Button>
 
           <Button
