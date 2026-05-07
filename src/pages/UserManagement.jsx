@@ -100,9 +100,21 @@ export default function UserManagement() {
   };
 
   const refresh = async () => {
-    const list = await User.list("-created_date", 500);
-    setUsers(list || []);
+    try {
+      if (currentUser?.is_super_admin) {
+        const list = await User.list("-created_date", 500);
+        setUsers(list || []);
+      } else if (currentUser?.company_id) {
+        const list = await User.filter({ company_id: currentUser.company_id }, "-created_date", 200);
+        setUsers(list || []);
+      }
+    } catch (err) {
+      console.error('refresh failed:', err.message);
+    }
   };
+
+  const patchUser = (id, fields) =>
+    setUsers(prev => prev.map(u => u.id === id ? { ...u, ...fields } : u));
 
   const doUpdateStatus = async (targetUser, newStatus, reason = null) => {
     setUpdatingId(targetUser.id);
@@ -114,8 +126,8 @@ export default function UserManagement() {
         rejection_reason: reason || null,
       };
       await User.update(targetUser.id, payload);
+      patchUser(targetUser.id, payload);
       toast.success(`User status updated to ${newStatus}.`);
-      await refresh();
     } catch (error) {
       console.error('Error updating user status:', error);
       toast.error('Failed to update user status.');
@@ -127,60 +139,51 @@ export default function UserManagement() {
   const handleTierChange = async (targetUser, newTier) => {
     if (!newTier || (targetUser.subscription_tier || "").toLowerCase() === newTier.toLowerCase()) return;
     setUpdatingId(targetUser.id);
-    
+
     try {
-      console.log(`Updating user ${targetUser.email} from tier ${targetUser.subscription_tier} to ${newTier}`);
-      
-      // Update user's subscription tier
       await User.update(targetUser.id, { subscription_tier: newTier });
-      console.log(`Successfully updated user ${targetUser.email} to tier ${newTier}`);
-      toast.success(`User subscription tier updated to ${newTier}.`);
-      
-      // Also update the Company's subscription tier to match
+      patchUser(targetUser.id, { subscription_tier: newTier });
+      toast.success(`Subscription tier updated to ${newTier}.`);
+
+      // Best-effort: also update the company doc (non-blocking)
       if (targetUser.company_id) {
-        console.log(`Updating Company ${targetUser.company_id} subscription_tier to ${newTier}`);
-        const updatedCompany = await Company.update(targetUser.company_id, { subscription_tier: newTier });
-        console.log(`Successfully updated Company ${targetUser.company_id}:`, updatedCompany);
-      } else {
-        console.warn(`User ${targetUser.email} has no company_id, cannot update company tier`);
+        Company.update(targetUser.company_id, { subscription_tier: newTier }).catch(err => {
+          console.warn('Company tier update failed (non-fatal):', err.message);
+        });
       }
-      
-      await refresh();
     } catch (error) {
       console.error('Error updating subscription tier:', error);
-      toast.error(`Failed to update subscription tier: ${error.message}`);
+      toast.error(`Failed to update tier: ${error.message}`);
     } finally {
       setUpdatingId("");
     }
   };
 
-  // Existing handleRoleChange for company_role
   const handleRoleChange = async (targetUser, newRole) => {
     if (!newRole || (targetUser.company_role || "").toLowerCase() === newRole.toLowerCase()) return;
     setUpdatingId(targetUser.id);
     try {
       await User.update(targetUser.id, { company_role: newRole });
-      toast.success('User company role updated successfully');
-      await refresh();
+      patchUser(targetUser.id, { company_role: newRole });
+      toast.success('Company role updated.');
     } catch (error) {
       console.error('Error updating user company role:', error);
-      toast.error('Failed to update user company role');
+      toast.error('Failed to update company role.');
     } finally {
       setUpdatingId("");
     }
   };
 
-  // New function for updating app_role
   const handleAppRoleChange = async (targetUser, newAppRole) => {
     if (!newAppRole || (targetUser.app_role || "").toLowerCase() === newAppRole.toLowerCase()) return;
     setUpdatingId(targetUser.id);
     try {
       await User.update(targetUser.id, { app_role: newAppRole });
-      toast.success('User app role updated successfully');
-      await refresh();
+      patchUser(targetUser.id, { app_role: newAppRole });
+      toast.success('App role updated.');
     } catch (error) {
       console.error('Error updating user app role:', error);
-      toast.error('Failed to update user app role');
+      toast.error('Failed to update app role.');
     } finally {
       setUpdatingId("");
     }
