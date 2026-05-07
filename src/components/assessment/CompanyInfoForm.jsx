@@ -203,22 +203,29 @@ const SurfaceExposureRecon = ({ domain, onResultsUpdate }) => {
                 <div>
                   <p className="font-medium text-white mb-2">Correlated CVEs ({totalCves}):</p>
                   {totalCves > 0 ? (
-                    <div className="space-y-1 max-h-24 overflow-y-auto">
-                      {scanResults.cve_correlations?.critical?.map((cve, i) => (
-                        <div key={i} className="text-xs font-mono text-red-300 bg-red-900/20 px-2 py-0.5 rounded">
-                          🔴 {cve}
-                        </div>
-                      ))}
-                      {scanResults.cve_correlations?.high?.map((cve, i) => (
-                        <div key={i} className="text-xs font-mono text-orange-300 bg-orange-900/20 px-2 py-0.5 rounded">
-                          🟠 {cve}
-                        </div>
-                      ))}
-                      {scanResults.cve_correlations?.medium?.map((cve, i) => (
-                        <div key={i} className="text-xs font-mono text-yellow-300 bg-yellow-900/20 px-2 py-0.5 rounded">
-                          🟡 {cve}
-                        </div>
-                      ))}
+                    <div className="space-y-1 max-h-28 overflow-y-auto">
+                      {[
+                        ...(scanResults.cve_correlations?.critical || []).map(c => ({ ...( typeof c === 'object' ? c : { cve_id: c }), _sev: 'critical' })),
+                        ...(scanResults.cve_correlations?.high || []).map(c => ({ ...(typeof c === 'object' ? c : { cve_id: c }), _sev: 'high' })),
+                        ...(scanResults.cve_correlations?.medium || []).map(c => ({ ...(typeof c === 'object' ? c : { cve_id: c }), _sev: 'medium' })),
+                      ].map((cve, i) => {
+                        const id = cve.cve_id || cve.id || 'Unknown';
+                        const desc = cve.description || cve.summary || null;
+                        const cvss = cve.cvss != null ? `CVSS ${cve.cvss}` : null;
+                        const colors = cve._sev === 'critical'
+                          ? 'text-red-300 bg-red-900/20'
+                          : cve._sev === 'high'
+                          ? 'text-orange-300 bg-orange-900/20'
+                          : 'text-yellow-300 bg-yellow-900/20';
+                        const dot = cve._sev === 'critical' ? '🔴' : cve._sev === 'high' ? '🟠' : '🟡';
+                        return (
+                          <div key={i} className={`text-xs px-2 py-1 rounded ${colors}`}>
+                            <span className="font-mono font-semibold">{dot} {id}</span>
+                            {cvss && <span className="ml-2 opacity-70">{cvss}</span>}
+                            {desc && <p className="mt-0.5 opacity-80 font-sans">{desc}</p>}
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : (
                     <p className="text-gray-400">No CVE correlations found.</p>
