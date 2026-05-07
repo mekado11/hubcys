@@ -65,7 +65,7 @@ const SurfaceExposureRecon = ({ domain, onResultsUpdate }) => {
 
     try {
       console.log('[components/assessment/CompanyInfoForm.js] Surface exposure scan for:', sanitized);
-      const response = await surfaceExposureRecon({ domain: sanitized });
+      const response = await surfaceExposureRecon({ target: sanitized });
 
       if (response?.status === 200) {
         const results = response.data;
