@@ -6,7 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Users, Database, Server, Code, Handshake, Siren, Landmark, KeyRound, GraduationCap, Cloud, ChevronDown, ChevronUp, ShieldQuestion, Sparkles, Info, BarChart } from "lucide-react"; // Added Sparkles, Info, BarChart
+import { Users, Database, Server, Code, Handshake, Siren, Landmark, KeyRound, GraduationCap, Cloud, ChevronDown, ChevronUp, ShieldQuestion, Sparkles, Info, BarChart, ArrowRight } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -287,13 +287,13 @@ export default function MaturitySliders({ data, onUpdate, onNext, onBack, onSave
           </p>
         </CardHeader>
         <CardContent>
-          {/* AI Generation Notice */}
-          {hasAnyScore && ( // Only show if at least one score is > 0 (implying AI prepopulation)
-            <Alert className="bg-purple-900/20 border-purple-500/30 mb-8"> {/* Added mb-8 for spacing */}
+          {/* Smart Score Notice */}
+          {hasAnyScore && (
+            <Alert className="bg-purple-900/20 border-purple-500/30 mb-8">
               <Sparkles className="w-5 h-5 text-purple-400" />
               <AlertDescription className="text-purple-200">
-                <strong>AI-Generated Initial Scores:</strong> The scores and descriptions below have been
-                pre-populated by our AI based on your company profile, industry, and selected framework.
+                <strong>Smart Initial Scores:</strong> The scores and descriptions below have been
+                pre-populated by Hubcys based on your company profile, industry, and selected framework.
                 Please review and adjust them based on your actual security posture.
               </AlertDescription>
             </Alert>
@@ -403,7 +403,7 @@ export default function MaturitySliders({ data, onUpdate, onNext, onBack, onSave
                             <div className="flex items-start gap-2 p-3 bg-purple-900/10 rounded-lg border border-purple-500/20">
                               <Info className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
                               <p className="text-xs text-purple-200">
-                                This description was AI-generated based on your company profile. 
+                                This description was pre-populated based on your company profile.
                                 Please review and edit to reflect your actual practices.
                               </p>
                             </div>
@@ -510,6 +510,34 @@ export default function MaturitySliders({ data, onUpdate, onNext, onBack, onSave
                 placeholder="Examples: 'We use Vanta for SOC 2 continuous monitoring and evidence automation. Manual evidence collection for ISO 27001. Quarterly compliance reviews with legal team. Main challenge is keeping policies updated and ensuring consistent implementation across teams.'"
                 className="bg-slate-800/50 border-gray-600 text-white placeholder-gray-400 focus:border-purple-500 focus:ring-purple-500 h-28"
               />
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <div className="flex justify-between items-center pt-6 border-t border-slate-700/50 mt-6">
+            <Button
+              variant="outline"
+              onClick={onBack}
+              className="border-gray-600 text-gray-300 hover:bg-slate-700"
+            >
+              Back
+            </Button>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={onSave}
+                disabled={saving}
+                className="border-gray-600 text-gray-300 hover:bg-slate-700"
+              >
+                {saving ? 'Saving…' : 'Save Progress'}
+              </Button>
+              <Button
+                onClick={onNext}
+                className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white font-semibold px-6"
+              >
+                View Results & Analysis
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
             </div>
           </div>
         </CardContent>

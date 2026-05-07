@@ -325,7 +325,7 @@ export default function AssessmentPage() {
     return (
       <div className="min-h-screen cyber-gradient flex items-center justify-center">
         <GeneratingAnimation 
-          message="AI is analyzing your organization..." 
+          message="Analyzing your organization..."
           subMessage="Generating personalized maturity scores and recommendations based on your industry, size, and framework selection. This may take 30-60 seconds."
         />
       </div>
