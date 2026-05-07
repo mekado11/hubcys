@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, Suspense, lazy, useCallback, memo, useMemo } from "react";
+import React, { useState, useEffect, useRef, Suspense, lazy, useCallback, memo, useMemo } from "react";
 import { User } from "@/entities/User";
 import { TrainingProgress } from "@/entities/TrainingProgress";
 import { TrainingVideo } from '@/entities/TrainingVideo';
