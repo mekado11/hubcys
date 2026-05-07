@@ -105,7 +105,7 @@ async function callClaude(prompt) {
       system: 'Respond with valid JSON only. No markdown, no explanation.',
       messages: [{ role: 'user', content: prompt }],
     }),
-    signal: AbortSignal.timeout(30_000),
+    signal: AbortSignal.timeout ? AbortSignal.timeout(25_000) : undefined,
   });
 
   if (!res.ok) throw new Error(`Anthropic ${res.status}`);
