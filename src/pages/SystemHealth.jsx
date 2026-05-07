@@ -122,8 +122,8 @@ export default function SystemHealth() {
                   <div key={idx} className="rounded-lg border border-gray-700 p-4 bg-slate-900/40 text-slate-200">
                     <div className="flex items-center justify-between mb-2">
                       <div className="font-semibold text-slate-100">{r.entity}</div>
-                      <Badge className={(!r.error && r.created && r.updated && r.read && r.deleted) ? "bg-green-500/20 text-green-300" : "bg-red-500/20 text-red-300"}>
-                        {(!r.error && r.created && r.updated && r.read && r.deleted) ? "OK" : "ERROR"}
+                      <Badge className={(!r.error && [r.created, r.updated, r.read, r.deleted].every(v => v === null || v === true)) ? "bg-green-500/20 text-green-300" : "bg-red-500/20 text-red-300"}>
+                        {(!r.error && [r.created, r.updated, r.read, r.deleted].every(v => v === null || v === true)) ? "OK" : "ERROR"}
                       </Badge>
                     </div>
                     <div className="text-xs">Duration: {r.duration_ms}ms</div>
