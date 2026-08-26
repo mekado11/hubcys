@@ -1,0 +1,124 @@
+{
+  "name": "Evidence",
+  "type": "object",
+  "properties": {
+    "control_id": {
+      "type": "string",
+      "description": "ID of the specific compliance control instance this evidence supports"
+    },
+    "evidence_name": {
+      "type": "string",
+      "description": "Name of the evidence item"
+    },
+    "evidence_type": {
+      "type": "string",
+      "enum": [
+        "Document",
+        "Screenshot",
+        "Configuration",
+        "Policy",
+        "Procedure",
+        "Report",
+        "Certificate",
+        "Audit_Log",
+        "Code_Review",
+        "Other"
+      ],
+      "description": "Type of evidence"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "URL to the uploaded evidence file"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of what this evidence demonstrates"
+    },
+    "collection_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when this evidence was collected"
+    },
+    "expiration_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when this evidence expires (if applicable)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Current",
+        "Expired",
+        "Needs Update",
+        "Under Review",
+        "Approved"
+      ],
+      "default": "Current",
+      "description": "Status of the evidence"
+    },
+    "collected_by": {
+      "type": "string",
+      "description": "Email of person who collected this evidence"
+    },
+    "reviewer_email": {
+      "type": "string",
+      "description": "Email of person who reviewed/approved this evidence"
+    },
+    "automated_source": {
+      "type": "string",
+      "description": "Source system if evidence was collected automatically (e.g., 'AWS Config', 'Okta')"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "Company ID for RLS"
+    }
+  },
+  "required": [
+    "control_id",
+    "evidence_name",
+    "evidence_type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "collected_by": "{{user.email}}"
+        },
+        {
+          "reviewer_email": "{{user.email}}"
+        },
+        {
+          "$and": [
+            {
+              "company_id": "{{user.company_id}}"
+            },
+            {
+              "user_condition": {
+                "company_role": "admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "collected_by": "{{user.email}}"
+        },
+        {
+          "$and": [
+            {
+              "company_id": "{{user.company_id}}"
+            },
+            {
+              "user_condition": {
+                "company_role": "admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

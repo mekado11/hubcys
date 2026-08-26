@@ -1,0 +1,71 @@
+{
+  "name": "RegulatoryRequirement",
+  "type": "object",
+  "properties": {
+    "regulation_code": {
+      "type": "string",
+      "enum": [
+        "NIS2",
+        "DORA",
+        "GDPR",
+        "CRA",
+        "FCA"
+      ],
+      "description": "Regulation identifier (EU/UK), including UK's FCA"
+    },
+    "jurisdiction": {
+      "type": "string",
+      "enum": [
+        "EU",
+        "UK",
+        "EU+UK"
+      ],
+      "description": "Applicable region"
+    },
+    "article_id": {
+      "type": "string",
+      "description": "Article/section id (e.g., Art. 21)"
+    },
+    "title": {
+      "type": "string",
+      "description": "Short title of the requirement"
+    },
+    "description": {
+      "type": "string",
+      "description": "Full requirement description (plain text)"
+    },
+    "mapped_control_hints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Keywords or control hints this aligns with (e.g. 'incident_response', 'patch_management')"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "Low",
+        "Medium",
+        "High",
+        "Critical"
+      ],
+      "default": "Medium",
+      "description": "Relative priority for readiness"
+    }
+  },
+  "required": [
+    "regulation_code",
+    "jurisdiction",
+    "article_id",
+    "title",
+    "description"
+  ],
+  "rls": {
+    "read": true,
+    "write": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

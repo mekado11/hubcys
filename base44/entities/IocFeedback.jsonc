@@ -1,0 +1,92 @@
+{
+  "name": "IocFeedback",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "Company owning this feedback"
+    },
+    "ioc_type": {
+      "type": "string",
+      "enum": [
+        "ip",
+        "domain",
+        "url",
+        "hash",
+        "user",
+        "token",
+        "cloud_principal"
+      ],
+      "description": "Type of IOC"
+    },
+    "ioc_value": {
+      "type": "string",
+      "description": "Exact IOC value"
+    },
+    "label": {
+      "type": "string",
+      "enum": [
+        "true_positive",
+        "false_positive",
+        "suspicious"
+      ],
+      "description": "Reviewer label"
+    },
+    "severity_override": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "description": "Optional severity override if TP"
+    },
+    "mapped_techniques": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Known ATT&CK techniques for this IOC if available"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Reviewer notes / rationale"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Optional expiration for feedback applicability"
+    }
+  },
+  "required": [
+    "company_id",
+    "ioc_type",
+    "ioc_value",
+    "label"
+  ],
+  "rls": {
+    "read": {
+      "company_id": "{{user.company_id}}"
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "$and": [
+            {
+              "company_id": "{{user.company_id}}"
+            },
+            {
+              "user_condition": {
+                "company_role": "admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

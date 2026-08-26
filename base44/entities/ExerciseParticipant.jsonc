@@ -1,0 +1,78 @@
+{
+  "name": "ExerciseParticipant",
+  "type": "object",
+  "properties": {
+    "exercise_id": {
+      "type": "string",
+      "description": "ID of the tabletop exercise"
+    },
+    "participant_email": {
+      "type": "string",
+      "description": "Email of the participant"
+    },
+    "participant_name": {
+      "type": "string",
+      "description": "Name of the participant"
+    },
+    "role_title": {
+      "type": "string",
+      "description": "Participant's job title or role"
+    },
+    "functional_roles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Functional roles of the participant in the exercise"
+    },
+    "systems_owned": {
+      "type": "string",
+      "description": "Systems or processes this participant owns"
+    },
+    "contact_methods": {
+      "type": "string",
+      "description": "How to contact this person during real incidents"
+    },
+    "participation_status": {
+      "type": "string",
+      "enum": [
+        "Invited",
+        "Confirmed",
+        "Participated",
+        "No_Show"
+      ],
+      "default": "Invited",
+      "description": "Participation status"
+    },
+    "performance_notes": {
+      "type": "string",
+      "description": "Notes on participant's performance during exercise"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "Company ID for RLS"
+    }
+  },
+  "required": [
+    "exercise_id",
+    "participant_email",
+    "functional_roles"
+  ],
+  "rls": {
+    "read": {
+      "company_id": "{{user.company_id}}"
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "company_role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

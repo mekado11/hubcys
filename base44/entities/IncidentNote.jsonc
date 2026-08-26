@@ -1,0 +1,79 @@
+{
+  "name": "IncidentNote",
+  "type": "object",
+  "properties": {
+    "incident_id": {
+      "type": "string",
+      "description": "ID of the incident this note belongs to"
+    },
+    "note_type": {
+      "type": "string",
+      "enum": [
+        "General",
+        "Detection",
+        "Triage",
+        "Containment",
+        "Eradication",
+        "Recovery",
+        "Review"
+      ],
+      "description": "Type of note based on incident phase"
+    },
+    "content": {
+      "type": "string",
+      "description": "Content of the note"
+    },
+    "author_email": {
+      "type": "string",
+      "description": "Email of the note author"
+    },
+    "author_name": {
+      "type": "string",
+      "description": "Name of the note author"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the note was created"
+    },
+    "is_critical": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this is a critical update"
+    }
+  },
+  "required": [
+    "incident_id",
+    "content",
+    "author_email"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "company_id": "{{user.company_id}}"
+        },
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "author_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

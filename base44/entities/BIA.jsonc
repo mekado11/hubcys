@@ -1,0 +1,132 @@
+{
+  "name": "BIA",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "ID of the company this BIA belongs to"
+    },
+    "title": {
+      "type": "string",
+      "description": "Name/title of this BIA"
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional description of scope and approach"
+    },
+    "scope": {
+      "type": "string",
+      "description": "Functional/asset scope of this BIA"
+    },
+    "annual_revenue": {
+      "type": "number",
+      "description": "Company annual revenue in USD \u2014 used to scale financial impact calculations realistically"
+    },
+    "employee_count": {
+      "type": "number",
+      "description": "Approximate number of employees \u2014 used to contextualize operational impact"
+    },
+    "linked_assessment_id": {
+      "type": "string",
+      "description": "Optional Assessment ID this BIA is associated with"
+    },
+    "bia_items": {
+      "type": "string",
+      "description": "JSON array of BIA items with FAIR data"
+    },
+    "bia_inputs": {
+      "type": "string",
+      "description": "JSON string of raw BIA answers"
+    },
+    "bia_weights": {
+      "type": "string",
+      "description": "JSON string of domain weights that sum to 1.0"
+    },
+    "bia_domain_scores": {
+      "type": "string",
+      "description": "JSON string of per-domain normalized scores 1-5"
+    },
+    "bia_composite_impact": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Weighted impact score (0-5)"
+    },
+    "bia_likelihood": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Likelihood score (0-5)"
+    },
+    "bia_risk_score": {
+      "type": "number",
+      "description": "Composite risk = impact * likelihood (0-25)"
+    },
+    "bia_financials": {
+      "type": "string",
+      "description": "JSON string with financial data"
+    },
+    "bia_rto_hours": {
+      "type": "number",
+      "description": "Recommended RTO in hours"
+    },
+    "bia_rpo_hours": {
+      "type": "number",
+      "description": "Recommended RPO in hours"
+    },
+    "bia_risk_register": {
+      "type": "string",
+      "description": "JSON string of ranked risk register entries"
+    },
+    "bia_last_calculated_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When BIA was last calculated"
+    },
+    "fair_metrics": {
+      "type": "string",
+      "description": "JSON object containing aggregated FAIR metrics"
+    },
+    "industry_benchmarks": {
+      "type": "string",
+      "description": "JSON object with industry-specific breach data"
+    },
+    "control_effectiveness_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "external_threat_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "completed",
+        "archived"
+      ],
+      "default": "draft"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "company_id",
+    "title"
+  ],
+  "rls": {
+    "read": {
+      "company_id": "{{user.company_id}}"
+    },
+    "write": {
+      "company_id": "{{user.company_id}}"
+    }
+  }
+}

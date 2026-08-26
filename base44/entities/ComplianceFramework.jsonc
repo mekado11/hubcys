@@ -1,0 +1,70 @@
+{
+  "name": "ComplianceFramework",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "ID of the company this framework belongs to"
+    },
+    "name": {
+      "type": "string",
+      "description": "Custom name for this framework instance (e.g., 'Q3 2024 SOC 2 Assessment')"
+    },
+    "framework_type": {
+      "type": "string",
+      "enum": [
+        "NIST_CSF",
+        "NIST_800_53_REV5",
+        "NIST_800_53A_REV5",
+        "ISO_27001",
+        "ISO_27002",
+        "CIS_Controls",
+        "SOC2",
+        "COBIT",
+        "FEDRAMP",
+        "CMMC",
+        "SOX_ITGC",
+        "IEC_62443",
+        "HIPAA",
+        "PCI_DSS",
+        "GDPR",
+        "TISAX",
+        "NCSC_CYBER_ESSENTIALS"
+      ],
+      "description": "The base standard for this framework, including latest NIST 800-53a Rev5 and UK's NCSC Cyber Essentials"
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional description for this compliance initiative"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Not Started",
+        "In Progress",
+        "Completed",
+        "Archived"
+      ],
+      "default": "Not Started",
+      "description": "Overall status of this compliance framework"
+    },
+    "target_completion_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Target date for achieving compliance"
+    }
+  },
+  "required": [
+    "company_id",
+    "name",
+    "framework_type"
+  ],
+  "rls": {
+    "read": {
+      "company_id": "{{user.company_id}}"
+    },
+    "write": {
+      "company_id": "{{user.company_id}}"
+    }
+  }
+}

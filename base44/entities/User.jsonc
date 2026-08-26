@@ -1,0 +1,214 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "ID of the company this user belongs to"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "The name of the user's company"
+    },
+    "company_access_code": {
+      "type": "string",
+      "description": "Access code for the user's company (cached for reliability)"
+    },
+    "company_description": {
+      "type": "string",
+      "description": "Description of the user's company (cached)"
+    },
+    "company_industry": {
+      "type": "string",
+      "description": "Industry of the user's company (cached)"
+    },
+    "company_size": {
+      "type": "string",
+      "description": "Size of the user's company (cached)"
+    },
+    "onboarding_completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the user has completed the onboarding tour"
+    },
+    "assessment_onboarding_shown": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the user has seen the assessment onboarding dialog"
+    },
+    "company_onboarding_completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the user has completed company selection/creation"
+    },
+    "subscription_tier": {
+      "type": "string",
+      "enum": [
+        "early_career",
+        "free_trial",
+        "starter",
+        "growth",
+        "enterprise"
+      ],
+      "description": "The user's current subscription tier - set by admin after approval"
+    },
+    "disclaimer_acknowledged": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the user has acknowledged the initial legal disclaimer."
+    },
+    "company_role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "member"
+      ],
+      "default": "member",
+      "description": "Role within the company (admin can manage company settings)"
+    },
+    "app_role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "security_analyst",
+        "security_manager",
+        "executive",
+        "auditor",
+        "member"
+      ],
+      "default": "member",
+      "description": "Granular application role for RBAC permissions"
+    },
+    "custom_permissions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Custom permissions array for fine-grained access control (e.g., ['edit:incidents', 'view:assessments', 'manage:policies'])"
+    },
+    "role_type": {
+      "type": "string",
+      "enum": [
+        "general",
+        "engineering"
+      ],
+      "default": "general",
+      "description": "More granular role type for training targeting ('general' or 'engineering')"
+    },
+    "approval_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "suspended"
+      ],
+      "default": "pending",
+      "description": "User approval status for access control - new users start as pending"
+    },
+    "approved_by": {
+      "type": "string",
+      "description": "Email of admin who approved/rejected/suspended this user"
+    },
+    "approved_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the user's approval status last changed"
+    },
+    "rejection_reason": {
+      "type": "string",
+      "description": "Reason for rejection if applicable"
+    },
+    "first_name": {
+      "type": "string",
+      "description": "User first name for approval context"
+    },
+    "last_name": {
+      "type": "string",
+      "description": "User last name for approval context"
+    },
+    "job_title": {
+      "type": "string",
+      "description": "User job title/role"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Contact phone number"
+    },
+    "company_website": {
+      "type": "string",
+      "description": "Company website URL"
+    },
+    "linkedin_url": {
+      "type": "string",
+      "description": "LinkedIn profile URL"
+    },
+    "reason_for_access": {
+      "type": "string",
+      "description": "Short description of why the user wants access"
+    },
+    "notification_preferences": {
+      "type": "object",
+      "properties": {
+        "email_on_mention": {
+          "type": "boolean",
+          "default": true
+        },
+        "email_on_assignment": {
+          "type": "boolean",
+          "default": true
+        },
+        "email_on_comment_reply": {
+          "type": "boolean",
+          "default": true
+        },
+        "in_app_notifications": {
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "description": "User notification preferences for collaboration features"
+    }
+  },
+  "required": [],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "id": "{{user.id}}"
+        },
+        {
+          "$and": [
+            {
+              "company_id": "{{user.company_id}}"
+            },
+            {
+              "user_condition": {
+                "company_id": {
+                  "_exists": true
+                }
+              }
+            }
+          ]
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "company_role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

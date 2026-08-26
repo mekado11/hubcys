@@ -1,0 +1,76 @@
+{
+  "name": "Subtask",
+  "type": "object",
+  "properties": {
+    "action_item_id": {
+      "type": "string",
+      "description": "ID of the parent action item"
+    },
+    "title": {
+      "type": "string",
+      "description": "Title of the subtask"
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the subtask is completed"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Optional due date for the subtask"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "Email of the person assigned to this subtask"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes for the subtask"
+    }
+  },
+  "required": [
+    "action_item_id",
+    "title"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "assigned_to": "{{user.email}}"
+        },
+        {
+          "$and": [
+            {
+              "company_id": "{{user.company_id}}"
+            },
+            {
+              "user_condition": {
+                "company_role": "admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "$and": [
+            {
+              "company_id": "{{user.company_id}}"
+            },
+            {
+              "user_condition": {
+                "company_role": "admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

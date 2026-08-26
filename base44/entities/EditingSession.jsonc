@@ -1,0 +1,63 @@
+{
+  "name": "EditingSession",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "Company ID for multi-tenant scoping"
+    },
+    "entity_type": {
+      "type": "string",
+      "enum": [
+        "incident",
+        "action_item",
+        "assessment",
+        "policy"
+      ],
+      "description": "Type of entity being edited"
+    },
+    "entity_id": {
+      "type": "string",
+      "description": "ID of the entity being edited"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email of the user currently editing"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Name of the user currently editing"
+    },
+    "last_heartbeat": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last heartbeat timestamp to track active sessions"
+    },
+    "section": {
+      "type": "string",
+      "description": "Specific section or field being edited (optional)"
+    }
+  },
+  "required": [
+    "company_id",
+    "entity_type",
+    "entity_id",
+    "user_email",
+    "last_heartbeat"
+  ],
+  "rls": {
+    "read": {
+      "company_id": "{{user.company_id}}"
+    },
+    "write": {
+      "$and": [
+        {
+          "company_id": "{{user.company_id}}"
+        },
+        {
+          "user_email": "{{user.email}}"
+        }
+      ]
+    }
+  }
+}

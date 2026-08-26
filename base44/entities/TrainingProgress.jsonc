@@ -1,0 +1,75 @@
+{
+  "name": "TrainingProgress",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "ID of the company this training progress belongs to"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email of the user taking the training"
+    },
+    "module_id": {
+      "type": "string",
+      "description": "ID of the training module (e.g., 'phishing-awareness')"
+    },
+    "progress_data": {
+      "type": "string",
+      "description": "JSON string containing detailed progress: sections completed, quiz answers, current section, etc."
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the user has successfully completed this training module"
+    },
+    "completion_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the training was completed"
+    },
+    "last_accessed_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the user last accessed this training module"
+    },
+    "quiz_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Final quiz score percentage"
+    },
+    "quiz_attempts": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of times the quiz was attempted"
+    }
+  },
+  "required": [
+    "company_id",
+    "user_email",
+    "module_id"
+  ],
+  "rls": {
+    "read": {
+      "$and": [
+        {
+          "company_id": "{{user.company_id}}"
+        },
+        {
+          "user_email": "{{user.email}}"
+        }
+      ]
+    },
+    "write": {
+      "$and": [
+        {
+          "company_id": "{{user.company_id}}"
+        },
+        {
+          "user_email": "{{user.email}}"
+        }
+      ]
+    }
+  }
+}

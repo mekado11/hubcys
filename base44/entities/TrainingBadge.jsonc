@@ -1,0 +1,67 @@
+{
+  "name": "TrainingBadge",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "Company scope"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email of badge recipient"
+    },
+    "badge_key": {
+      "type": "string",
+      "description": "Unique key for this badge type"
+    },
+    "label": {
+      "type": "string",
+      "description": "Display label of the badge"
+    },
+    "description": {
+      "type": "string",
+      "description": "Short description of why it was awarded"
+    },
+    "module_id": {
+      "type": "string",
+      "description": "Related training module id if applicable"
+    },
+    "score": {
+      "type": "number",
+      "description": "Score achieved when earning the badge"
+    },
+    "awarded_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the badge was awarded"
+    }
+  },
+  "required": [
+    "company_id",
+    "user_email",
+    "badge_key",
+    "label"
+  ],
+  "rls": {
+    "read": {
+      "$and": [
+        {
+          "company_id": "{{user.company_id}}"
+        },
+        {
+          "user_email": "{{user.email}}"
+        }
+      ]
+    },
+    "write": {
+      "$and": [
+        {
+          "company_id": "{{user.company_id}}"
+        },
+        {
+          "user_email": "{{user.email}}"
+        }
+      ]
+    }
+  }
+}

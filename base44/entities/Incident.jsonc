@@ -1,0 +1,392 @@
+{
+  "name": "Incident",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "ID of the company this incident belongs to"
+    },
+    "incident_id": {
+      "type": "string",
+      "description": "Unique incident identifier (e.g., INC-2024-001)"
+    },
+    "title": {
+      "type": "string",
+      "description": "Brief title/summary of the incident"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of the incident"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Detected",
+        "Triaged",
+        "Contained",
+        "Eradicated",
+        "Recovering",
+        "Closed",
+        "Under_Review"
+      ],
+      "default": "Detected",
+      "description": "Current status of the incident"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "Low",
+        "Medium",
+        "High",
+        "Critical"
+      ],
+      "default": "Medium",
+      "description": "Priority level of the incident"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Malware",
+        "Phishing",
+        "Data_Breach",
+        "Insider_Threat",
+        "DDoS",
+        "Unauthorized_Access",
+        "System_Compromise",
+        "Network_Intrusion",
+        "Physical_Security",
+        "Other"
+      ],
+      "description": "Type/category of the incident"
+    },
+    "threat_actor_type": {
+      "type": "string",
+      "enum": [
+        "Nation State",
+        "Cybercriminal Group",
+        "Hacktivist",
+        "Insider Threat",
+        "Script Kiddie",
+        "Unknown",
+        "Other"
+      ],
+      "description": "Classification of the suspected threat actor."
+    },
+    "threat_actor_name": {
+      "type": "string",
+      "description": "Name of the specific threat actor group, if known (e.g., APT29, Conti)."
+    },
+    "threat_actor_motivation": {
+      "type": "string",
+      "enum": [
+        "Financial Gain",
+        "Espionage",
+        "Sabotage",
+        "Ideological",
+        "Revenge",
+        "Notoriety",
+        "Unknown"
+      ],
+      "description": "Suspected motivation behind the threat actor's actions."
+    },
+    "threat_actor_confidence": {
+      "type": "string",
+      "enum": [
+        "Low",
+        "Medium",
+        "High"
+      ],
+      "description": "Confidence level in the threat actor attribution."
+    },
+    "detection_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the incident was first detected"
+    },
+    "enriched_threat_intelligence": {
+      "type": "string",
+      "description": "AI-synthesized threat intelligence related to this incident including recent campaigns, TTPs, and advisories"
+    },
+    "related_iocs_details": {
+      "type": "string",
+      "description": "Detailed information about related IOCs from threat intelligence feeds"
+    },
+    "external_vulnerability_context": {
+      "type": "string",
+      "description": "Vulnerability context from external scans and reconnaissance"
+    },
+    "ai_suggested_priority": {
+      "type": "string",
+      "enum": [
+        "Low",
+        "Medium",
+        "High",
+        "Critical"
+      ],
+      "description": "AI-suggested priority based on incident analysis"
+    },
+    "ai_suggested_category": {
+      "type": "string",
+      "enum": [
+        "Malware",
+        "Phishing",
+        "Data_Breach",
+        "Insider_Threat",
+        "DDoS",
+        "Unauthorized_Access",
+        "System_Compromise",
+        "Network_Intrusion",
+        "Physical_Security",
+        "Other"
+      ],
+      "description": "AI-suggested category based on incident analysis"
+    },
+    "ai_classification_rationale": {
+      "type": "string",
+      "description": "AI's explanation for suggested priority and category"
+    },
+    "ai_suggested_playbooks": {
+      "type": "string",
+      "description": "JSON array of suggested playbook names/types for this incident"
+    },
+    "ai_suggested_remediation": {
+      "type": "string",
+      "description": "AI-generated remediation steps in markdown format"
+    },
+    "ai_enrichment_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When AI enrichment was last performed"
+    },
+    "nis2_significance": {
+      "type": "string",
+      "enum": [
+        "Not Assessed",
+        "Not Significant",
+        "Significant",
+        "Not Applicable"
+      ],
+      "default": "Not Assessed",
+      "description": "Assessment of incident significance under NIS2 criteria"
+    },
+    "nis2_initial_notification_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the 24-hour NIS2 notification was sent"
+    },
+    "nis2_interim_update_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the 72-hour NIS2 update was sent"
+    },
+    "nis2_final_report_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the final NIS2 report was sent"
+    },
+    "nis2_notified_authorities": {
+      "type": "string",
+      "description": "List of CSIRTs or competent authorities notified"
+    },
+    "nis2_cross_border_impact": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the incident is likely to have cross-border impact"
+    },
+    "nis2_affected_services": {
+      "type": "string",
+      "description": "Essential or important services affected by the incident"
+    },
+    "ico_notification_required": {
+      "type": "boolean",
+      "description": "If a data breach notification to the UK's ICO is required"
+    },
+    "ico_notification_deadline": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Calculated deadline for ICO notification (72 hours from awareness)"
+    },
+    "ico_notified_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the ICO notification was sent"
+    },
+    "detection_source": {
+      "type": "string",
+      "description": "Source of detection (SIEM, user report, IDS, etc.)"
+    },
+    "reporter_name": {
+      "type": "string",
+      "description": "Name of the person who reported the incident"
+    },
+    "reporter_email": {
+      "type": "string",
+      "description": "Email of the person who reported the incident"
+    },
+    "affected_systems": {
+      "type": "string",
+      "description": "List of affected systems, applications, or infrastructure"
+    },
+    "affected_users": {
+      "type": "string",
+      "description": "Users or departments impacted by the incident"
+    },
+    "affected_data": {
+      "type": "string",
+      "description": "Data or information assets affected"
+    },
+    "business_impact": {
+      "type": "string",
+      "description": "Assessment of business operations impact"
+    },
+    "containment_actions": {
+      "type": "string",
+      "description": "Actions taken to contain the incident"
+    },
+    "containment_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When containment was achieved"
+    },
+    "containment_effective": {
+      "type": "boolean",
+      "description": "Whether containment was effective"
+    },
+    "stakeholders_notified": {
+      "type": "string",
+      "description": "List of stakeholders notified during containment"
+    },
+    "root_cause": {
+      "type": "string",
+      "description": "Identified root cause of the incident"
+    },
+    "eradication_actions": {
+      "type": "string",
+      "description": "Actions taken to eliminate the root cause"
+    },
+    "eradication_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When eradication was completed"
+    },
+    "tools_used": {
+      "type": "string",
+      "description": "Tools, commands, or procedures used for eradication"
+    },
+    "iocs_identified": {
+      "type": "string",
+      "description": "Indicators of Compromise (IOCs) discovered"
+    },
+    "patches_applied": {
+      "type": "string",
+      "description": "Patches or configuration changes applied"
+    },
+    "systems_restored": {
+      "type": "string",
+      "description": "List of systems restored to normal operation"
+    },
+    "recovery_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When recovery was completed"
+    },
+    "verification_steps": {
+      "type": "string",
+      "description": "Steps taken to verify system integrity"
+    },
+    "monitoring_enabled": {
+      "type": "string",
+      "description": "Additional monitoring tools or measures enabled"
+    },
+    "return_to_service": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When systems returned to normal service"
+    },
+    "incident_timeline": {
+      "type": "string",
+      "description": "Detailed timeline of the incident"
+    },
+    "what_worked": {
+      "type": "string",
+      "description": "What worked well during incident response"
+    },
+    "what_failed": {
+      "type": "string",
+      "description": "What failed or could be improved"
+    },
+    "communication_issues": {
+      "type": "string",
+      "description": "Any communication problems encountered"
+    },
+    "escalation_timeline": {
+      "type": "string",
+      "description": "Timeline of escalations during the incident"
+    },
+    "team_performance": {
+      "type": "string",
+      "description": "Evaluation of team performance"
+    },
+    "lessons_learned": {
+      "type": "string",
+      "description": "Key lessons learned from the incident"
+    },
+    "action_items_generated": {
+      "type": "string",
+      "description": "Action items created as a result of this incident"
+    },
+    "control_gaps_identified": {
+      "type": "string",
+      "description": "Security control gaps discovered"
+    },
+    "runbooks_updated": {
+      "type": "string",
+      "description": "Runbooks or SOPs updated"
+    },
+    "training_needs": {
+      "type": "string",
+      "description": "Training needs identified from the incident"
+    },
+    "final_report": {
+      "type": "string",
+      "description": "Final incident report document"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "Email of the incident commander/lead"
+    },
+    "closed_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the incident was officially closed"
+    },
+    "mttr_minutes": {
+      "type": "number",
+      "description": "Mean Time To Recovery in minutes"
+    },
+    "mttd_minutes": {
+      "type": "number",
+      "description": "Mean Time To Detection in minutes"
+    },
+    "external_notifications": {
+      "type": "string",
+      "description": "External parties notified (regulators, customers, etc.)"
+    },
+    "cost_estimate": {
+      "type": "number",
+      "description": "Estimated cost impact of the incident"
+    }
+  },
+  "required": [
+    "company_id",
+    "title"
+  ],
+  "rls": {
+    "read": {
+      "company_id": "{{user.company_id}}"
+    },
+    "write": {
+      "company_id": "{{user.company_id}}"
+    }
+  }
+}

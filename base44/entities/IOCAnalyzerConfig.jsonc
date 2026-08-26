@@ -1,0 +1,99 @@
+{
+  "name": "IOCAnalyzerConfig",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "Company this configuration applies to"
+    },
+    "thresholds": {
+      "type": "object",
+      "properties": {
+        "high": {
+          "type": "number",
+          "default": 75
+        },
+        "medium": {
+          "type": "number",
+          "default": 50
+        }
+      },
+      "description": "Score thresholds for verdicts"
+    },
+    "weights": {
+      "type": "object",
+      "properties": {
+        "w_hash": {
+          "type": "number",
+          "default": 0.25
+        },
+        "w_ip": {
+          "type": "number",
+          "default": 0.2
+        },
+        "w_behavior": {
+          "type": "number",
+          "default": 0.35
+        },
+        "w_geo": {
+          "type": "number",
+          "default": 0.1
+        },
+        "w_ctx": {
+          "type": "number",
+          "default": 0.1
+        }
+      },
+      "description": "Scoring weight configuration"
+    },
+    "context_multiplier": {
+      "type": "number",
+      "default": 1,
+      "description": "Org-specific context multiplier (0.5-2.0 typically)"
+    },
+    "whitelist_patterns": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Patterns to ignore (supports * wildcard at start/end)"
+    },
+    "blacklist_values": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Explicitly high-risk IOCs (always escalate)"
+    },
+    "enable_ai_mapping": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable LLM-based ATT&CK/OWASP/NIST mapping"
+    },
+    "enable_shodan_enrichment": {
+      "type": "boolean",
+      "default": true,
+      "description": "Query Shodan for exposed services on IPs"
+    }
+  },
+  "required": [
+    "company_id"
+  ],
+  "rls": {
+    "read": {
+      "company_id": "{{user.company_id}}"
+    },
+    "write": {
+      "$and": [
+        {
+          "company_id": "{{user.company_id}}"
+        },
+        {
+          "user_condition": {
+            "company_role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,471 @@
+{
+  "name": "EtsiAssessment",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "ID of the company this assessment belongs to"
+    },
+    "product_name": {
+      "type": "string",
+      "description": "Name of the IoT product being assessed"
+    },
+    "product_category": {
+      "type": "string",
+      "description": "Category of the IoT product"
+    },
+    "manufacturer_name": {
+      "type": "string",
+      "description": "Name of the product manufacturer"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "in_progress",
+        "completed"
+      ],
+      "default": "draft"
+    },
+    "provision_5_1_1": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.1.1"
+    },
+    "provision_5_1_1_detail": {
+      "type": "string",
+      "description": "Detail for 5.1.1"
+    },
+    "provision_5_1_2": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.1.2"
+    },
+    "provision_5_1_2_detail": {
+      "type": "string",
+      "description": "Detail for 5.1.2"
+    },
+    "provision_5_1_3": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.1.3"
+    },
+    "provision_5_1_3_detail": {
+      "type": "string",
+      "description": "Detail for 5.1.3"
+    },
+    "provision_5_1_4": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.1.4"
+    },
+    "provision_5_1_4_detail": {
+      "type": "string",
+      "description": "Detail for 5.1.4"
+    },
+    "provision_5_1_5": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.1.5"
+    },
+    "provision_5_1_5_detail": {
+      "type": "string",
+      "description": "Detail for 5.1.5"
+    },
+    "provision_5_2_1": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.2.1"
+    },
+    "provision_5_2_1_detail": {
+      "type": "string",
+      "description": "Detail for 5.2.1"
+    },
+    "provision_5_2_2": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.2.2"
+    },
+    "provision_5_2_2_detail": {
+      "type": "string",
+      "description": "Detail for 5.2.2"
+    },
+    "provision_5_2_3": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.2.3"
+    },
+    "provision_5_2_3_detail": {
+      "type": "string",
+      "description": "Detail for 5.2.3"
+    },
+    "provision_5_3_1": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.3.1"
+    },
+    "provision_5_3_1_detail": {
+      "type": "string",
+      "description": "Detail for 5.3.1"
+    },
+    "provision_5_3_2": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.3.2"
+    },
+    "provision_5_3_2_detail": {
+      "type": "string",
+      "description": "Detail for 5.3.2"
+    },
+    "provision_5_3_3": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.3.3"
+    },
+    "provision_5_3_3_detail": {
+      "type": "string",
+      "description": "Detail for 5.3.3"
+    },
+    "provision_5_3_7": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.3.7"
+    },
+    "provision_5_3_7_detail": {
+      "type": "string",
+      "description": "Detail for 5.3.7"
+    },
+    "provision_5_3_8": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.3.8"
+    },
+    "provision_5_3_8_detail": {
+      "type": "string",
+      "description": "Detail for 5.3.8"
+    },
+    "provision_5_3_10": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.3.10"
+    },
+    "provision_5_3_10_detail": {
+      "type": "string",
+      "description": "Detail for 5.3.10"
+    },
+    "provision_5_3_13": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.3.13"
+    },
+    "provision_5_3_13_detail": {
+      "type": "string",
+      "description": "Detail for 5.3.13"
+    },
+    "provision_5_3_16": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.3.16"
+    },
+    "provision_5_3_16_detail": {
+      "type": "string",
+      "description": "Detail for 5.3.16"
+    },
+    "provision_5_4_1": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.4.1"
+    },
+    "provision_5_4_1_detail": {
+      "type": "string",
+      "description": "Detail for 5.4.1"
+    },
+    "provision_5_4_3": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.4.3"
+    },
+    "provision_5_4_3_detail": {
+      "type": "string",
+      "description": "Detail for 5.4.3"
+    },
+    "provision_5_4_4": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.4.4"
+    },
+    "provision_5_4_4_detail": {
+      "type": "string",
+      "description": "Detail for 5.4.4"
+    },
+    "provision_5_5_1": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.5.1"
+    },
+    "provision_5_5_1_detail": {
+      "type": "string",
+      "description": "Detail for 5.5.1"
+    },
+    "provision_5_5_6": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.5.6"
+    },
+    "provision_5_5_6_detail": {
+      "type": "string",
+      "description": "Detail for 5.5.6"
+    },
+    "provision_5_5_7": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.5.7"
+    },
+    "provision_5_5_7_detail": {
+      "type": "string",
+      "description": "Detail for 5.5.7"
+    },
+    "provision_5_6_2": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.6.2"
+    },
+    "provision_5_6_2_detail": {
+      "type": "string",
+      "description": "Detail for 5.6.2"
+    },
+    "provision_5_7_1": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.7.1"
+    },
+    "provision_5_7_1_detail": {
+      "type": "string",
+      "description": "Detail for 5.7.1"
+    },
+    "provision_5_7_2": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.7.2"
+    },
+    "provision_5_7_2_detail": {
+      "type": "string",
+      "description": "Detail for 5.7.2"
+    },
+    "provision_5_8_1": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.8.1"
+    },
+    "provision_5_8_1_detail": {
+      "type": "string",
+      "description": "Detail for 5.8.1"
+    },
+    "provision_5_8_2": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.8.2"
+    },
+    "provision_5_8_2_detail": {
+      "type": "string",
+      "description": "Detail for 5.8.2"
+    },
+    "provision_5_11_1": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.11.1"
+    },
+    "provision_5_11_1_detail": {
+      "type": "string",
+      "description": "Detail for 5.11.1"
+    },
+    "provision_5_11_2": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 5.11.2"
+    },
+    "provision_5_11_2_detail": {
+      "type": "string",
+      "description": "Detail for 5.11.2"
+    },
+    "provision_6_1": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 6.1"
+    },
+    "provision_6_1_detail": {
+      "type": "string",
+      "description": "Detail for 6.1"
+    },
+    "provision_6_2": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 6.2"
+    },
+    "provision_6_2_detail": {
+      "type": "string",
+      "description": "Detail for 6.2"
+    },
+    "provision_6_4": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 6.4"
+    },
+    "provision_6_4_detail": {
+      "type": "string",
+      "description": "Detail for 6.4"
+    },
+    "provision_6_5": {
+      "type": "string",
+      "enum": [
+        "compliant",
+        "non_compliant",
+        "not_applicable"
+      ],
+      "description": "Status for 6.5"
+    },
+    "provision_6_5_detail": {
+      "type": "string",
+      "description": "Detail for 6.5"
+    }
+  },
+  "required": [
+    "company_id"
+  ],
+  "rls": {
+    "read": {
+      "company_id": "{{user.company_id}}"
+    },
+    "write": {
+      "company_id": "{{user.company_id}}"
+    }
+  }
+}

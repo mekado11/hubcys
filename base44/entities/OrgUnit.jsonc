@@ -1,0 +1,70 @@
+{
+  "name": "OrgUnit",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "ID of the company this org unit belongs to"
+    },
+    "name": {
+      "type": "string",
+      "description": "Name of the function/team (e.g., Engineering, DevOps)"
+    },
+    "unit_type": {
+      "type": "string",
+      "enum": [
+        "Engineering",
+        "IT_Desktop",
+        "DevOps",
+        "Cybersecurity",
+        "Other"
+      ],
+      "description": "Functional area"
+    },
+    "description": {
+      "type": "string",
+      "description": "What this unit does"
+    },
+    "responsibilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Key responsibilities (short statements)"
+    },
+    "parent_unit_id": {
+      "type": "string",
+      "description": "Optional parent org unit id to form the tree"
+    },
+    "contact_email": {
+      "type": "string",
+      "description": "Primary contact for this function"
+    },
+    "headcount": {
+      "type": "number",
+      "description": "Approximate team size"
+    },
+    "order_index": {
+      "type": "number",
+      "description": "Manual sort order (lower first)"
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this unit is active"
+    }
+  },
+  "required": [
+    "company_id",
+    "name",
+    "unit_type"
+  ],
+  "rls": {
+    "read": {
+      "company_id": "{{user.company_id}}"
+    },
+    "write": {
+      "company_id": "{{user.company_id}}"
+    }
+  }
+}

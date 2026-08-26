@@ -1,0 +1,202 @@
+{
+  "name": "TabletopExercise",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "ID of the company this exercise belongs to"
+    },
+    "exercise_name": {
+      "type": "string",
+      "description": "Name of the tabletop exercise"
+    },
+    "exercise_description": {
+      "type": "string",
+      "description": "Description of the exercise objectives and scope"
+    },
+    "assessment_id": {
+      "type": "string",
+      "description": "Optional ID of linked assessment to import company context from"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "Name of the company for this exercise"
+    },
+    "company_size": {
+      "type": "string",
+      "enum": [
+        "Small_1-50",
+        "Medium_51-500",
+        "Large_501-2000",
+        "Enterprise_2000+"
+      ],
+      "description": "Size of the company by employee count"
+    },
+    "industry_sector": {
+      "type": "string",
+      "enum": [
+        "Healthcare",
+        "Financial_Services",
+        "Technology",
+        "Manufacturing",
+        "Retail",
+        "Education",
+        "Government",
+        "Energy",
+        "Legal",
+        "Other"
+      ],
+      "description": "Industry sector of the company"
+    },
+    "critical_systems_scope": {
+      "type": "string",
+      "description": "Critical systems, applications, security tools, and infrastructure in scope for the exercise"
+    },
+    "business_context": {
+      "type": "string",
+      "description": "Additional business context, processes, and dependencies relevant to the exercise"
+    },
+    "exercise_objectives": {
+      "type": "string",
+      "description": "Specific learning objectives and goals for this exercise"
+    },
+    "compliance_requirements": {
+      "type": "string",
+      "description": "Relevant compliance frameworks being tested (NIST, ISO 27035, etc.)"
+    },
+    "nis2_essential_services": {
+      "type": "string",
+      "description": "Essential or important services under NIS2 that could be affected by the exercise scenario"
+    },
+    "nis2_notification_procedures": {
+      "type": "string",
+      "description": "Current procedures for NIS2 incident notification to CSIRTs and competent authorities"
+    },
+    "nis2_cross_border_considerations": {
+      "type": "string",
+      "description": "Considerations for cross-border impact assessment and notification procedures"
+    },
+    "nis2_supply_chain_dependencies": {
+      "type": "string",
+      "description": "Key supply chain dependencies that could be tested during the exercise"
+    },
+    "scenarios": {
+      "type": "string",
+      "description": "JSON array of scenario objects with type, name, details, and injects"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Planning",
+        "Ready_to_Execute",
+        "In_Progress",
+        "Completed",
+        "Archived"
+      ],
+      "default": "Planning",
+      "description": "Current status of the exercise"
+    },
+    "scheduled_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the exercise is scheduled to run"
+    },
+    "duration_minutes": {
+      "type": "number",
+      "description": "Planned duration of the exercise in minutes"
+    },
+    "facilitator_email": {
+      "type": "string",
+      "description": "Email of the exercise facilitator"
+    },
+    "participants": {
+      "type": "string",
+      "description": "JSON string containing participant details and roles"
+    },
+    "execution_data": {
+      "type": "string",
+      "description": "JSON string containing real-time observations, decisions, and timeline data from execution"
+    },
+    "facilitator_observations": {
+      "type": "string",
+      "description": "Real-time facilitator observations during exercise execution"
+    },
+    "participant_decisions": {
+      "type": "string",
+      "description": "Key decisions made by participants during the exercise"
+    },
+    "communication_timeline": {
+      "type": "string",
+      "description": "Timeline of communications and escalations during execution"
+    },
+    "response_effectiveness": {
+      "type": "string",
+      "description": "Assessment of how effectively participants responded to injects"
+    },
+    "gaps_identified": {
+      "type": "string",
+      "description": "Gaps in processes, documentation, or response capabilities identified during execution"
+    },
+    "strengths_identified": {
+      "type": "string",
+      "description": "Strengths demonstrated during the exercise execution"
+    },
+    "lessons_learned": {
+      "type": "string",
+      "description": "Key lessons learned from the exercise"
+    },
+    "action_items_generated": {
+      "type": "string",
+      "description": "Action items created as a result of the exercise"
+    },
+    "improvement_recommendations": {
+      "type": "string",
+      "description": "Specific recommendations for improving incident response capabilities"
+    },
+    "aar_document": {
+      "type": "string",
+      "description": "After-Action Report document content"
+    },
+    "maturity_scores": {
+      "type": "string",
+      "description": "JSON string containing maturity scores for different IR domains"
+    },
+    "next_exercise_recommendations": {
+      "type": "string",
+      "description": "Recommendations for future exercises"
+    },
+    "compliance_mapping": {
+      "type": "string",
+      "description": "Mapping to compliance frameworks (NIST, ISO 27035, etc.)"
+    },
+    "nis2_notification_simulation": {
+      "type": "string",
+      "description": "Assessment of how well the organization simulated NIS2 notification procedures during the exercise"
+    },
+    "nis2_cross_border_simulation": {
+      "type": "string",
+      "description": "How well cross-border impact assessment and coordination was simulated"
+    },
+    "nis2_supply_chain_response": {
+      "type": "string",
+      "description": "Assessment of how the organization handled supply chain-related aspects during the exercise"
+    },
+    "nis2_compliance_gaps": {
+      "type": "string",
+      "description": "Specific gaps identified related to NIS2 compliance requirements"
+    }
+  },
+  "required": [
+    "company_id",
+    "exercise_name",
+    "facilitator_email"
+  ],
+  "rls": {
+    "read": {
+      "company_id": "{{user.company_id}}"
+    },
+    "write": {
+      "company_id": "{{user.company_id}}"
+    }
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "name": "VideoProgress",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "ID of the company"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email of the user watching the video"
+    },
+    "video_id": {
+      "type": "string",
+      "description": "ID of the training video"
+    },
+    "module_id": {
+      "type": "string",
+      "description": "ID of the training module"
+    },
+    "watch_time_seconds": {
+      "type": "number",
+      "default": 0,
+      "description": "Total time watched in seconds"
+    },
+    "last_position_seconds": {
+      "type": "number",
+      "default": 0,
+      "description": "Last playback position in seconds"
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the video was completed (watched at least 90%)"
+    },
+    "completion_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the video was completed"
+    },
+    "last_watched_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the video was last watched"
+    }
+  },
+  "required": [
+    "company_id",
+    "user_email",
+    "video_id",
+    "module_id"
+  ],
+  "rls": {
+    "read": {
+      "$and": [
+        {
+          "company_id": "{{user.company_id}}"
+        },
+        {
+          "user_email": "{{user.email}}"
+        }
+      ]
+    },
+    "write": {
+      "$and": [
+        {
+          "company_id": "{{user.company_id}}"
+        },
+        {
+          "user_email": "{{user.email}}"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "Company ID for multi-tenant scoping"
+    },
+    "recipient_email": {
+      "type": "string",
+      "description": "Email of the user receiving this notification"
+    },
+    "sender_email": {
+      "type": "string",
+      "description": "Email of the user who triggered this notification"
+    },
+    "sender_name": {
+      "type": "string",
+      "description": "Name of the user who triggered this notification"
+    },
+    "notification_type": {
+      "type": "string",
+      "enum": [
+        "mention",
+        "comment_reply",
+        "assignment",
+        "incident_update",
+        "action_item_update",
+        "assessment_shared"
+      ],
+      "description": "Type of notification"
+    },
+    "title": {
+      "type": "string",
+      "description": "Notification title/headline"
+    },
+    "message": {
+      "type": "string",
+      "description": "Notification message content"
+    },
+    "related_entity_type": {
+      "type": "string",
+      "enum": [
+        "incident",
+        "action_item",
+        "assessment",
+        "comment",
+        "policy"
+      ],
+      "description": "Type of entity this notification relates to"
+    },
+    "related_entity_id": {
+      "type": "string",
+      "description": "ID of the related entity"
+    },
+    "link_url": {
+      "type": "string",
+      "description": "URL to navigate to when notification is clicked"
+    },
+    "read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the notification has been read"
+    },
+    "read_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the notification was marked as read"
+    }
+  },
+  "required": [
+    "company_id",
+    "recipient_email",
+    "notification_type",
+    "title",
+    "message"
+  ],
+  "rls": {
+    "read": {
+      "$and": [
+        {
+          "company_id": "{{user.company_id}}"
+        },
+        {
+          "recipient_email": "{{user.email}}"
+        }
+      ]
+    },
+    "write": {
+      "company_id": "{{user.company_id}}"
+    }
+  }
+}

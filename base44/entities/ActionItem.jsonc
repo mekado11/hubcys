@@ -1,0 +1,110 @@
+{
+  "name": "ActionItem",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "ID of the company this action item belongs to"
+    },
+    "assessment_id": {
+      "type": "string",
+      "description": "ID of the related assessment"
+    },
+    "incident_id": {
+      "type": "string",
+      "description": "ID of the related incident"
+    },
+    "policy_id": {
+      "type": "string",
+      "description": "ID of the policy this action item is derived from"
+    },
+    "control_id": {
+      "type": "string",
+      "description": "ID of the specific compliance control this action item addresses"
+    },
+    "title": {
+      "type": "string",
+      "description": "Title of the action item"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of the action item"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "30_day",
+        "60_day",
+        "90_day"
+      ],
+      "description": "Time category for the action item"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium",
+      "description": "Priority level of the action item"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "in_progress",
+        "completed",
+        "blocked"
+      ],
+      "default": "not_started",
+      "description": "Current status of the action item"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "Email of the person assigned to this action item"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Due date for completion"
+    },
+    "completed_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when the action item was completed"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes or comments"
+    },
+    "estimated_effort": {
+      "type": "string",
+      "description": "Estimated effort required"
+    },
+    "responsible_team": {
+      "type": "string",
+      "description": "Team responsible for this action item"
+    },
+    "impact_on_control_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Expected improvement to control maturity score upon completion"
+    }
+  },
+  "required": [
+    "company_id",
+    "title",
+    "category"
+  ],
+  "rls": {
+    "read": {
+      "company_id": "{{user.company_id}}"
+    },
+    "write": {
+      "company_id": "{{user.company_id}}"
+    }
+  }
+}

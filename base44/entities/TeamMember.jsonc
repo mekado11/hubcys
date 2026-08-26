@@ -1,0 +1,81 @@
+{
+  "name": "TeamMember",
+  "type": "object",
+  "properties": {
+    "team_id": {
+      "type": "string",
+      "description": "ID of the team"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email of the team member"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "member",
+        "lead",
+        "admin"
+      ],
+      "default": "member",
+      "description": "Role within the team"
+    },
+    "permissions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "view_assessments",
+          "create_assessments",
+          "manage_action_items",
+          "manage_team"
+        ]
+      },
+      "description": "Specific permissions for this team member"
+    }
+  },
+  "required": [
+    "team_id",
+    "user_email"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_email": "{{user.email}}"
+        },
+        {
+          "$and": [
+            {
+              "company_id": "{{user.company_id}}"
+            },
+            {
+              "user_condition": {
+                "company_role": "admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "$and": [
+            {
+              "company_id": "{{user.company_id}}"
+            },
+            {
+              "user_condition": {
+                "company_role": "admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

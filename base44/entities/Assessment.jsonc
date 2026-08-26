@@ -1,0 +1,665 @@
+{
+  "name": "Assessment",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "ID of the company this assessment belongs to"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "Name of the organization being assessed"
+    },
+    "company_website": {
+      "type": "string",
+      "description": "Primary website/domain of the organization for external reconnaissance"
+    },
+    "company_description": {
+      "type": "string",
+      "description": "Description of what the company does and its primary business focus"
+    },
+    "industry_sector": {
+      "type": "string",
+      "enum": [
+        "Healthcare",
+        "Financial_Services",
+        "Technology",
+        "Manufacturing",
+        "Retail",
+        "Education",
+        "Government",
+        "Energy",
+        "Legal",
+        "UK_Transport",
+        "UK_Water",
+        "UK_Digital_Infrastructure",
+        "Other"
+      ],
+      "description": "Primary industry sector of the organization, including UK CNI"
+    },
+    "company_size": {
+      "type": "string",
+      "enum": [
+        "Small_1-50",
+        "Medium_51-500",
+        "Large_501-2000",
+        "Enterprise_2000+"
+      ],
+      "description": "Size of the organization by employee count"
+    },
+    "framework": {
+      "type": "string",
+      "description": "ID of the ComplianceFramework record this assessment is for"
+    },
+    "applicable_privacy_laws": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "UK_GDPR",
+          "CCPA_CPRA",
+          "VCDPA",
+          "CPA",
+          "UCPA",
+          "CTDPA",
+          "ICDPA",
+          "INCDPA",
+          "TIPA",
+          "MCDPA",
+          "DPDPA",
+          "NJCDPA",
+          "NY_SHIELD",
+          "BIPA"
+        ]
+      },
+      "description": "Applicable privacy laws for this organization"
+    },
+    "security_compliance_goals": {
+      "type": "string",
+      "description": "Specific security and/or compliance goals for this assessment"
+    },
+    "previous_gap_analysis_details": {
+      "type": "string",
+      "description": "Details about previous gap analyses, including top unresolved gaps"
+    },
+    "current_biggest_risks": {
+      "type": "string",
+      "description": "Biggest known security risks the organization is currently facing"
+    },
+    "business_critical_systems": {
+      "type": "string",
+      "description": "Core systems or data assets that are mission-critical if compromised"
+    },
+    "ciso_perspective": {
+      "type": "string",
+      "description": "What leadership needs to know from this assessment - key messages for executives"
+    },
+    "compliance_tooling_details": {
+      "type": "string",
+      "description": "Details on compliance tracking tools and evidence management"
+    },
+    "external_attack_surface": {
+      "type": "string",
+      "description": "JSON string containing external attack surface reconnaissance results"
+    },
+    "exposed_assets": {
+      "type": "string",
+      "description": "JSON string containing publicly exposed assets discovered via Shodan and other sources"
+    },
+    "external_cve_threats": {
+      "type": "string",
+      "description": "JSON string containing CVEs correlated with externally exposed technologies"
+    },
+    "surface_exposure_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "External exposure risk score based on reconnaissance findings"
+    },
+    "grand_summary": {
+      "type": "string",
+      "description": "Comprehensive grand summary combining internal assessment with external reconnaissance findings"
+    },
+    "grand_summary_generated_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the grand summary was generated"
+    },
+    "nis2_supply_chain_security": {
+      "type": "string",
+      "description": "How the organization manages cybersecurity risks in its supply chain and relationships with suppliers."
+    },
+    "nis2_business_continuity": {
+      "type": "string",
+      "description": "Details on business continuity and crisis management plans, including backup management, disaster recovery, and crisis management."
+    },
+    "nis2_vulnerability_handling": {
+      "type": "string",
+      "description": "Policies and procedures for vulnerability handling and disclosure."
+    },
+    "nis2_use_of_crypto": {
+      "type": "string",
+      "description": "Policies regarding the use of cryptography and, where appropriate, encryption."
+    },
+    "nis2_essential_services": {
+      "type": "string",
+      "description": "Identification of essential or important services under NIS2 classification."
+    },
+    "nis2_governance_framework": {
+      "type": "string",
+      "description": "Description of cybersecurity governance structure and board-level oversight."
+    },
+    "nis2_human_resources_security": {
+      "type": "string",
+      "description": "Human resources security measures including training, background checks, and awareness programs."
+    },
+    "pci_cde_scope": {
+      "type": "string",
+      "description": "Detailed description of the Cardholder Data Environment (CDE) scope, including all systems, networks, and components that store, process, or transmit cardholder data"
+    },
+    "pci_network_segmentation": {
+      "type": "string",
+      "description": "Network segmentation strategy and implementation details for isolating the CDE from other networks"
+    },
+    "pci_data_protection": {
+      "type": "string",
+      "description": "Cardholder data protection measures including encryption, tokenization, masking, and secure deletion procedures"
+    },
+    "pci_vulnerability_management": {
+      "type": "string",
+      "description": "Vulnerability management program details including scanning procedures, penetration testing, and patch management"
+    },
+    "pci_access_control": {
+      "type": "string",
+      "description": "Access control measures for the CDE including user provisioning, multi-factor authentication, and privileged account management"
+    },
+    "pci_monitoring_logging": {
+      "type": "string",
+      "description": "Security monitoring and logging capabilities including SIEM, file integrity monitoring, and log management"
+    },
+    "pci_compliance_level": {
+      "type": "string",
+      "enum": [
+        "level_1",
+        "level_2",
+        "level_3",
+        "level_4"
+      ],
+      "description": "PCI DSS compliance level based on transaction volume"
+    },
+    "pci_last_assessment_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the last PCI DSS assessment or validation"
+    },
+    "pci_current_gaps": {
+      "type": "string",
+      "description": "Current known gaps or challenges in PCI DSS compliance"
+    },
+    "ops_local_admin_privileges": {
+      "type": "string",
+      "enum": [
+        "0-10%",
+        "11-30%",
+        "31-60%",
+        "61-90%",
+        "91-100%"
+      ],
+      "description": "Percentage of end-user workstations where users have local administrator privileges"
+    },
+    "ops_software_installation_control": {
+      "type": "string",
+      "enum": [
+        "centrally_managed",
+        "requires_it_approval",
+        "user_download_it_approval",
+        "user_download_free"
+      ],
+      "description": "How new software is typically installed on company-issued endpoints"
+    },
+    "ops_byod_security_controls": {
+      "type": "string",
+      "enum": [
+        "not_permitted",
+        "no_policy_controls",
+        "limited_controls",
+        "comprehensive_controls"
+      ],
+      "description": "BYOD policy and security controls implementation"
+    },
+    "ops_remote_access_method": {
+      "type": "string",
+      "enum": [
+        "direct_internet",
+        "basic_vpn",
+        "vpn_with_mfa",
+        "zero_trust"
+      ],
+      "description": "How remote employees access internal company networks and sensitive data"
+    },
+    "ops_unsanctioned_cloud_apps": {
+      "type": "string",
+      "enum": [
+        "no_process",
+        "reactive_approach",
+        "basic_monitoring",
+        "comprehensive_monitoring"
+      ],
+      "description": "How organization identifies and manages unsanctioned cloud applications (Shadow IT)"
+    },
+    "ops_personal_cloud_storage": {
+      "type": "string",
+      "enum": [
+        "no_policy",
+        "policy_no_enforcement",
+        "technical_blocking",
+        "dlp_monitoring"
+      ],
+      "description": "Policy and enforcement for storing company data on personal cloud storage"
+    },
+    "ops_patch_management_cadence": {
+      "type": "string",
+      "enum": [
+        "continuous_weekly",
+        "monthly",
+        "quarterly",
+        "ad_hoc"
+      ],
+      "description": "How frequently security patches are deployed to end-user workstations"
+    },
+    "ops_mobile_device_management": {
+      "type": "string",
+      "enum": [
+        "0%",
+        "1-25%",
+        "26-75%",
+        "76-100%"
+      ],
+      "description": "Percentage of company-owned mobile devices managed by MDM/UEM solution"
+    },
+    "ops_data_classification_system": {
+      "type": "string",
+      "enum": [
+        "enforced_technical",
+        "defined_inconsistent",
+        "general_understanding",
+        "no_system"
+      ],
+      "description": "Formal data classification system implementation and enforcement"
+    },
+    "ops_network_access_control": {
+      "type": "string",
+      "enum": [
+        "open_access",
+        "basic_authentication",
+        "credential_registration",
+        "nac_solution"
+      ],
+      "description": "Device authentication and authorization for internal network access"
+    },
+    "ops_offboarding_data_management": {
+      "type": "string",
+      "enum": [
+        "no_process",
+        "manual_checklist",
+        "standardized_checklist",
+        "automated_workflows"
+      ],
+      "description": "Process for revoking access and securing data when employees leave"
+    },
+    "ops_endpoint_edr_coverage": {
+      "type": "string",
+      "enum": [
+        "no_edr",
+        "pilot_limited",
+        "partial_deployment",
+        "comprehensive_coverage"
+      ],
+      "description": "Endpoint Detection and Response (EDR) solution deployment across endpoints"
+    },
+    "ops_centralized_logging_siem": {
+      "type": "string",
+      "enum": [
+        "no_central_logging",
+        "manual_review_only",
+        "basic_collection_analysis",
+        "siem_real_time"
+      ],
+      "description": "Centralized logging and SIEM implementation for security monitoring"
+    },
+    "ops_vulnerability_scanning_frequency": {
+      "type": "string",
+      "enum": [
+        "never_on_request",
+        "annually_less",
+        "quarterly_semi",
+        "monthly_automated"
+      ],
+      "description": "Frequency of endpoint vulnerability scanning"
+    },
+    "ops_data_loss_prevention": {
+      "type": "string",
+      "enum": [
+        "no_dlp",
+        "policy_no_enforcement",
+        "basic_dlp",
+        "comprehensive_dlp"
+      ],
+      "description": "Data Loss Prevention (DLP) measures on endpoints"
+    },
+    "ops_security_baseline_enforcement": {
+      "type": "string",
+      "enum": [
+        "no_baselines",
+        "manual_inconsistent",
+        "periodic_audits",
+        "automated_enforcement"
+      ],
+      "description": "Security baseline configuration enforcement across endpoints"
+    },
+    "target_completion_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Target completion date for the assessment"
+    },
+    "maturity_identity": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Maturity level for Identity (IAM, SSO, MFA, JML)"
+    },
+    "maturity_asset_management": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Maturity level for Asset Management (Inventory, ownership, classification)"
+    },
+    "maturity_infra_security": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Maturity level for Infrastructure Security (Endpoints, firewalls, networks)"
+    },
+    "maturity_app_security": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Maturity level for Application Security (SDLC, code scanning, dependencies)"
+    },
+    "maturity_third_party_risk": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Maturity level for Third-Party & Supply Chain Risk"
+    },
+    "maturity_incident_response": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Maturity level for Incident Response (IR plan, DR testing, RTO/RPO)"
+    },
+    "maturity_governance_risk": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Maturity level for Governance & Risk (Policies, risk assessments, exec oversight)"
+    },
+    "maturity_data_protection": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Maturity level for Data Protection (Encryption, backups, retention, access controls)"
+    },
+    "maturity_security_training": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Maturity level for Security Training (Employee awareness, social engineering defense)"
+    },
+    "maturity_cloud_security": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Maturity level for Cloud Security (IAM, misconfig detection, workload isolation)"
+    },
+    "maturity_business_continuity": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Maturity level for Business Continuity & Crisis Management"
+    },
+    "maturity_identity_na": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether Identity domain is not applicable"
+    },
+    "maturity_asset_management_na": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether Asset Management domain is not applicable"
+    },
+    "maturity_infra_security_na": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether Infrastructure Security domain is not applicable"
+    },
+    "maturity_app_security_na": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether Application Security domain is not applicable"
+    },
+    "maturity_third_party_risk_na": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether Third-Party Risk domain is not applicable"
+    },
+    "maturity_incident_response_na": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether Incident Response domain is not applicable"
+    },
+    "maturity_governance_risk_na": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether Governance & Risk domain is not applicable"
+    },
+    "maturity_data_protection_na": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether Data Protection domain is not applicable"
+    },
+    "maturity_security_training_na": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether Security Training domain is not applicable"
+    },
+    "maturity_cloud_security_na": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether Cloud Security domain is not applicable"
+    },
+    "maturity_business_continuity_na": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether Business Continuity domain is not applicable"
+    },
+    "details_identity": {
+      "type": "string",
+      "description": "Qualitative details on Identity"
+    },
+    "details_asset_management": {
+      "type": "string",
+      "description": "Qualitative details on Asset Management"
+    },
+    "details_infra_security": {
+      "type": "string",
+      "description": "Qualitative details on Infrastructure Security"
+    },
+    "details_app_security": {
+      "type": "string",
+      "description": "Qualitative details on Application Security"
+    },
+    "details_third_party_risk": {
+      "type": "string",
+      "description": "Qualitative details on Third-Party Risk"
+    },
+    "details_incident_response": {
+      "type": "string",
+      "description": "Qualitative details on Incident Response"
+    },
+    "details_governance_risk": {
+      "type": "string",
+      "description": "Qualitative details on Governance & Risk"
+    },
+    "details_data_protection": {
+      "type": "string",
+      "description": "Qualitative details on Data Protection"
+    },
+    "details_security_training": {
+      "type": "string",
+      "description": "Qualitative details on Security Training"
+    },
+    "details_cloud_security": {
+      "type": "string",
+      "description": "Qualitative details on Cloud Security"
+    },
+    "details_business_continuity": {
+      "type": "string",
+      "description": "Qualitative details on Business Continuity"
+    },
+    "overall_score": {
+      "type": "number",
+      "description": "Overall maturity score (0-100)"
+    },
+    "maturity_level": {
+      "type": "string",
+      "enum": [
+        "Beginner",
+        "Developing",
+        "Intermediate",
+        "Advanced",
+        "Expert"
+      ],
+      "description": "Overall maturity classification"
+    },
+    "applicable_categories": {
+      "type": "number",
+      "description": "Number of applicable categories used in scoring"
+    },
+    "total_categories": {
+      "type": "number",
+      "description": "Total number of categories available"
+    },
+    "smart_analysis": {
+      "type": "string",
+      "description": "Smart system generated comprehensive analysis and recommendations"
+    },
+    "report_generated": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether a report has been generated"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "completed",
+        "archived"
+      ],
+      "default": "draft",
+      "description": "Status of the assessment"
+    },
+    "framework_responses": {
+      "type": "string",
+      "description": "JSON string containing framework-specific responses"
+    },
+    "nis2_compliance_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Specific NIS2 compliance maturity score"
+    },
+    "nis2_readiness_level": {
+      "type": "string",
+      "enum": [
+        "Not Ready",
+        "Basic Preparation",
+        "Substantial Compliance",
+        "Full Compliance"
+      ],
+      "description": "Overall NIS2 readiness classification"
+    },
+    "bia_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether BIA section was used"
+    },
+    "bia_inputs": {
+      "type": "string",
+      "description": "JSON string of raw BIA answers (all domains, numeric inputs, metadata)"
+    },
+    "bia_weights": {
+      "type": "string",
+      "description": "JSON string of domain weights that sum to 1.0"
+    },
+    "bia_domain_scores": {
+      "type": "string",
+      "description": "JSON string of per-domain normalized scores 1-5"
+    },
+    "bia_composite_impact": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Weighted impact score (0-5)"
+    },
+    "bia_likelihood": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "description": "Likelihood score (0-5)"
+    },
+    "bia_risk_score": {
+      "type": "number",
+      "description": "Composite risk = impact * likelihood (0-25)"
+    },
+    "bia_financials": {
+      "type": "string",
+      "description": "JSON string of financial quantifications (SLE/ALE, downtime loss, penalties, fines)"
+    },
+    "bia_rto_hours": {
+      "type": "number",
+      "description": "Recommended RTO in hours"
+    },
+    "bia_rpo_hours": {
+      "type": "number",
+      "description": "Recommended RPO in hours"
+    },
+    "bia_risk_register": {
+      "type": "string",
+      "description": "JSON string of ranked risk register entries"
+    },
+    "bia_last_calculated_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When BIA was last calculated"
+    },
+    "bia_items": {
+      "type": "string",
+      "description": "JSON array (up to 5) of BIA items. Each item includes {name, type, inputs, result:{impact,likelihood,riskScore,annualizedLoss,rtoHours,rpoHours,topDrivers,actionPlan}}"
+    }
+  },
+  "required": [
+    "company_id",
+    "company_name",
+    "company_website",
+    "framework"
+  ],
+  "rls": {
+    "read": {
+      "company_id": "{{user.company_id}}"
+    },
+    "write": {
+      "company_id": "{{user.company_id}}"
+    }
+  }
+}

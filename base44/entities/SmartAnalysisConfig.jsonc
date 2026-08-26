@@ -1,0 +1,58 @@
+{
+  "name": "SmartAnalysisConfig",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "ID of the company this configuration applies to"
+    },
+    "prompt_preamble": {
+      "type": "string",
+      "description": "Additional preamble/instructions injected at the top of the AI prompt"
+    },
+    "force_sections": {
+      "type": "boolean",
+      "default": true,
+      "description": "Force the model to output all required sections"
+    },
+    "min_recommendations": {
+      "type": "number",
+      "default": 6,
+      "description": "Minimum number of recommendations to request"
+    },
+    "include_external_data": {
+      "type": "boolean",
+      "default": true,
+      "description": "Include external attack surface and CVE correlation data in prompts if available"
+    },
+    "include_operational_security": {
+      "type": "boolean",
+      "default": true,
+      "description": "Include operational security practices in prompts"
+    },
+    "notes_for_analyst": {
+      "type": "string",
+      "description": "Private guidance for the AI (tone, industry nuances, compliance emphasis)"
+    }
+  },
+  "required": [
+    "company_id"
+  ],
+  "rls": {
+    "read": {
+      "company_id": "{{user.company_id}}"
+    },
+    "write": {
+      "$and": [
+        {
+          "company_id": "{{user.company_id}}"
+        },
+        {
+          "user_condition": {
+            "company_role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

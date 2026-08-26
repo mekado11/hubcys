@@ -1,0 +1,85 @@
+{
+  "name": "SmartConsultation",
+  "type": "object",
+  "properties": {
+    "assessment_id": {
+      "type": "string",
+      "description": "ID of the associated assessment"
+    },
+    "conversation_history": {
+      "type": "string",
+      "description": "JSON string containing the full conversation history"
+    },
+    "session_title": {
+      "type": "string",
+      "description": "Title for this consultation session"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "completed",
+        "archived"
+      ],
+      "default": "active",
+      "description": "Status of the consultation session"
+    },
+    "context_data": {
+      "type": "string",
+      "description": "JSON string containing relevant context for the smart system"
+    },
+    "last_message_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the last message in this conversation"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "Company ID for RLS"
+    }
+  },
+  "required": [
+    "assessment_id",
+    "session_title"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "$and": [
+            {
+              "company_id": "{{user.company_id}}"
+            },
+            {
+              "user_condition": {
+                "company_role": "admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "$and": [
+            {
+              "company_id": "{{user.company_id}}"
+            },
+            {
+              "user_condition": {
+                "company_role": "admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

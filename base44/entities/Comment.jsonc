@@ -1,0 +1,88 @@
+{
+  "name": "Comment",
+  "type": "object",
+  "properties": {
+    "action_item_id": {
+      "type": "string",
+      "description": "ID of the action item this comment belongs to (optional)"
+    },
+    "incident_id": {
+      "type": "string",
+      "description": "ID of the incident this comment belongs to (optional)"
+    },
+    "assessment_id": {
+      "type": "string",
+      "description": "ID of the assessment this comment belongs to (optional)"
+    },
+    "policy_id": {
+      "type": "string",
+      "description": "ID of the policy this comment belongs to (optional)"
+    },
+    "content": {
+      "type": "string",
+      "description": "Content of the comment (supports markdown and @mentions)"
+    },
+    "author_email": {
+      "type": "string",
+      "description": "Email of the comment author"
+    },
+    "author_name": {
+      "type": "string",
+      "description": "Name of the comment author"
+    },
+    "parent_comment_id": {
+      "type": "string",
+      "description": "ID of parent comment if this is a reply"
+    },
+    "mentioned_users": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Array of user emails mentioned in this comment"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "Company ID for RLS"
+    },
+    "edited": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this comment has been edited"
+    },
+    "edited_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the comment was last edited"
+    }
+  },
+  "required": [
+    "content",
+    "author_email",
+    "company_id"
+  ],
+  "rls": {
+    "read": {
+      "company_id": "{{user.company_id}}"
+    },
+    "write": {
+      "$or": [
+        {
+          "author_email": "{{user.email}}"
+        },
+        {
+          "$and": [
+            {
+              "company_id": "{{user.company_id}}"
+            },
+            {
+              "user_condition": {
+                "company_role": "admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "name": "TrainingVideo",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "ID of the company this training video belongs to"
+    },
+    "module_id": {
+      "type": "string",
+      "description": "ID of the training module this video belongs to (e.g., 'phishing-awareness')"
+    },
+    "video_title": {
+      "type": "string",
+      "description": "Title of the training video"
+    },
+    "video_description": {
+      "type": "string",
+      "description": "Description of what this video covers"
+    },
+    "video_url": {
+      "type": "string",
+      "description": "URL to the uploaded video file"
+    },
+    "video_duration_seconds": {
+      "type": "number",
+      "description": "Duration of the video in seconds"
+    },
+    "video_transcript": {
+      "type": "string",
+      "description": "Full transcript of the video for accessibility"
+    },
+    "video_thumbnail_url": {
+      "type": "string",
+      "description": "URL to the video thumbnail image"
+    },
+    "target_audience": {
+      "type": "string",
+      "enum": [
+        "general",
+        "engineering",
+        "all"
+      ],
+      "default": "general",
+      "description": "Target audience for this video"
+    },
+    "video_order": {
+      "type": "number",
+      "default": 1,
+      "description": "Order of this video within the module"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this video is currently active and available"
+    },
+    "created_by_email": {
+      "type": "string",
+      "description": "Email of the user who uploaded this video"
+    }
+  },
+  "required": [
+    "company_id",
+    "module_id",
+    "video_title",
+    "video_url"
+  ],
+  "rls": {
+    "read": {
+      "company_id": "{{user.company_id}}"
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by_email": "{{user.email}}"
+        },
+        {
+          "$and": [
+            {
+              "company_id": "{{user.company_id}}"
+            },
+            {
+              "user_condition": {
+                "company_role": "admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

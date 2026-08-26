@@ -1,0 +1,72 @@
+{
+  "name": "Team",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the team"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the team's purpose"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "Company this team belongs to"
+    },
+    "team_lead_email": {
+      "type": "string",
+      "description": "Email of the team leader"
+    }
+  },
+  "required": [
+    "name",
+    "company_name"
+  ],
+  "rls": {
+    "read": {
+      "$and ": [
+        {
+          "company_id": "{{user.company_id}}"
+        },
+        {
+          "$or": [
+            {
+              "created_by": "{{user.email}}"
+            },
+            {
+              "team_lead_email": "{{user.email}}"
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "write": {
+      "$and ": [
+        {
+          "company_id": "{{user.company_id}}"
+        },
+        {
+          "$or": [
+            {
+              "created_by": "{{user.email}}"
+            },
+            {
+              "team_lead_email": "{{user.email}}"
+            },
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

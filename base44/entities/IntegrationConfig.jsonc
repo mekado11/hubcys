@@ -1,0 +1,116 @@
+{
+  "name": "IntegrationConfig",
+  "type": "object",
+  "properties": {
+    "integration_name": {
+      "type": "string",
+      "description": "Name of the integration (e.g., 'AWS Config', 'Okta', 'Qualys')"
+    },
+    "integration_type": {
+      "type": "string",
+      "enum": [
+        "Cloud_Provider",
+        "Identity_Provider",
+        "Vulnerability_Scanner",
+        "ITSM",
+        "Endpoint_Security",
+        "Code_Repository",
+        "SIEM",
+        "Other"
+      ],
+      "description": "Category of integration"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Connected",
+        "Disconnected",
+        "Error",
+        "Pending_Setup"
+      ],
+      "default": "Pending_Setup",
+      "description": "Current status of the integration"
+    },
+    "connection_config": {
+      "type": "string",
+      "description": "JSON string containing connection configuration (encrypted)"
+    },
+    "last_sync_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last successful data synchronization"
+    },
+    "sync_frequency": {
+      "type": "string",
+      "enum": [
+        "Real_Time",
+        "Hourly",
+        "Daily",
+        "Weekly",
+        "Manual"
+      ],
+      "default": "Daily",
+      "description": "How often to sync data"
+    },
+    "data_types_collected": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Types of data collected from this integration"
+    },
+    "error_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of recent sync errors"
+    },
+    "company_id": {
+      "type": "string",
+      "description": "Company ID for RLS"
+    }
+  },
+  "required": [
+    "integration_name",
+    "integration_type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "$and": [
+            {
+              "company_id": "{{user.company_id}}"
+            },
+            {
+              "user_condition": {
+                "company_role": "admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "$and": [
+            {
+              "company_id": "{{user.company_id}}"
+            },
+            {
+              "user_condition": {
+                "company_role": "admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

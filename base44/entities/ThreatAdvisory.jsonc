@@ -1,0 +1,89 @@
+{
+  "name": "ThreatAdvisory",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Advisory title"
+    },
+    "source": {
+      "type": "string",
+      "description": "Source org (e.g., ENISA, NCSC UK, CISA)"
+    },
+    "published_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Published date/time"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "Low",
+        "Medium",
+        "High",
+        "Critical"
+      ],
+      "default": "Medium"
+    },
+    "summary": {
+      "type": "string",
+      "description": "Short summary / synopsis"
+    },
+    "cves": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of related CVEs"
+    },
+    "mitre_techniques": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "MITRE ATT&CK techniques (if known)"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Keywords (e.g., ransomware, vpn, exchange, phishing)"
+    },
+    "affected_sectors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Sectors impacted (e.g., Healthcare, Government)"
+    },
+    "regions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Regions (e.g., UK, EU)"
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Reference URLs"
+    }
+  },
+  "required": [
+    "title",
+    "source",
+    "published_date",
+    "summary"
+  ],
+  "rls": {
+    "read": true,
+    "write": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

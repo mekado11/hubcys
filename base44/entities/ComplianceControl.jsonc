@@ -1,0 +1,126 @@
+{
+  "name": "ComplianceControl",
+  "type": "object",
+  "properties": {
+    "framework_id": {
+      "type": "string",
+      "description": "ID of the compliance framework this control belongs to"
+    },
+    "control_id": {
+      "type": "string",
+      "description": "Unique identifier for the control (e.g., A.5.1.1, CC6.1)"
+    },
+    "control_name": {
+      "type": "string",
+      "description": "Name/title of the control"
+    },
+    "control_description": {
+      "type": "string",
+      "description": "Detailed description of what the control requires"
+    },
+    "control_category": {
+      "type": "string",
+      "description": "Category or domain of the control"
+    },
+    "implementation_status": {
+      "type": "string",
+      "enum": [
+        "Not Started",
+        "In Progress",
+        "Implemented",
+        "Needs Improvement",
+        "Not Applicable"
+      ],
+      "default": "Not Started",
+      "description": "Current implementation status"
+    },
+    "maturity_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "default": 0,
+      "description": "Numerical maturity score (0-5): 0=Not Implemented, 1=Planned, 2=Partial, 3=Implemented, 4=Reviewed, 5=Monitored+Improved"
+    },
+    "criticality": {
+      "type": "string",
+      "enum": [
+        "Low",
+        "Medium",
+        "High",
+        "Critical"
+      ],
+      "default": "Medium",
+      "description": "Criticality level of the control"
+    },
+    "owner_email": {
+      "type": "string",
+      "description": "Email of the person or team responsible for this control"
+    },
+    "last_review_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when this control was last reviewed"
+    },
+    "next_review_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when this control should be reviewed next"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes or comments about the control"
+    },
+    "mapped_assessment_categories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Assessment categories this control maps to (e.g., 'access_control')"
+    }
+  },
+  "required": [
+    "framework_id",
+    "control_id",
+    "control_name"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "owner_email": "{{user.email}}"
+        },
+        {
+          "$and": [
+            {
+              "company_id": "{{user.company_id}}"
+            },
+            {
+              "user_condition": {
+                "company_role": "admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "owner_email": "{{user.email}}"
+        },
+        {
+          "$and": [
+            {
+              "company_id": "{{user.company_id}}"
+            },
+            {
+              "user_condition": {
+                "company_role": "admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

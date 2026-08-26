@@ -1,0 +1,240 @@
+{
+  "name": "PciScope",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "Company this PCI scope belongs to"
+    },
+    "title": {
+      "type": "string",
+      "description": "Name of this PCI DSS scoping session"
+    },
+    "description": {
+      "type": "string",
+      "description": "Short description/purpose"
+    },
+    "linked_assessment_id": {
+      "type": "string",
+      "description": "Optional Assessment ID to associate with this scoping"
+    },
+    "cde_assets": {
+      "type": "array",
+      "description": "Assets that store/process/transmit CHD/SAD",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "web_app",
+              "database",
+              "payment_processor",
+              "endpoint",
+              "network_device",
+              "service",
+              "other"
+            ]
+          },
+          "stores_pan": {
+            "type": "boolean",
+            "default": false
+          },
+          "processes_pan": {
+            "type": "boolean",
+            "default": false
+          },
+          "transmits_pan": {
+            "type": "boolean",
+            "default": false
+          },
+          "location": {
+            "type": "string"
+          },
+          "segment": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      }
+    },
+    "connected_systems": {
+      "type": "array",
+      "description": "Systems connected to the CDE that could impact security",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "function": {
+            "type": "string"
+          },
+          "connection_type": {
+            "type": "string",
+            "enum": [
+              "inbound",
+              "outbound",
+              "bidirectional"
+            ]
+          },
+          "transmits_pan": {
+            "type": "boolean",
+            "default": false
+          },
+          "segment": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      }
+    },
+    "data_flows": {
+      "type": "array",
+      "description": "Cardholder data flows",
+      "items": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "destination": {
+            "type": "string"
+          },
+          "data_type": {
+            "type": "string",
+            "enum": [
+              "PAN",
+              "SAD",
+              "CHD",
+              "Tokenized",
+              "None"
+            ]
+          },
+          "encryption_in_transit": {
+            "type": "boolean",
+            "default": true
+          },
+          "encryption_at_rest": {
+            "type": "boolean",
+            "default": true
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "destination",
+          "data_type"
+        ]
+      }
+    },
+    "network_segments": {
+      "type": "array",
+      "description": "Network segments and scope classification",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "cde",
+              "connected",
+              "out_of_scope"
+            ]
+          },
+          "controls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "scope"
+        ]
+      }
+    },
+    "scope_summary": {
+      "type": "string",
+      "description": "Narrative summary of scope and boundaries"
+    },
+    "compliance_gaps": {
+      "type": "array",
+      "description": "Identified gaps tied to PCI DSS requirements",
+      "items": {
+        "type": "string"
+      }
+    },
+    "scope_stats": {
+      "type": "object",
+      "description": "Computed stats for quick view",
+      "properties": {
+        "assets_total": {
+          "type": "number",
+          "default": 0
+        },
+        "cde_assets": {
+          "type": "number",
+          "default": 0
+        },
+        "connected_systems": {
+          "type": "number",
+          "default": 0
+        },
+        "data_flows": {
+          "type": "number",
+          "default": 0
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "approved",
+        "archived"
+      ],
+      "default": "draft",
+      "description": "Workflow status"
+    },
+    "last_calculated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When scope stats were last computed"
+    }
+  },
+  "required": [
+    "company_id",
+    "title"
+  ],
+  "rls": {
+    "read": {
+      "company_id": "{{user.company_id}}"
+    },
+    "write": {
+      "company_id": "{{user.company_id}}"
+    }
+  }
+}

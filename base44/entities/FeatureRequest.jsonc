@@ -1,0 +1,90 @@
+{
+  "name": "FeatureRequest",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "Company ID for multi-tenant scoping"
+    },
+    "title": {
+      "type": "string",
+      "description": "Short title for the feature request"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description and use case"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium",
+      "description": "Impact/urgency"
+    },
+    "category": {
+      "type": "string",
+      "description": "Optional category (e.g., assessment, dashboard, reporting)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "new",
+        "in_review",
+        "planned",
+        "in_progress",
+        "done",
+        "rejected"
+      ],
+      "default": "new",
+      "description": "Request workflow status"
+    }
+  },
+  "required": [
+    "title",
+    "description"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "$and": [
+            {
+              "company_id": "{{user.company_id}}"
+            },
+            {
+              "user_condition": {
+                "company_role": "admin"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "$and": [
+            {
+              "company_id": "{{user.company_id}}"
+            },
+            {
+              "user_condition": {
+                "company_role": "admin"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

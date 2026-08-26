@@ -1,0 +1,129 @@
+{
+  "name": "Company",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the company/organization"
+    },
+    "access_code": {
+      "type": "string",
+      "description": "Unique access code for users to join this company"
+    },
+    "admin_user_email": {
+      "type": "string",
+      "description": "Email of the company administrator who created this company"
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional description of the company"
+    },
+    "industry": {
+      "type": "string",
+      "enum": [
+        "Healthcare",
+        "Financial_Services",
+        "Technology",
+        "Manufacturing",
+        "Retail",
+        "Education",
+        "Government",
+        "Energy",
+        "Legal",
+        "Other"
+      ],
+      "description": "Industry sector of the company"
+    },
+    "size": {
+      "type": "string",
+      "enum": [
+        "Small_1-50",
+        "Medium_51-500",
+        "Large_501-2000",
+        "Enterprise_2000+"
+      ],
+      "description": "Size of the company by employee count"
+    },
+    "subscription_tier": {
+      "type": "string",
+      "enum": [
+        "free_trial",
+        "starter",
+        "growth",
+        "enterprise"
+      ],
+      "description": "Subscription tier for this company - set by admin after approval, not automatically"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "suspended",
+        "cancelled"
+      ],
+      "default": "active",
+      "description": "Status of the company account"
+    },
+    "operating_regions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Global",
+          "US",
+          "Canada",
+          "EU",
+          "UK",
+          "APAC",
+          "LATAM",
+          "MEA",
+          "ANZ",
+          "India",
+          "Other"
+        ]
+      },
+      "description": "Regions where the company operates; used to tailor advisories and training"
+    },
+    "training_enabled_modules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Optional allow-list of training module IDs enabled for this org (e.g., ['phishing-awareness','cloud-security-best-practices'])"
+    }
+  },
+  "required": [
+    "name",
+    "access_code",
+    "admin_user_email"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "id": "{{user.company_id}}"
+        },
+        {
+          "admin_user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "admin_user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

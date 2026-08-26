@@ -1,0 +1,70 @@
+{
+  "name": "AssetType",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "Company scope for this taxonomy"
+    },
+    "name": {
+      "type": "string",
+      "description": "Display name (e.g., SaaS, EDR, WAF, SCADA)"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "IT",
+        "OT_ICS",
+        "Cloud",
+        "Data_Store",
+        "Security",
+        "Application",
+        "Network",
+        "Other"
+      ],
+      "description": "High-level grouping for filtering and reporting"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "description": "If disabled, hidden from picker"
+    },
+    "order_index": {
+      "type": "number",
+      "default": 100,
+      "description": "Sort order (lower first)"
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Auto-suggest triggers (lowercase words)"
+    },
+    "linked_org_unit_id": {
+      "type": "string",
+      "description": "OrgUnit responsible/owner for this type (optional)"
+    },
+    "risk_profile": {
+      "type": "string",
+      "description": "JSON string with optional weight multipliers, e.g. {\"impactWeightMultipliers\":{\"bia_impact_ops_dependency_share\":1.2}, \"likelihoodWeightMultipliers\":{\"bia_exposure_legacy_status\":1.1}}"
+    },
+    "is_seed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether created by system as seed for this company"
+    }
+  },
+  "required": [
+    "company_id",
+    "name"
+  ],
+  "rls": {
+    "read": {
+      "company_id": "{{user.company_id}}"
+    },
+    "write": {
+      "company_id": "{{user.company_id}}"
+    }
+  }
+}

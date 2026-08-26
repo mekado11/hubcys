@@ -1,0 +1,121 @@
+{
+  "name": "BreachCaseStudy",
+  "type": "object",
+  "properties": {
+    "company_name": {
+      "type": "string",
+      "description": "Name of the breached company"
+    },
+    "breach_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the breach incident"
+    },
+    "industry_sector": {
+      "type": "string",
+      "enum": [
+        "Healthcare",
+        "Financial_Services",
+        "Technology",
+        "Manufacturing",
+        "Retail",
+        "Education",
+        "Government",
+        "Energy",
+        "Legal",
+        "Other"
+      ],
+      "description": "Industry of the breached company"
+    },
+    "attack_type": {
+      "type": "string",
+      "enum": [
+        "Ransomware",
+        "Data_Breach",
+        "DDoS",
+        "Phishing",
+        "Supply_Chain",
+        "Insider_Threat",
+        "Cloud_Misconfiguration",
+        "Unpatched_Vulnerability",
+        "API_Exploit",
+        "Other"
+      ],
+      "description": "Primary attack vector/type"
+    },
+    "primary_cause": {
+      "type": "string",
+      "description": "Root cause of the breach (e.g., 'Unpatched VPN vulnerability', 'Weak MFA')"
+    },
+    "records_compromised": {
+      "type": "number",
+      "description": "Number of records/accounts affected"
+    },
+    "estimated_financial_impact": {
+      "type": "number",
+      "description": "Total estimated financial cost in USD"
+    },
+    "downtime_hours": {
+      "type": "number",
+      "description": "Duration of system downtime in hours"
+    },
+    "regulatory_fines": {
+      "type": "number",
+      "description": "Regulatory fines imposed (if any)"
+    },
+    "direct_costs": {
+      "type": "number",
+      "description": "Direct response and remediation costs"
+    },
+    "indirect_costs": {
+      "type": "number",
+      "description": "Indirect costs (reputation, customer churn, stock impact)"
+    },
+    "key_mitigations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Key controls that could have prevented this breach"
+    },
+    "cve_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "CVE IDs associated with this breach"
+    },
+    "summary": {
+      "type": "string",
+      "description": "Brief summary of the incident"
+    },
+    "reference_url": {
+      "type": "string",
+      "description": "Source URL for this case study"
+    },
+    "lessons_learned": {
+      "type": "string",
+      "description": "Key lessons and recommendations"
+    },
+    "is_public": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this is publicly available data"
+    }
+  },
+  "required": [
+    "company_name",
+    "breach_date",
+    "industry_sector",
+    "attack_type",
+    "primary_cause"
+  ],
+  "rls": {
+    "read": true,
+    "write": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

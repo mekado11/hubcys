@@ -1,0 +1,157 @@
+{
+  "name": "Policy",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "ID of the company this policy belongs to"
+    },
+    "policy_type": {
+      "type": "string",
+      "enum": [
+        "Access_Control",
+        "Incident_Response",
+        "Data_Backup_and_Recovery",
+        "Data_Retention_and_Disposal",
+        "Vendor_Security_Management",
+        "Acceptable_Use",
+        "Password_Policy",
+        "Change_Management",
+        "Vulnerability_Management",
+        "Physical_Security",
+        "Business_Continuity",
+        "BYOD",
+        "PCI_DSS_Compliance",
+        "Data_Classification",
+        "Encryption",
+        "Remote_Work",
+        "Mobile_Device",
+        "Cloud_Security",
+        "API_Security",
+        "Other"
+      ],
+      "description": "The category of the security policy"
+    },
+    "title": {
+      "type": "string",
+      "description": "The official name/title of the policy document"
+    },
+    "content": {
+      "type": "string",
+      "description": "The full content of the policy, supporting rich text or Markdown"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "In_Review",
+        "Approved",
+        "Archived"
+      ],
+      "default": "Draft",
+      "description": "The current status of the policy document"
+    },
+    "version": {
+      "type": "string",
+      "default": "1.0",
+      "description": "The version number of the policy (e.g., 1.0, 1.1, 2.0)"
+    },
+    "approved_by": {
+      "type": "string",
+      "description": "Email of the user who approved this version of the policy"
+    },
+    "approved_date": {
+      "type": "string",
+      "format": "date",
+      "description": "The date this version of the policy was approved"
+    },
+    "framework_alignment": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of compliance frameworks this policy helps satisfy (e.g., 'NIST_CSF', 'ISO_27001', 'PCI_DSS')"
+    },
+    "standards_mapping": {
+      "type": "string",
+      "description": "JSON string containing detailed framework-to-control mappings"
+    },
+    "linked_assessment_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs of assessments that are relevant to this policy"
+    },
+    "linked_incident_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs of incidents relevant to this policy"
+    },
+    "linked_tabletop_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs of tabletop exercises relevant to this policy"
+    },
+    "last_reviewed_date": {
+      "type": "string",
+      "format": "date",
+      "description": "The date this policy was last formally reviewed"
+    },
+    "next_review_date": {
+      "type": "string",
+      "format": "date",
+      "description": "The scheduled date for the next policy review"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Keywords for searching and categorization"
+    },
+    "policy_owner": {
+      "type": "string",
+      "description": "Email of the policy owner responsible for maintenance"
+    },
+    "review_frequency": {
+      "type": "string",
+      "enum": [
+        "Quarterly",
+        "Semi_Annually",
+        "Annually",
+        "Biannually"
+      ],
+      "description": "How often this policy should be reviewed"
+    },
+    "exceptions": {
+      "type": "string",
+      "description": "JSON string containing any approved exceptions to this policy"
+    },
+    "enforcement_mechanisms": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Technical or procedural controls that enforce this policy"
+    }
+  },
+  "required": [
+    "company_id",
+    "policy_type",
+    "title",
+    "content"
+  ],
+  "rls": {
+    "read": {
+      "company_id": "{{user.company_id}}"
+    },
+    "write": {
+      "company_id": "{{user.company_id}}"
+    }
+  }
+}
