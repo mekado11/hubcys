@@ -30,6 +30,7 @@ import {
   Search,
 } from "lucide-react";
 import EvidenceView from "./EvidenceView";
+import { CreateExercise, ExerciseWorkspace } from './ExerciseWorkflow';
 import {
   Badge,
   PageHeader,
@@ -519,11 +520,11 @@ function IndexPage({ section, resource, org }) {
         <Profiles data={resource.data} org={org} />
       ) : section === "exercises" ? (
         <section className="v2-panel">
+          <Link className="v2-button" to={`/app/exercises/new?org=${encodeURIComponent(org)}`}>Create ransomware exercise</Link>
+          <div className="v2-workflow-links">{resource.data.exercises.map(row => <Link className="v2-text-link" key={row.id} to={`/app/exercises/${row.id}?org=${encodeURIComponent(org)}`}>Open {label(row.threat_id)} · {row.scope_key}</Link>)}</div>
           <ExerciseRows exercises={resource.data.exercises} org={org} />
           <p className="v2-muted v2-footnote">
-            Exercise authoring and participation controls are a separate
-            delivery. This shell provides read-only access to recorded
-            exercises.
+            Open an exercise to release injects, submit assigned responses or review captured evidence.
           </p>
         </section>
       ) : (
@@ -741,6 +742,8 @@ export default function ReadinessApp({
             />
           ) : (
             <Routes>
+              <Route path="exercises/new" element={<CreateExercise key={org} client={client} org={org} />} />
+              <Route path="exercises/:exerciseId" element={<ExerciseWorkspace key={`${org}:${location.pathname}`} client={client} org={org} />} />
               <Route
                 index
                 element={

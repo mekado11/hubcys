@@ -790,6 +790,13 @@
 .v2-skip:focus {
   top: 8px;
 }
+.v2-skip:not(:focus) {
+  clip-path: inset(100%);
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+}
 .v2-menu,
 .v2-close {
   display: none;
@@ -1051,3 +1058,16 @@
     scroll-behavior: auto !important;
   }
 }
+.v2-form label { display: grid; gap: .5rem; margin-block: 1rem; }
+.v2-form input:not([type=checkbox]), .v2-form select, .v2-form textarea { padding: .75rem; border: 1px solid var(--v2-line); background: var(--v2-surface); border-radius: 4px; width: 100%; }
+.v2-form textarea { min-height: 130px; resize: vertical; }
+.v2-form fieldset { border: 0; padding: 0; margin: 0 0 1rem; min-width: 0; }
+.v2-form legend { font-weight: 600; }
+.v2-form .v2-check { display: flex; align-items: flex-start; gap: .75rem; }
+.v2-check input { width: 22px; height: 22px; flex-shrink: 0; margin-top: .25rem; }
+.v2-check span { min-width: 0; overflow-wrap: anywhere; }
+.v2-check small { display: block; color: var(--v2-muted); }
+.v2-evidence-choice { border-bottom: 1px solid var(--v2-line); padding-block: 1rem; }
+.v2-evidence-choice blockquote { margin: .5rem 0; white-space: pre-wrap; }
+.v2-workflow-links { display: grid; margin-block: 1rem; }
+.v2-app button:disabled { opacity: .55; cursor: not-allowed; }

@@ -3,13 +3,14 @@ import type { Firestore, Transaction, DocumentReference, DocumentData } from 'fi
 import { z } from 'zod';
 import {
   Id, Membership, ProviderGrant, Exercise, ExerciseParticipant, ScenarioVersion,
-  ExpectedAction, Criterion, InjectRelease, Response, Evidence, assertTenant,
+  ExpectedAction, Criterion, InjectRelease, Response, Evidence, Observation, assertTenant,
   type PermissionName,
 } from '../../shared/v2/contracts.js';
 import { ExerciseCommand, Organization, ContextVersion, InjectDefinition, type ExerciseCommandInput } from '../../shared/v2/commands.js';
 import { authorizeCommand, AuthorizationError } from './authorization.js';
 import { assertExerciseTransition } from './lifecycle.js';
 import { canonicalJson, validateScenarioManifest } from './scoring.js';
+import { ransomwareTemplate } from './ransomware-template.js';
 
 export class CommandError extends Error {
   constructor(public status: number, public code: string) { super(code); }
@@ -20,9 +21,11 @@ const envelope = (id: string, organization_id: string, uid: string, now: string)
 });
 const permissions: Record<ExerciseCommandInput['command'], PermissionName> = {
   create_exercise: 'exercise:create',
+  create_ransomware_exercise: 'exercise:create',
   transition_exercise: 'exercise:start',
   release_inject: 'inject:release',
   submit_response: 'response:submit',
+  accept_observation: 'observation:accept',
 };
 
 export async function loadAuthority(tx: Transaction, db: Firestore, organizationId: string, uid: string) {
@@ -89,7 +92,7 @@ export async function executeExerciseCommand(db: Firestore, uid: string, raw: un
     const authority = await loadAuthority(tx, db, orgId, uid);
     let exercise: z.infer<typeof Exercise> | undefined;
     let participant: z.infer<typeof ExerciseParticipant> | undefined;
-    if (command.command !== 'create_exercise') {
+    if (command.command !== 'create_exercise' && command.command !== 'create_ransomware_exercise') {
       exercise = await parseDocument(tx, root.collection('exercises').doc(command.exercise_id), Exercise);
       assertTenant(orgId, [exercise]);
       const assignmentSnap = await tx.get(root.collection('exercises').doc(exercise.id).collection('participants').doc(uid));
@@ -114,27 +117,35 @@ export async function executeExerciseCommand(db: Firestore, uid: string, raw: un
     let entityId: string;
     let beforeHash: string | null = exercise ? digest(exercise) : null;
 
-    if (command.command === 'create_exercise') {
-      const scenarioRef = root.collection('scenario_versions').doc(command.scenario_version_id);
-      const scenario = await parseDocument(tx, scenarioRef, ScenarioVersion);
-      const context = await parseDocument(tx, root.collection('context_versions').doc(command.context_version_id), ContextVersion);
+    if (command.command === 'create_exercise' || command.command === 'create_ransomware_exercise') {
+      const template = command.command === 'create_ransomware_exercise'
+        ? ransomwareTemplate(orgId, uid, key, now, command.context_description) : null;
+      const scenarioRef = root.collection('scenario_versions').doc(template ? template.scenario.id : (command as Extract<ExerciseCommandInput, { command: 'create_exercise' }>).scenario_version_id);
+      const scenario = template ? template.scenario : await parseDocument(tx, scenarioRef, ScenarioVersion);
+      const context = template ? template.context : await parseDocument(tx, root.collection('context_versions').doc((command as Extract<ExerciseCommandInput, { command: 'create_exercise' }>).context_version_id), ContextVersion);
       assertTenant(orgId, [scenario, context]);
       if (scenario.state !== 'published' || context.status !== 'published') throw new CommandError(409, 'PUBLISHED_CONTEXT_REQUIRED');
       // Validate the whole published manifest, not just the version label.
       const expectedActions: z.infer<typeof ExpectedAction>[] = [];
       const criteria: z.infer<typeof Criterion>[] = [];
       for (const id of scenario.expected_action_ids) {
-        const expected = await parseDocument(tx, scenarioRef.collection('expected_actions').doc(id), ExpectedAction);
+        const expected = template ? template.expected_actions.find(row => row.id === id)! : await parseDocument(tx, scenarioRef.collection('expected_actions').doc(id), ExpectedAction);
         assertTenant(orgId, [expected]);
         expectedActions.push(expected);
       }
       for (const id of scenario.criterion_ids) {
-        const criterion = await parseDocument(tx, scenarioRef.collection('criteria').doc(id), Criterion);
+        const criterion = template ? template.criteria.find(row => row.id === id)! : await parseDocument(tx, scenarioRef.collection('criteria').doc(id), Criterion);
         assertTenant(orgId, [criterion]);
         criteria.push(criterion);
       }
       try { validateScenarioManifest(scenario, expectedActions, criteria); }
       catch { throw new CommandError(409, 'MANIFEST_MISMATCH'); }
+      if (template) {
+        writes.push({ ref: scenarioRef, data: scenario }, { ref: root.collection('context_versions').doc(context.id), data: context });
+        for (const row of template.expected_actions) writes.push({ ref: scenarioRef.collection('expected_actions').doc(row.id), data: row });
+        for (const row of template.criteria) writes.push({ ref: scenarioRef.collection('criteria').doc(row.id), data: row });
+        for (const row of template.injects) writes.push({ ref: scenarioRef.collection('injects').doc(row.id), data: row });
+      }
       for (const member of command.participants) {
         const memberAuthority = await loadAuthority(tx, db, orgId, member.uid);
         if (memberAuthority.membership.uid !== member.uid || memberAuthority.membership.status !== 'active') throw new AuthorizationError();
@@ -200,6 +211,38 @@ export async function executeExerciseCommand(db: Firestore, uid: string, raw: un
         } });
         writes.push({ ref: exerciseRef, data: { record_version: current.record_version + 1 }, update: true });
         result = { exercise_id: entityId, release_id: release.id, released_at: now, record_version: current.record_version + 1 };
+      } else if (command.command === 'accept_observation') {
+        if (current.state !== 'review') throw new CommandError(409, 'EXERCISE_NOT_IN_REVIEW');
+        const scenarioRef = root.collection('scenario_versions').doc(current.scenario_version_id);
+        const scenario = await parseDocument(tx, scenarioRef, ScenarioVersion);
+        const criterion = await parseDocument(tx, scenarioRef.collection('criteria').doc(command.criterion_id), Criterion);
+        assertTenant(orgId, [scenario, criterion]);
+        if (!scenario.criterion_ids.includes(criterion.id) || criterion.scenario_version_id !== scenario.id ||
+            (command.measurement.kind !== 'unknown' && command.measurement.kind !== criterion.kind)) throw new CommandError(409, 'CRITERION_MISMATCH');
+        for (const id of command.evidence_ids) {
+          const evidence = await parseDocument(tx, root.collection('evidence').doc(id), Evidence);
+          assertTenant(orgId, [evidence]);
+          if (evidence.exercise_id !== current.id || evidence.status !== 'accepted' || evidence.source_kind !== 'participant_response') throw new CommandError(409, 'EVIDENCE_NOT_ELIGIBLE');
+          const response = await parseDocument(tx, exerciseRef.collection('responses').doc(evidence.source_record_id), Response);
+          assertTenant(orgId, [response]);
+          if (response.exercise_id !== current.id || digest(response) !== evidence.content_sha256) throw new CommandError(409, 'SOURCE_INTEGRITY_FAILURE');
+          if (response.actor_uid === uid) throw new CommandError(403, 'INDEPENDENT_REVIEW_REQUIRED');
+        }
+        const observationId = `observation-${digest([current.id, criterion.id])}`;
+        const observationRef = root.collection('observations').doc(observationId);
+        if ((await tx.get(observationRef)).exists) throw new CommandError(409, 'OBSERVATION_ALREADY_ACCEPTED');
+        const priorObservations = await tx.get(root.collection('observations').where('exercise_id', '==', current.id).limit(501));
+        if (priorObservations.size > 500) throw new CommandError(409, 'OBSERVATION_LIMIT');
+        if (priorObservations.docs.some(doc => doc.data().criterion_id === criterion.id && doc.data().status === 'accepted')) throw new CommandError(409, 'OBSERVATION_ALREADY_ACCEPTED');
+        const observation = Observation.parse({
+          ...envelope(observationId, orgId, uid, now), exercise_id: current.id, criterion_id: criterion.id,
+          expected_action_id: criterion.expected_action_id, capability_id: criterion.capability_id,
+          status: 'accepted', accepted_by_uid: uid, accepted_at: now,
+          measurement: command.measurement, rationale: command.rationale, evidence_ids: command.evidence_ids,
+        });
+        writes.push({ ref: observationRef, data: observation });
+        writes.push({ ref: exerciseRef, data: { record_version: current.record_version + 1 }, update: true });
+        result = { exercise_id: current.id, observation_id: observationId, record_version: current.record_version + 1 };
       } else {
         if (current.state !== 'running') throw new CommandError(409, 'EXERCISE_NOT_RUNNING');
         const releaseSnap = await tx.get(exerciseRef.collection('releases').doc(command.inject_release_id));
