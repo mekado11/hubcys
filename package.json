@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -58,7 +61,7 @@
     "docx": "^9.0.0",
     "embla-carousel-react": "^8.5.2",
     "firebase": "^11.10.0",
-    "firebase-admin": "^13.10.0",
+    "firebase-admin": "^14.4.0",
     "framer-motion": "^11.16.4",
     "html2canvas": "^1.4.1",
     "input-otp": "^1.4.2",

@@ -45,6 +45,7 @@ Audit records are append-created by these commands and browser-immutable. This i
 No production configuration, data, rules or deployment is changed by committing this code. There is no staging environment assumed or required for local development.
 
 - Set `FIREBASE_PROJECT_ID` on the server to the explicitly reviewed production project when deployment is authorized. Do not infer the server trust target from a browser request or `VITE_` value.
+- Use Node 22, as pinned in `package.json` and CI, for the current Firebase Admin SDK. Confirm the deployment runtime honors that pin before activation.
 - Provision Google Application Default Credentials through a server-only, reviewed deployment mechanism. `applicationDefault()` does not make Vercel credentials appear automatically. Workload identity or a securely mounted application-credentials file must be configured and tested; do not paste service-account keys into source, client variables or PR comments.
 - Server credentials need the intended Firebase Auth user lookup/revocation checks and Firestore operations. Apply least-privilege IAM and separate deploy/admin ownership from application runtime where feasible.
 - The six existing API authentication changes are NOT feature-gated. Missing identity configuration fails closed with 503. Before deploying them, confirm that valid existing users receive successful token verification and that disabled/revoked users fail; otherwise those six APIs will be unavailable.
