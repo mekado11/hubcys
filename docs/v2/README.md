@@ -36,4 +36,6 @@ The scorer expects the entire published criterion and expected-action manifests,
 
 ## Still required
 
-Authoritative membership provisioning, legacy tenant-policy repairs, Storage policies, scheduled inject dispatch and outbox workers, file ingestion, accepted observations and persisted score runs, complete verification/retest services, organization readiness projection, reports, migration tooling, frontend integration and environment-matched end-to-end acceptance remain subsequent review units. No production-readiness claim is made by these test suites.
+The [connected exercise workflow](./exercise-workflow.md) now provides actual-app creation, manual inject release, participation, accepted observations and current-evidence scoring, verified through real APIs and local Firebase emulators.
+
+Authoritative membership provisioning, legacy tenant-policy repairs, Storage policies, scheduled inject dispatch and outbox workers, file ingestion, persisted score runs and finalization, complete verification/retest services, organization readiness projection, reports, migration tooling and production-environment acceptance remain subsequent review units. No production-readiness claim is made by these test suites.

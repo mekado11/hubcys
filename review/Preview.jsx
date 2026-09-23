@@ -41,6 +41,13 @@ function Preview() {
       },
     ];
     return {
+      setup: (org, signal) => respond({
+        principal_uid: "review-facilitator",
+        context_description: "Synthetic review environment: identity services, endpoints and business-critical operations.",
+        members: [{ uid: "synthetic-responder", roles: ["participant"] }],
+      }, signal),
+      workspace: () => Promise.reject(new WorkspaceError(409, "This preview contains evidence snapshots only. Live exercise operations require the connected application; no production writes are available here.")),
+      command: () => Promise.reject(new WorkspaceError(403, "This interface preview is read-only.")),
       context: (signal) =>
         respond(
           { organizations: mode === "unassigned" ? [] : organizations },
