@@ -264,3 +264,37 @@ test("threat index toggles and the synthetic create form never claims a save", a
   await expect(page.getByRole("button", { name: "Create exercise", exact: true })).toBeDisabled();
   await expect(page.getByRole("note")).toContainText("read-only");
 });
+
+test("enterprise palette preserves readable navigation and primary actions in both themes", async ({ page }) => {
+  await page.goto(start);
+  await expect(page.locator(".v2-exercise-score strong")).toHaveText("60");
+  for (const theme of ["light", "dark"]) {
+    if (theme === "dark") await page.getByRole("button", { name: "Switch to dark mode" }).click();
+    const menu = page.getByRole("button", { name: "Open navigation", exact: true });
+    const mobile = await menu.isVisible();
+    if (mobile) await menu.click();
+    const ratios = await page.evaluate(() => {
+      const luminance = color => {
+        const channels = color.match(/[\d.]+/g).slice(0, 3).map(Number).map(n => {
+          const value = n / 255;
+          return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+        });
+        return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+      };
+      return [".v2-sidebar nav a.active", ".v2-panel-footer .v2-button"].map(selector => {
+        const style = getComputedStyle(document.querySelector(selector));
+        const foreground = luminance(style.color);
+        const background = luminance(style.backgroundColor);
+        return (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05);
+      });
+    });
+    for (const ratio of ratios) expect(ratio).toBeGreaterThanOrEqual(4.5);
+    if (mobile) await page.keyboard.press("Escape");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await expect(page.getByRole("button", { name: "Refresh", exact: true })).toBeVisible();
+  }
+  await page.getByRole("button", { name: "Switch to light mode" }).click();
+  await page.getByLabel("Interface review state").selectOption("empty");
+  await expect(page.getByRole("link", { name: "Explore exercises" })).toBeVisible();
+  await expect(page.locator(".v2-exercise-score")).toHaveCount(0);
+});

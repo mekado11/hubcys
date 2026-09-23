@@ -115,7 +115,7 @@ function Preview() {
       <div
         className="review-controls"
         style={{
-          background: "#16272c",
+          background: "#142236",
           color: "#eef5f4",
           padding: "8px 16px",
           font: "14px sans-serif",

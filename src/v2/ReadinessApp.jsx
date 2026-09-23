@@ -404,9 +404,9 @@ function IndexPage({ section, resource, org, client }) {
         title={title}
         description={description}
       >
-        <button className="v2-button secondary" onClick={resource.refresh}>
+        <button className="v2-button secondary v2-refresh" aria-label="Refresh" onClick={resource.refresh}>
           <RefreshCw size={16} />
-          Refresh
+          <span>Refresh</span>
         </button>
       </PageHeader>
       {section === "overview" ? (
@@ -580,6 +580,9 @@ export default function ReadinessApp({
               ))}
             </select>
           </label>
+          <span className="v2-location-label" aria-hidden="true">
+            <span>/</span>{[...primary, ...secondary].find(([path]) => location.pathname.split("/")[2] === path)?.[1] || "Workspace"}
+          </span>
           <div className="v2-top-actions">
             <span className="v2-user">{userLabel}</span>
             <button
