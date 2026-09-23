@@ -51,6 +51,12 @@ jobs:
           name: profile-security-browser
           path: test-results/profile-security/
           if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: connected-exercise-workflow
+          path: test-results/workflow/
+          if-no-files-found: ignore
       - run: npm run build
       - run: npm run build:review
       - run: npm run test:ui

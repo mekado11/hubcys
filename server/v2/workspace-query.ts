@@ -1,5 +1,6 @@
 import type { Firestore } from 'firebase-admin/firestore';
-import { Exercise, ExerciseParticipant, Id, assertTenant } from '../../shared/v2/contracts.js';
+import { Exercise, ExerciseParticipant, Id, assertTenant, ScenarioVersion, Criterion, ExpectedAction, type PermissionName } from '../../shared/v2/contracts.js';
+import { InjectDefinition } from '../../shared/v2/commands.js';
 import { authorizeCommand, AuthorizationError } from './authorization.js';
 import { loadAuthority, CommandError } from './command-service.js';
 
@@ -23,6 +24,13 @@ export async function getExerciseWorkspace(db: Firestore, uid: string, organizat
       ...('provider_grant' in authority ? { provider_grant: authority.provider_grant } : {}),
     };
     authorizeCommand({ ...access, permission: 'exercise:read' });
+    const permits = (permission: PermissionName) => {
+      try { authorizeCommand({ ...access, permission }); return true; }
+      catch (error) { if (error instanceof AuthorizationError) return false; throw error; }
+    };
+    const can_facilitate = permits('exercise:start');
+    const can_respond = permits('response:submit');
+    const can_evaluate = permits('observation:accept');
     const releases = await tx.get(ref.collection('releases').orderBy('sequence').limit(100));
     let privileged = false;
     try {
@@ -38,10 +46,41 @@ export async function getExerciseWorkspace(db: Firestore, uid: string, organizat
     for (const doc of [...releases.docs, ...responses.docs]) {
       if (doc.data().organization_id !== organizationId || doc.data().exercise_id !== exerciseId) throw new AuthorizationError();
     }
+    let available_injects: Array<ReturnType<typeof InjectDefinition.parse>> = [];
+    let criteria: Array<ReturnType<typeof Criterion.parse>> = [];
+    let expected_actions: Array<ReturnType<typeof ExpectedAction.parse>> = [];
+    const scenarioRef = db.doc(`organizations/${organizationId}/scenario_versions/${exercise.scenario_version_id}`);
+    if (can_facilitate) {
+      const injects = await tx.get(scenarioRef.collection('injects').limit(101));
+      if (injects.size > 100) throw new CommandError(409, 'INJECT_DIRECTORY_LIMIT');
+      available_injects = injects.docs.map(doc => {
+        const row = InjectDefinition.parse(doc.data());
+        if (row.id !== doc.id || row.organization_id !== organizationId || row.scenario_version_id !== scenarioRef.id) throw new AuthorizationError();
+        return row;
+      });
+    }
+    if (privileged && can_evaluate) {
+      const scenario = ScenarioVersion.parse((await tx.get(scenarioRef)).data());
+      assertTenant(organizationId, [scenario]);
+      if (scenario.id !== scenarioRef.id) throw new AuthorizationError();
+      for (const id of scenario.criterion_ids) {
+        const row = Criterion.parse((await tx.get(scenarioRef.collection('criteria').doc(id))).data());
+        if (row.id !== id || row.scenario_version_id !== scenario.id || row.organization_id !== organizationId) throw new AuthorizationError();
+        criteria.push(row);
+      }
+      for (const id of scenario.expected_action_ids) {
+        const row = ExpectedAction.parse((await tx.get(scenarioRef.collection('expected_actions').doc(id))).data());
+        if (row.id !== id || row.scenario_version_id !== scenario.id || row.organization_id !== organizationId) throw new AuthorizationError();
+        expected_actions.push(row);
+      }
+    }
     // Never read private scenario definitions or expected actions in a
     // participant workspace. Only immutable released artifact snapshots return.
     return {
       exercise, assignment: assignment ?? null,
+      principal_uid: uid, can_facilitate, can_respond, can_evaluate: privileged && can_evaluate,
+      can_review: privileged, available_injects,
+      ...(privileged && can_evaluate ? { criteria, expected_actions } : {}),
       releases: releases.docs.map(doc => doc.data()),
       responses: responses.docs.map(doc => doc.data()),
       limits: { releases: 100, responses: 200 },

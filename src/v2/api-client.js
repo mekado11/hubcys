@@ -42,6 +42,30 @@ export function createReadinessClient(getToken, fetcher = fetch) {
     return body.data;
   };
   return {
+    setup: (org, signal) => read({ view: 'setup', organization_id: org }, signal),
+    workspace: async (org, exercise, signal) => {
+      const token = await getToken();
+      if (!token) throw new WorkspaceError(401, 'Sign in to continue.');
+      const response = await fetcher(`/api/v2/exercise?${new URLSearchParams({ organization_id: org, exercise_id: exercise })}`, {
+        headers: { Authorization: `Bearer ${token}` }, cache: 'no-store', signal,
+      });
+      const body = await response.json();
+      if (!response.ok) throw new WorkspaceError(response.status, response.status === 403 ? 'Your assignment does not permit this exercise.' : 'The exercise could not be loaded. Retry.');
+      return body.data;
+    },
+    command: async command => {
+      const token = await getToken();
+      if (!token) throw new WorkspaceError(401, 'Sign in to continue.');
+      const response = await fetcher('/api/v2/commands', {
+        method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        cache: 'no-store', body: JSON.stringify(command),
+      });
+      const body = await response.json();
+      if (!response.ok) throw new WorkspaceError(response.status, response.status === 409
+        ? 'The exercise state changed or this operation is not valid. Refresh and review before trying again.'
+        : response.status === 403 ? 'Your current role or assignment does not permit this action.' : 'The action was not confirmed. Retry the same action to check its receipt.');
+      return body.data;
+    },
     context: (signal) => read({ view: "context" }, signal),
     index: (org, signal) =>
       read({ view: "index", organization_id: org }, signal),

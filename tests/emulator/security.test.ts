@@ -1,4 +1,6 @@
 import test, { before, beforeEach, after } from 'node:test';
+import { createHash } from 'node:crypto';
+import { canonicalJson } from '../../server/v2/scoring.js';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { initializeTestEnvironment, assertFails, type RulesTestEnvironment } from '@firebase/rules-unit-testing';
@@ -82,6 +84,61 @@ async function seedReviewEvidence() {
   await batch.commit();
   return fixture;
 }
+
+test('observation acceptance rejects wrong phase, tenant, type, tampering and self-review without partial writes', async () => {
+  const root = db.doc('organizations/org-a');
+  const created = await executeExerciseCommand(db, 'leader', {
+    command: 'create_ransomware_exercise', organization_id: 'org-a', idempotency_key: 'builtin',
+    scope_key: 'response-team', context_description: 'Local test context',
+    participants: [{ uid: 'leader', roles: ['facilitator', 'evaluator'] }, { uid: 'p1', roles: ['participant'] }],
+  });
+  const exerciseId = String(created.exercise_id);
+  const exerciseRef = root.collection('exercises').doc(exerciseId);
+  const command = { command: 'accept_observation', organization_id: 'org-a', exercise_id: exerciseId,
+    expected_record_version: 0, idempotency_key: 'accept', criterion_id: 'criterion-triage',
+    measurement: { kind: 'completion', completed: true, omission_observed: false },
+    rationale: 'Independent evaluator review', evidence_ids: ['not-yet-created'] };
+  await assert.rejects(executeExerciseCommand(db, 'leader', command), /EXERCISE_NOT_IN_REVIEW/);
+  for (const [version, state] of ['scheduled', 'ready', 'running'].entries()) {
+    await executeExerciseCommand(db, 'leader', { command: 'transition_exercise', organization_id: 'org-a',
+      exercise_id: exerciseId, expected_record_version: version, next_state: state, idempotency_key: state });
+  }
+  await executeExerciseCommand(db, 'leader', { command: 'release_inject', organization_id: 'org-a',
+    exercise_id: exerciseId, expected_record_version: 3, inject_definition_id: 'inject-triage', idempotency_key: 'release' });
+  const response = await executeExerciseCommand(db, 'p1', { command: 'submit_response', organization_id: 'org-a',
+    exercise_id: exerciseId, inject_release_id: 'inject-triage', content: 'Identity and endpoint recorded.', idempotency_key: 'response' });
+  await executeExerciseCommand(db, 'leader', { command: 'transition_exercise', organization_id: 'org-a',
+    exercise_id: exerciseId, expected_record_version: 4, next_state: 'review', idempotency_key: 'review' });
+  const payload = { ...command, expected_record_version: 5, evidence_ids: [String(response.evidence_id)] };
+  const auditCount = (await root.collection('audit_events').get()).size;
+  const evidenceRef = root.collection('evidence').doc(String(response.evidence_id));
+  const responseRef = exerciseRef.collection('responses').doc(String(response.response_id));
+  const originalEvidence = (await evidenceRef.get()).data()!;
+  const originalResponse = (await responseRef.get()).data()!;
+  await assert.rejects(executeExerciseCommand(db, 'leader', { ...payload, measurement: { kind: 'sequence', followed: true } }), /CRITERION_MISMATCH/);
+  await evidenceRef.update({ organization_id: 'org-b' });
+  await assert.rejects(executeExerciseCommand(db, 'leader', payload));
+  await evidenceRef.set(originalEvidence);
+  await evidenceRef.update({ status: 'pending' });
+  await assert.rejects(executeExerciseCommand(db, 'leader', payload));
+  await evidenceRef.set(originalEvidence);
+  await responseRef.update({ content: 'Tampered content' });
+  await assert.rejects(executeExerciseCommand(db, 'leader', payload), /SOURCE_INTEGRITY_FAILURE/);
+  const selfResponse = { ...originalResponse, actor_uid: 'leader' };
+  await responseRef.set(selfResponse);
+  await evidenceRef.update({ content_sha256: createHash('sha256').update(canonicalJson(selfResponse)).digest('hex') });
+  await assert.rejects(executeExerciseCommand(db, 'leader', payload), /INDEPENDENT_REVIEW_REQUIRED/);
+  assert.equal((await root.collection('observations').get()).size, 0);
+  assert.equal((await root.collection('audit_events').get()).size, auditCount);
+  assert.equal((await exerciseRef.get()).data()?.record_version, 5);
+  await responseRef.set(originalResponse);
+  await evidenceRef.set(originalEvidence);
+  const accepted = await executeExerciseCommand(db, 'leader', payload);
+  const replayed = await executeExerciseCommand(db, 'leader', payload);
+  assert.equal(replayed.replayed, true);
+  assert.equal(replayed.observation_id, accepted.observation_id);
+  assert.equal((await root.collection('observations').get()).size, 1);
+});
 
 test('readiness context and index resolve current authority, not legacy profile claims', async () => {
   await seedReviewEvidence();

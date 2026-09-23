@@ -10,8 +10,8 @@
  *   VITE_FIREBASE_APP_ID
  */
 import { initializeApp, getApps } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
@@ -33,4 +33,13 @@ const app     = isConfigured ? (getApps().length ? getApps()[0] : initializeApp(
 export const auth    = isConfigured ? getAuth(app)      : null;
 export const db      = isConfigured ? getFirestore(app) : null;
 export const storage = isConfigured ? getStorage(app)   : null;
+// Test-only compile-time branch. Production builds cannot opt into emulators
+// through a URL, browser storage or a production project identifier.
+if (import.meta.env.MODE === 'workflow-test' && auth && db) {
+  if (firebaseConfig.projectId !== 'demo-hubcys-v2' || window.location.hostname !== '127.0.0.1') {
+    throw new Error('Local workflow test configuration required');
+  }
+  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+  connectFirestoreEmulator(db, '127.0.0.1', 8080);
+}
 export default app;

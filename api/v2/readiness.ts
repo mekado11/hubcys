@@ -9,6 +9,7 @@ import {
   getReadinessIndex,
   getEvidenceDrilldown,
 } from "../../server/v2/readiness-query.js";
+import { getExerciseSetup } from '../../server/v2/exercise-setup.js';
 
 type Request = IncomingMessage & { query?: Record<string, unknown> };
 type Response = ServerResponse & {
@@ -44,6 +45,7 @@ export default async function handler(req: Request, res: Response) {
           ),
         });
     }
+    if (query.view === 'setup') return res.status(200).json({ data: await getExerciseSetup(db, identity.uid, query.organization_id) });
     if (query.view !== "index")
       return res.status(400).json({ error: "Invalid view" });
     return res
