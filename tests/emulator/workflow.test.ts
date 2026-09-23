@@ -81,6 +81,7 @@ test('actual application: create → facilitate → six employee responses → e
       await expect(leader.getByRole('button', { name: 'Check for updates', exact: true })).toBeEnabled();
     }
     mkdirSync('test-results/workflow', { recursive: true });
+    await leader.evaluate(() => window.scrollTo(0, 0));
     await leader.screenshot({ path: 'test-results/workflow/facilitator.png', fullPage: true });
     for (let i = 1; i <= 6; i++) {
       const context = await browser.newContext({ viewport: i === 1 ? { width: 390, height: 844 } : { width: 1280, height: 900 } });
@@ -89,6 +90,16 @@ test('actual application: create → facilitate → six employee responses → e
       await signIn(participant, `workflow-p${i}`, `/app/exercises/${exerciseId}?org=workflow-org`);
       await participant.getByRole('heading', { name: 'Record your response' }).waitFor();
       assert.equal(await participant.getByRole('heading', { name: 'Facilitator controls' }).count(), 0);
+      assert.equal(await participant.locator('.v2-queue-item').count(), 0);
+      if (i === 1) {
+        await participant.getByLabel('Your decision, action or communication').fill('Unsaved local response draft');
+        await participant.getByRole('button', { name: 'Check for updates', exact: true }).click();
+        await expect(participant.getByLabel('Your decision, action or communication')).toHaveValue('Unsaved local response draft');
+        await participant.getByRole('button', { name: 'Respond to Encryption activity detected', exact: true }).click();
+        await expect(participant.getByLabel('Released inject', { exact: true })).toHaveValue('inject-preserve');
+        await expect(participant.getByLabel('Your decision, action or communication')).toBeFocused();
+        await expect(participant.getByLabel('Your decision, action or communication')).toHaveValue('Unsaved local response draft');
+      }
       for (const [inject, text] of [
         ['inject-triage', 'Affected identity and endpoint recorded. Incident classified and response lead assigned.'],
         ['inject-preserve', 'Endpoint reimaged before acquiring a forensic image.'],
@@ -101,6 +112,7 @@ test('actual application: create → facilitate → six employee responses → e
         await participant.waitForFunction(() => (document.querySelector('textarea') as HTMLTextAreaElement)?.value === '');
       }
       if (i === 1) {
+        await expect(participant.locator('.v2-response-record').first()).toContainText('Affected identity and endpoint recorded.');
         assert.equal(await participant.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
         await participant.screenshot({ path: 'test-results/workflow/participant-mobile.png', fullPage: true });
       }

@@ -298,3 +298,29 @@ test("enterprise palette preserves readable navigation and primary actions in bo
   await expect(page.getByRole("link", { name: "Explore exercises" })).toBeVisible();
   await expect(page.locator(".v2-exercise-score")).toHaveCount(0);
 });
+
+test("live preview separates released artifacts, facilitator authority and participant responses", async ({ page }) => {
+  const errors = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.goto(start);
+  await page.getByRole("link", { name: "Live exercise preview", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Facilitator controls", exact: true })).toBeVisible();
+  await expect(page.locator(".v2-timeline-event")).toHaveCount(2);
+  await expect(page.locator(".v2-queue-item")).toHaveCount(3);
+  await expect(page.getByRole("button", { name: "Release Business owner impact request", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "End response phase", exact: true })).toBeDisabled();
+  await expect(page.locator(".v2-response-record")).toHaveCount(2);
+  await page.locator(".v2-queue-item").last().getByText("Inspect scenario text", { exact: true }).click();
+  await expect(page.locator(".v2-queue-item").last()).toContainText("Operations requests a factual impact update");
+  await page.getByLabel("Interface review state").selectOption("participant");
+  await expect(page.getByRole("heading", { name: "Record your response", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Facilitator controls", exact: true })).toHaveCount(0);
+  await expect(page.getByText("Business owner impact request", { exact: true })).toHaveCount(0);
+  await expect(page.locator(".v2-response-record")).toHaveCount(1);
+  await page.getByRole("button", { name: "Respond to New privileged credential", exact: true }).click();
+  await expect(page.getByLabel("Released inject", { exact: true })).toHaveValue("release-2");
+  await expect(page.getByRole("button", { name: "Submit response", exact: true })).toBeDisabled();
+  await expect(page.getByRole("note")).toContainText("Read-only synthetic workspace");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  expect(errors).toEqual([]);
+});

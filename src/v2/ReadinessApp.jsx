@@ -644,7 +644,7 @@ export default function ReadinessApp({
           ) : (
             <Routes>
               <Route path="exercises/new" element={<CreateExercise key={org} client={client} org={org} preview={preview} />} />
-              <Route path="exercises/:exerciseId" element={<ExerciseWorkspace key={`${org}:${location.pathname}`} client={client} org={org} />} />
+              <Route path="exercises/:exerciseId" element={<ExerciseWorkspace key={`${org}:${location.pathname}`} client={client} org={org} preview={preview} />} />
               <Route
                 index
                 element={
