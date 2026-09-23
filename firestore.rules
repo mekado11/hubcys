@@ -376,9 +376,16 @@ service cloud.firestore {
       );
     }
 
-    // ── Deny everything else ──────────────────────────────────────────────────
-    match /{document=**} {
-      allow read, write: if isSuperAdmin();
+    // V2 is server-command-only. Legacy profile flags confer NO access here.
+    // Admin SDK command services must enforce their own transactional policy.
+    match /organizations/{document=**} {
+      allow read, write: if false;
+    }
+
+    // Preserve legacy admin fallback outside the explicitly isolated V2 root.
+    // A broad recursive allow would otherwise override the V2 deny above.
+    match /{rootCollection}/{document=**} {
+      allow read, write: if rootCollection != 'organizations' && isSuperAdmin();
     }
   }
 }

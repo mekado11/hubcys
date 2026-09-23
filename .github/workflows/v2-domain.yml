@@ -1,10 +1,17 @@
-name: V2 domain contracts
+name: V2 domain and server boundaries
 on:
   pull_request:
     paths:
       - 'shared/v2/**'
       - 'server/v2/**'
+      - 'server/security/**'
+      - 'api/**'
       - 'tests/v2/**'
+      - 'tests/security/**'
+      - 'tests/emulator/**'
+      - 'scripts/**'
+      - 'firestore.rules'
+      - 'firebase.emulator.json'
       - 'tsconfig.v2.json'
       - 'package*.json'
       - '.github/workflows/v2-domain.yml'
@@ -14,14 +21,20 @@ permissions:
 jobs:
   domain:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
       - run: npm ci --ignore-scripts
       - run: npm run typecheck:v2
       - run: npm run test:v2
+      - run: npm run test:security
+      - run: npm run test:emulator
       - run: npm run build

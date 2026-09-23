@@ -5,15 +5,15 @@ import {
 } from '../../shared/v2/contracts.js';
 
 const permissionSets: Record<z.infer<typeof Membership>['roles'][number], readonly PermissionName[]> = {
-  organization_admin: ['organization:manage', 'exercise:create', 'exercise:start', 'inject:release', 'response:submit',
+  organization_admin: ['organization:manage', 'exercise:create', 'exercise:read', 'exercise:review', 'exercise:start', 'inject:release', 'response:submit',
     'observation:accept', 'remediation:assign', 'remediation:update', 'verification:record', 'report:read', 'report:export'],
-  readiness_lead: ['exercise:create', 'exercise:start', 'inject:release', 'response:submit', 'observation:accept',
+  readiness_lead: ['exercise:create', 'exercise:read', 'exercise:review', 'exercise:start', 'inject:release', 'response:submit', 'observation:accept',
     'remediation:assign', 'remediation:update', 'verification:record', 'report:read', 'report:export'],
-  facilitator: ['exercise:start', 'inject:release', 'response:submit', 'remediation:update', 'report:read'],
-  evaluator: ['observation:accept', 'verification:record', 'response:submit', 'remediation:update', 'report:read'],
-  participant: ['response:submit', 'remediation:update'],
-  observer: ['report:read'],
-  auditor: ['report:read', 'report:export'],
+  facilitator: ['exercise:read', 'exercise:review', 'exercise:start', 'inject:release', 'response:submit', 'remediation:update', 'report:read'],
+  evaluator: ['exercise:read', 'exercise:review', 'observation:accept', 'verification:record', 'response:submit', 'remediation:update', 'report:read'],
+  participant: ['exercise:read', 'response:submit', 'remediation:update'],
+  observer: ['exercise:read', 'report:read'],
+  auditor: ['exercise:read', 'report:read', 'report:export'],
 };
 
 const AuthorizationRequest = z.object({
@@ -56,15 +56,26 @@ export function authorizeCommand(raw: unknown): void {
     deny();
   }
   if (!membership.roles.some(role => permissionSets[role].includes(permission))) deny();
+  if (permission === 'exercise:read' &&
+      !membership.roles.some(role => ['organization_admin', 'readiness_lead', 'auditor'].includes(role))) {
+    const assignment = request.exercise_participant;
+    if (!request.exercise_id || !assignment || assignment.organization_id !== organization_id ||
+        assignment.exercise_id !== request.exercise_id || assignment.uid !== principal_uid ||
+        assignment.status !== 'active') deny();
+  }
 
-  const needsAssignment = ['exercise:start', 'inject:release', 'response:submit', 'observation:accept'].includes(permission);
+  const needsAssignment = ['exercise:review', 'exercise:start', 'inject:release', 'response:submit', 'observation:accept'].includes(permission);
   if (needsAssignment) {
     const assignment = request.exercise_participant;
     if (!request.exercise_id || !assignment || assignment.exercise_id !== request.exercise_id ||
         assignment.organization_id !== organization_id || assignment.uid !== principal_uid || assignment.status !== 'active') deny();
-    const requiredRole = permission === 'response:submit' ? 'participant'
-      : permission === 'observation:accept' ? 'evaluator' : 'facilitator';
-    if (!assignment?.roles.includes(requiredRole)) deny();
+    if (permission === 'exercise:review') {
+      if (!assignment?.roles.some(role => role === 'facilitator' || role === 'evaluator')) deny();
+    } else {
+      const requiredRole = permission === 'response:submit' ? 'participant'
+        : permission === 'observation:accept' ? 'evaluator' : 'facilitator';
+      if (!assignment?.roles.includes(requiredRole)) deny();
+    }
   }
   if (permission === 'remediation:update') {
     const managesWork = membership.roles.includes('organization_admin') || membership.roles.includes('readiness_lead');

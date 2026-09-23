@@ -11,6 +11,9 @@
     "typecheck": "tsc -p ./jsconfig.json",
     "typecheck:v2": "tsc -p tsconfig.v2.json --noEmit",
     "test:v2": "tsc -p tsconfig.v2.json && node --test .v2-build/tests/v2/*.test.js",
+    "test:security": "node --test tests/security/*.test.mjs",
+    "test:emulator": "firebase emulators:exec --project demo-hubcys-v2 --config firebase.emulator.json --only auth,firestore \"npm run test:emulator:inner\"",
+    "test:emulator:inner": "node scripts/assert-local-emulators.mjs && tsc -p tsconfig.v2.json && NODE_ENV=test FIREBASE_PROJECT_ID=demo-hubcys-v2 node --test --test-concurrency=1 .v2-build/tests/emulator/*.test.js",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -55,6 +58,7 @@
     "docx": "^9.0.0",
     "embla-carousel-react": "^8.5.2",
     "firebase": "^11.10.0",
+    "firebase-admin": "^13.10.0",
     "framer-motion": "^11.16.4",
     "html2canvas": "^1.4.1",
     "input-otp": "^1.4.2",
@@ -84,6 +88,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",
+    "@firebase/rules-unit-testing": "^4.0.1",
     "@types/node": "^22.13.5",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
@@ -95,6 +100,7 @@
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.18",
     "eslint-plugin-unused-imports": "^4.3.0",
+    "firebase-tools": "^15.30.2",
     "globals": "^15.14.0",
     "postcss": "^8.5.3",
     "tailwindcss": "^3.4.17",

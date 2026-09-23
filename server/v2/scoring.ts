@@ -79,6 +79,42 @@ export function canonicalJson(value: unknown): string {
   return json;
 }
 
+/** Shared by publication/creation boundaries and scoring; records are schema-validated first. */
+export function validateScenarioManifest(
+  scenario: z.infer<typeof ScenarioVersion>,
+  expectedActions: z.infer<typeof ExpectedAction>[],
+  criteria: CriterionRecord[],
+) {
+  assertTenant(scenario.organization_id, [...expectedActions, ...criteria]);
+  if (scenario.state !== 'published') throw new Error('SCENARIO_NOT_PUBLISHED');
+  if (scenario.scoring_policy_version !== SCORING_POLICY_VERSION) throw new Error('UNSUPPORTED_SCORING_POLICY');
+  const actionMap = uniqueById(expectedActions);
+  const criteriaMap = uniqueById(criteria);
+  const matches = (ids: string[], records: Map<string, unknown>) =>
+    ids.length === records.size && ids.every(id => records.has(id));
+  if (!matches(scenario.expected_action_ids, actionMap) || !matches(scenario.criterion_ids, criteriaMap)) {
+    throw new Error('SCENARIO_MANIFEST_MISMATCH');
+  }
+  for (const action of expectedActions) {
+    if (action.scenario_version_id !== scenario.id || !scenario.capability_ids.includes(action.capability_id)) {
+      throw new Error('EXPECTED_ACTION_SCOPE_MISMATCH');
+    }
+  }
+  for (const criterion of criteria) {
+    const action = actionMap.get(criterion.expected_action_id);
+    if (!action || action.capability_id !== criterion.capability_id ||
+        criterion.scenario_version_id !== scenario.id || !scenario.capability_ids.includes(criterion.capability_id)) {
+      throw new Error('CRITERION_SCOPE_MISMATCH');
+    }
+  }
+  for (const capability of scenario.capability_ids) {
+    if (!criteria.some(criterion => criterion.capability_id === capability && criterion.required)) {
+      throw new Error('CAPABILITY_HAS_NO_REQUIRED_CRITERIA');
+    }
+  }
+  return criteriaMap;
+}
+
 /**
  * Pure domain calculation. Call ONLY with server-loaded records from an
  * authorized command; this function is not a persistence or authorization API.
@@ -96,35 +132,12 @@ export function calculateExerciseScore(raw: unknown) {
   if (exercise.scoring_policy_version !== SCORING_POLICY_VERSION ||
       scenario.scoring_policy_version !== SCORING_POLICY_VERSION) throw new Error('UNSUPPORTED_SCORING_POLICY');
 
-  const actionMap = uniqueById(expected_actions);
-  const criteriaMap = uniqueById(criteria);
+  const criteriaMap = validateScenarioManifest(scenario, expected_actions, criteria);
   const evidenceMap = uniqueById(evidence);
   uniqueById(observations);
-  const manifestMatches = (ids: string[], records: Map<string, unknown>) =>
-    ids.length === records.size && ids.every(id => records.has(id));
-  if (!manifestMatches(scenario.expected_action_ids, actionMap) || !manifestMatches(scenario.criterion_ids, criteriaMap)) {
-    throw new Error('SCENARIO_MANIFEST_MISMATCH');
-  }
   const observationMap = new Map<string, ObservationRecord>();
-  for (const action of expected_actions) {
-    if (action.scenario_version_id !== scenario.id || !scenario.capability_ids.includes(action.capability_id)) {
-      throw new Error('EXPECTED_ACTION_SCOPE_MISMATCH');
-    }
-  }
   for (const item of evidence) {
     if (item.exercise_id !== exercise.id) throw new Error('EVIDENCE_EXERCISE_MISMATCH');
-  }
-  for (const criterion of criteria) {
-    const action = actionMap.get(criterion.expected_action_id);
-    if (!action || action.scenario_version_id !== scenario.id || action.capability_id !== criterion.capability_id ||
-        criterion.scenario_version_id !== scenario.id || !scenario.capability_ids.includes(criterion.capability_id)) {
-      throw new Error('CRITERION_SCOPE_MISMATCH');
-    }
-  }
-  for (const capability of scenario.capability_ids) {
-    if (!criteria.some(criterion => criterion.capability_id === capability && criterion.required)) {
-      throw new Error('CAPABILITY_HAS_NO_REQUIRED_CRITERIA');
-    }
   }
   for (const observation of observations) {
     const criterion = criteriaMap.get(observation.criterion_id);

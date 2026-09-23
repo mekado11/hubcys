@@ -26,7 +26,7 @@ export const Role = z.enum([
   'participant', 'observer', 'auditor',
 ]);
 export const Permission = z.enum([
-  'organization:manage', 'exercise:create', 'exercise:start', 'inject:release',
+  'organization:manage', 'exercise:create', 'exercise:read', 'exercise:review', 'exercise:start', 'inject:release',
   'response:submit', 'observation:accept', 'remediation:assign',
   'remediation:update', 'verification:record', 'report:read', 'report:export',
 ]);

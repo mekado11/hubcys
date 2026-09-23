@@ -10,6 +10,8 @@
  * POST { target: "example.com" }
  */
 
+import { requireIdentity } from '../server/security/identity.js';
+
 const RL_WINDOW_MS = 60_000;
 const RL_MAX = 5;
 const _rateLimitStore = new Map();
@@ -36,11 +38,6 @@ function setCorsHeaders(req, res) {
   if (origin && allowed.includes(origin)) res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-}
-
-function isAuthenticated(req) {
-  const auth = req.headers.authorization || '';
-  return auth.startsWith('Bearer ') && auth.length > 10;
 }
 
 // ── Shodan helpers ────────────────────────────────────────────────────────────
@@ -223,7 +220,7 @@ export default async function handler(req, res) {
   setCorsHeaders(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  if (!isAuthenticated(req)) return res.status(401).json({ error: 'Unauthorized' });
+  if (!await requireIdentity(req, res)) return;
   if (!checkRateLimit(getClientIp(req))) return res.status(429).json({ error: 'Too many requests' });
 
   const { target } = req.body || {};

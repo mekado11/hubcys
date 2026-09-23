@@ -1,6 +1,6 @@
 # HubCyS V2 domain foundation
 
-This additive foundation establishes validated records and pure domain rules for evidence-backed readiness. It does not change live routes, legacy Firestore collections/rules, identity bootstrap, API authentication, billing, or production behavior.
+This additive foundation establishes validated records, domain rules and an initial server boundary for evidence-backed readiness. The server review unit adds verified API identity and a feature-gated V2 exercise command/query service; it does not migrate customer data, rebuild the frontend or deploy production policies.
 
 ## Included
 
@@ -9,6 +9,7 @@ This additive foundation establishes validated records and pure domain rules for
 - Central command authorization policy for organization membership, exercise assignments, ownership, independent verification and explicitly scoped provider-customer grants.
 - Exercise/remediation state invariant guards and comparable persistent-gap detection. Completion remains separate from verification and does not alter readiness.
 - Isolated strict TypeScript compilation and Node tests without Firebase, provider calls, customer records or secrets.
+- Firebase Admin identity verification, operator-managed V2 authority, transactional exercise/response/evidence/audit writes, and synthetic Auth/Firestore emulator coverage. See [server boundary and deployment prerequisites](server-boundary.md).
 
 ## Run
 
@@ -16,6 +17,8 @@ This additive foundation establishes validated records and pure domain rules for
 npm ci --ignore-scripts
 npm run typecheck:v2
 npm run test:v2
+npm run test:security
+npm run test:emulator
 npm run build
 ```
 
@@ -23,7 +26,7 @@ Compilation writes temporary test output to the ignored `.v2-build` directory. E
 
 ## Integration boundary
 
-These modules are not exposed as browser APIs and are not wired into legacy workflows. An integration must verify the identity token, resolve memberships/grants/assignments from authoritative server storage, validate all parent-child references, and call the policy before privileged database operations.
+The command/query endpoints expose only the implemented exercise operations, with `HUBCYS_V2_ENABLED=true` required. They verify identity and load memberships, grants and assignments server-side in the mutation transaction. They are not wired into the legacy frontend. Scoring, verification, report and migration services remain unexposed pure-domain foundations.
 
 The scorer expects the entire published criterion and expected-action manifests, not a caller-selected successful subset. It returns `inputs` separately from aggregate `result`/`capabilities`; persist individual input records and immutable run/result records transactionally, rather than storing only a percentage or a growing JSON blob.
 
@@ -33,4 +36,4 @@ The scorer expects the entire published criterion and expected-action manifests,
 
 ## Still required
 
-Server identity verification, authoritative membership provisioning, Firestore/Storage policies and emulator tests, transactional commands/audit/outbox, durable exercise runtime, real participant responses, file ingestion, complete verification/retest services, organization readiness projection, reports, migration tooling, and environment-matched end-to-end acceptance remain subsequent review units. No production-readiness claim is made by the unit suite.
+Authoritative membership provisioning, legacy tenant-policy repairs, Storage policies, scheduled inject dispatch and outbox workers, file ingestion, accepted observations and persisted score runs, complete verification/retest services, organization readiness projection, reports, migration tooling, frontend integration and environment-matched end-to-end acceptance remain subsequent review units. No production-readiness claim is made by these test suites.
