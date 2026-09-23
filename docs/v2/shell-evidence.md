@@ -6,7 +6,7 @@
 
 The existing `HUBCYS_V2_ENABLED` server gate remains mandatory. The browser obtains a Firebase token, discovers server-managed organization memberships/grants, and sends a selected organization identifier that is independently authorized on each read. No legacy profile field establishes V2 authority.
 
-Organization discovery requires the collection-group single-field indexes described in `firestore.v2.indexes.json`. Merge these definitions with the authoritative deployment index configuration during a reviewed deployment; do not replace unrelated indexes or deploy automatically. Emulator tests do not establish that production indexes exist.
+Organization discovery requires the collection-group single-field indexes described in `firestore.v2.indexes.json`. They are merged into `firestore.indexes.json`; deploy them without `--force` so unrelated deployed indexes are kept (see the [activation runbook](activation-runbook.md)). Emulator tests do not establish that production indexes exist.
 
 The evidence endpoint requires current reviewer permission and an active facilitator/evaluator exercise assignment. Participants cannot retrieve expectations, rubrics or others' evidence by guessing a URL. Provider grants must include the corresponding read/review permissions.
 

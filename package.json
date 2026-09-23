@@ -20,6 +20,7 @@
     "test:security": "node --test tests/security/*.test.mjs",
     "test:emulator": "firebase emulators:exec --project demo-hubcys-v2 --config firebase.emulator.json --only auth,firestore \"npm run test:emulator:inner\"",
     "test:emulator:inner": "node scripts/assert-local-emulators.mjs && node -e \"require('node:fs').rmSync('.v2-build', {recursive:true, force:true})\" && tsc -p tsconfig.v2.json && NODE_ENV=test FIREBASE_PROJECT_ID=demo-hubcys-v2 node --test --test-concurrency=1 .v2-build/tests/emulator/*.test.js",
+    "operator": "tsc -p tsconfig.v2.json && node .v2-build/scripts/operator.js",
     "preview": "vite preview"
   },
   "dependencies": {

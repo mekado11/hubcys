@@ -91,5 +91,8 @@
       ]
     }
   ],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    { "collectionGroup": "memberships", "fieldPath": "uid", "indexes": [{ "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }, { "order": "ASCENDING", "queryScope": "COLLECTION" }, { "order": "DESCENDING", "queryScope": "COLLECTION" }] },
+    { "collectionGroup": "provider_grants", "fieldPath": "subject_uid", "indexes": [{ "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }, { "order": "ASCENDING", "queryScope": "COLLECTION" }, { "order": "DESCENDING", "queryScope": "COLLECTION" }] }
+  ]
 }
