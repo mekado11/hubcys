@@ -37,9 +37,18 @@ service cloud.firestore {
       return callerProfile().company_id;
     }
 
+    function operatorRevocationPath() {
+      return /databases/$(database)/documents/operator_revocations/$(uid());
+    }
+
+    // The Auth claim is the only source of global authority. A claim carried by an
+    // ID token from a session that began before an operator revocation is rejected,
+    // so revocation takes effect immediately instead of when the token expires.
     function isSuperAdmin() {
       return isAuthed()
-        && request.auth.token.get('is_super_admin', false) == true;
+        && request.auth.token.get('is_super_admin', false) == true
+        && (!exists(operatorRevocationPath())
+          || request.auth.token.auth_time > get(operatorRevocationPath()).data.revoked_at_seconds);
     }
 
     function sameCompany(resourceCompanyId) {
@@ -520,10 +529,15 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Preserve legacy admin fallback outside the explicitly isolated V2 root.
-    // A broad recursive allow would otherwise override the V2 deny above.
+    // Operator revocations are written only by the Admin SDK operator CLI.
+    match /operator_revocations/{document=**} {
+      allow read, write: if false;
+    }
+
+    // Preserve legacy admin fallback outside the explicitly isolated roots.
+    // A broad recursive allow would otherwise override the denies above.
     match /{rootCollection}/{document=**} {
-      allow read, write: if rootCollection != 'organizations' && isSuperAdmin();
+      allow read, write: if !(rootCollection in ['organizations', 'operator_revocations']) && isSuperAdmin();
     }
   }
 }

@@ -110,6 +110,26 @@ test('profile-based admin forgery fails while trusted Auth claim supports legacy
   await assertFails(getDoc(doc(client('operator', { is_super_admin: 'true' }), 'unknown/private')));
 });
 
+test('operator revocation cuts off claimed tokens from earlier sessions immediately', async () => {
+  const revokedAt = Math.floor(Date.now() / 1000);
+  await rules.withSecurityRulesDisabled(async context => {
+    await setDoc(doc(context.firestore(), 'operator_revocations/operator'), { uid: 'operator', revoked_at_seconds: revokedAt });
+  });
+  const cached = client('operator', { is_super_admin: true, auth_time: revokedAt - 60 });
+  await assertFails(getDoc(doc(cached, 'company/org-b')));
+  await assertFails(setDoc(doc(cached, 'unknown/private'), { approved: true }));
+  const fresh = client('operator', { is_super_admin: true, auth_time: revokedAt + 60 });
+  await assertSucceeds(getDoc(doc(fresh, 'company/org-b')));
+  // Revocation records are never browser-readable or writable, even by a current operator.
+  for (const db of [fresh, cached, client('member-a')]) {
+    await assertFails(getDoc(doc(db, 'operator_revocations/operator')));
+    await assertFails(setDoc(doc(db, 'operator_revocations/operator'), { revoked_at_seconds: 0 }));
+    await assertFails(deleteDoc(doc(db, 'operator_revocations/operator')));
+  }
+  // Operators without a revocation record are unaffected.
+  await assertSucceeds(getDoc(doc(client('other-operator', { is_super_admin: true }), 'company/org-b')));
+});
+
 test('same-company user administration is bounded and member directories cannot enumerate other tenants', async () => {
   const admin = client('admin-a');
   await assertSucceeds(updateDoc(doc(admin, 'users/pending-a'), {

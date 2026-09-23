@@ -21,6 +21,7 @@ async function user(uid: string, opts: { verified?: boolean; claims?: Record<str
 async function clearOrg() {
   await db.recursiveDelete(db.doc(`organizations/${ORG}`));
   await db.doc('users/owner').delete();
+  await db.doc('operator_revocations/owner').delete();
 }
 const provision = (actorUid = 'operator', name = 'Operator test org') => planProvisionOrganization(auth, db, {
   organizationId: ORG, name, contextDescription: 'Synthetic context only', actorUid, now: NOW,
@@ -36,24 +37,28 @@ beforeEach(async () => {
 });
 
 test('operator claim: dry run writes nothing, apply preserves unrelated claims, revoke removes and revokes tokens', async () => {
-  const plan = await planOperatorClaim(auth, 'owner', true);
+  const plan = await planOperatorClaim(auth, db, 'owner', true);
   assert.equal(plan.changes.length, 1);
   assert.deepEqual((await auth.getUser('owner')).customClaims, { unrelated: 'keep' }, 'planning is read-only');
   await plan.apply();
   assert.deepEqual((await auth.getUser('owner')).customClaims, { unrelated: 'keep', is_super_admin: true });
-  assert.equal((await planOperatorClaim(auth, 'owner', true)).changes.length, 0, 'idempotent');
+  assert.equal((await planOperatorClaim(auth, db, 'owner', true)).changes.length, 0, 'idempotent');
 
   const before = (await auth.getUser('owner')).tokensValidAfterTime;
   await new Promise(resolve => setTimeout(resolve, 1100));
-  await (await planOperatorClaim(auth, 'owner', false)).apply();
+  await (await planOperatorClaim(auth, db, 'owner', false)).apply();
   const after = await auth.getUser('owner');
   assert.deepEqual(after.customClaims, { unrelated: 'keep' });
   assert.notEqual(after.tokensValidAfterTime, before, 'existing sessions are revoked');
+  const revocation = (await db.doc('operator_revocations/owner').get()).data();
+  assert.equal(revocation?.uid, 'owner');
+  assert.equal(revocation?.revoked_at_seconds, Math.floor(Date.parse(after.tokensValidAfterTime!) / 1000),
+    'recorded time matches the Auth revocation time that Firestore rules compare with auth_time');
 });
 
 test('operator claim is refused for unverified or unknown accounts', async () => {
-  await assert.rejects(planOperatorClaim(auth, 'unverified', true), { code: 'EMAIL_NOT_VERIFIED' });
-  await assert.rejects(planOperatorClaim(auth, 'nobody', true), { code: 'USER_NOT_FOUND' });
+  await assert.rejects(planOperatorClaim(auth, db, 'unverified', true), { code: 'EMAIL_NOT_VERIFIED' });
+  await assert.rejects(planOperatorClaim(auth, db, 'nobody', true), { code: 'USER_NOT_FOUND' });
 });
 
 test('organization provisioning requires a claimed operator, validates records, audits, and never overwrites', async () => {
@@ -76,6 +81,11 @@ test('organization provisioning requires a claimed operator, validates records, 
   assert.deepEqual(event.changed_paths, [`organizations/${ORG}`, `organizations/${ORG}/context_versions/context-v1`]);
 
   assert.equal((await provision()).changes.length, 0, 'second run is a no-op');
+  await assert.rejects(planProvisionOrganization(auth, db, {
+    organizationId: ORG, name: 'Operator test org', contextDescription: 'Corrected context', actorUid: 'operator', now: NOW,
+  }), { code: 'CONTEXT_EXISTS_WITH_DIFFERENT_CONTENT' });
+  await db.doc(`organizations/${ORG}/context_versions/context-v1`).update({ status: 'retired' });
+  await assert.rejects(provision(), { code: 'CONTEXT_EXISTS_WITH_DIFFERENT_CONTENT' }, 'a retired context is never reported as provisioned');
   await assert.rejects(provision('operator', 'Renamed org'), { code: 'ORGANIZATION_EXISTS_WITH_DIFFERENT_NAME' });
 });
 
