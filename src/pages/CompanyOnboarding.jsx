@@ -22,8 +22,6 @@ export default function CompanyOnboarding() {
   const [newCompanyIndustry, setNewCompanyIndustry] = useState("Technology");
   const [newCompanySize, setNewCompanySize] = useState("Small_1-50");
 
-  // Join company state
-  const [accessCode, setAccessCode] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -61,27 +59,11 @@ export default function CompanyOnboarding() {
   };
 
   const generateAccessCode = () => {
-    return Math.random().toString(36).substring(2, 10).toUpperCase();
-  };
-
-  const ensureUniqueAccessCode = async () => {
-    // Try up to 5 times to avoid extremely rare collisions
-    for (let i = 0; i < 5; i++) {
-      const candidate = generateAccessCode();
-      const existing = await Company.filter({ access_code: candidate });
-      if (!existing || existing.length === 0) return candidate;
-    }
-    // Fallback: include timestamp suffix for uniqueness
-    return (generateAccessCode().slice(0, 6) + Date.now().toString().slice(-2)).toUpperCase();
+    // No cross-tenant directory query. A code is not membership authority.
+    return crypto.randomUUID().replaceAll('-', '').toUpperCase();
   };
 
   const sanitize = (s) => (typeof s === "string" ? s.replace(/<script[^>]*>.*?<\/script>/gi, "").trim() : s);
-
-  const extractEmailDomain = (email) => {
-    if (!email || typeof email !== 'string') return null;
-    const parts = email.split('@');
-    return parts.length === 2 ? parts[1].toLowerCase() : null;
-  };
 
   const handleCreateCompany = async (e) => {
     e.preventDefault();
@@ -89,14 +71,14 @@ export default function CompanyOnboarding() {
     setSubmitting(true);
 
     try {
-      // Ensure uniqueness of access code
-      const uniqueCode = await ensureUniqueAccessCode();
+      const uniqueCode = generateAccessCode();
 
       // Create the company
       const company = await Company.create({
         name: sanitize(newCompanyName),
         access_code: uniqueCode,
         admin_user_email: currentUser.email,
+        created_by_uid: currentUser.id,
         description: sanitize(newCompanyDescription),
         industry: newCompanyIndustry,
         size: newCompanySize,
@@ -121,69 +103,6 @@ export default function CompanyOnboarding() {
     } catch (err) {
       console.error("Error creating company:", err);
       setError("Failed to create company. Please try again.");
-      setSubmitting(false);
-    }
-  };
-
-  const handleJoinCompany = async (e) => {
-    e.preventDefault();
-    setError("");
-    setSubmitting(true);
-
-    try {
-      // Find company by access code
-      const companies = await Company.filter({ access_code: accessCode.toUpperCase() });
-
-      if (!companies || companies.length === 0) {
-        setError("Invalid access code. Please check and try again.");
-        setSubmitting(false);
-        return;
-      }
-
-      if (companies.length > 1) {
-        setError("Multiple companies matched this access code. Please contact support.");
-        setSubmitting(false);
-        return;
-      }
-
-      const company = companies[0];
-
-      // NEW: Domain validation logic
-      const userDomain = extractEmailDomain(currentUser.email);
-      const adminDomain = extractEmailDomain(company.admin_user_email);
-
-      if (!userDomain || !adminDomain) {
-        setError("Unable to verify email domains. Please contact support.");
-        setSubmitting(false);
-        return;
-      }
-
-      if (userDomain !== adminDomain) {
-        setError(
-          `Email domain mismatch. Your email domain (@${userDomain}) does not match the company's registered domain (@${adminDomain}). Only users with @${adminDomain} email addresses can join this company.`
-        );
-        setSubmitting(false);
-        return;
-      }
-
-      // Domain matches - proceed with joining
-      await User.updateMyUserData({
-        company_id: company.id,
-        company_name: company.name,
-        company_access_code: company.access_code,
-        company_description: company.description,
-        company_industry: company.industry,
-        company_size: company.size,
-        company_onboarding_completed: true,
-        company_role: "member",
-        approval_status: "pending" // New users joining need approval
-      });
-
-      // Redirect to pending approval page
-      window.location.href = createPageUrl("PendingApproval");
-    } catch (err) {
-      console.error("Error joining company:", err);
-      setError("Failed to join company. Please try again.");
       setSubmitting(false);
     }
   };
@@ -228,7 +147,7 @@ export default function CompanyOnboarding() {
               <LogIn className="w-6 h-6 mr-3" />
               <div className="text-left">
                 <div className="font-bold">Join Existing Company</div>
-                <div className="text-sm opacity-90">Use an access code to join your team</div>
+                <div className="text-sm opacity-90">Administrator-assisted enrollment</div>
               </div>
             </Button>
           </CardContent>
@@ -370,11 +289,11 @@ export default function CompanyOnboarding() {
             <div className="bg-slate-800/60 border border-cyan-500/30 rounded-xl p-5 text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Users className="w-4 h-4 text-cyan-400" />
-                <p className="text-sm text-cyan-300 font-medium">Your Organisation Invite Code</p>
+                <p className="text-sm text-cyan-300 font-medium">Legacy Organisation Reference</p>
               </div>
-              <p className="text-xs text-gray-400 mb-3">Share this code with team members so they can join your organisation</p>
+              <p className="text-xs text-gray-400 mb-3">This reference does not grant access. New members require verified administrator provisioning.</p>
               <div className="flex items-center justify-center gap-3">
-                <span className="text-3xl font-mono font-bold text-white tracking-widest bg-slate-700/60 px-6 py-3 rounded-lg border border-slate-600">
+                <span className="min-w-0 break-all text-sm font-mono font-bold text-white bg-slate-700/60 px-3 py-3 rounded-lg border border-slate-600">
                   {createdCompany.access_code}
                 </span>
                 <Button
@@ -391,9 +310,7 @@ export default function CompanyOnboarding() {
             </div>
 
             <div className="space-y-2 text-sm text-gray-400">
-              <p className="flex items-start gap-2"><span className="text-cyan-400 mt-0.5">•</span> Send this code to colleagues who need access</p>
-              <p className="flex items-start gap-2"><span className="text-cyan-400 mt-0.5">•</span> New members will appear as "Pending" in User Management until you approve them</p>
-              <p className="flex items-start gap-2"><span className="text-cyan-400 mt-0.5">•</span> You can find this code again in User Management → Invite Code</p>
+              <p>Self-service joining is paused while the secure invitation flow is completed. An authorized operator must verify each member's identity and company assignment.</p>
             </div>
 
             <Button
@@ -418,41 +335,17 @@ export default function CompanyOnboarding() {
               Join Your Company
             </CardTitle>
             <p className="text-gray-400 mt-2">
-              Enter the access code provided by your company administrator. Your role will be assigned by the admin after you join.
+              Self-service joining is paused. Contact your administrator for verified account provisioning.
             </p>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleJoinCompany} className="space-y-4">
-              {error && (
-                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 flex items-start">
-                  <AlertCircle className="w-5 h-5 text-red-400 mr-2 flex-shrink-0 mt-0.5" />
-                  <p className="text-red-300 text-sm">{error}</p>
-                </div>
-              )}
-
-              <div>
-                <Label className="text-gray-300">Access Code *</Label>
-                <Input
-                  value={accessCode}
-                  onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
-                  placeholder="Enter 8-character code"
-                  required
-                  maxLength={8}
-                  className="bg-slate-800/50 border-gray-600 text-white uppercase"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  The access code is case-insensitive and should be 8 characters long.
-                </p>
-              </div>
-
+            <div className="space-y-4">
               <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 flex items-start">
                 <AlertCircle className="w-5 h-5 text-blue-400 mr-2 flex-shrink-0 mt-0.5" />
                 <div className="text-blue-300 text-sm">
-                  <p className="font-semibold mb-1">Email Domain Verification</p>
+                  <p className="font-semibold mb-1">Verified Enrollment Required</p>
                   <p>
-                    Your email domain must match your company's registered domain. 
-                    For example, if your company was registered with @company.com, 
-                    you must use an @company.com email address to join.
+                    A matching email domain or access code does not establish company membership. Enrollment must be approved through a trusted administrative process.
                   </p>
                 </div>
               </div>
@@ -467,22 +360,8 @@ export default function CompanyOnboarding() {
                 >
                   Back
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={submitting || !accessCode}
-                  className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Joining...
-                    </>
-                  ) : (
-                    "Join Company"
-                  )}
-                </Button>
               </div>
-            </form>
+            </div>
           </CardContent>
         </Card>
       </div>

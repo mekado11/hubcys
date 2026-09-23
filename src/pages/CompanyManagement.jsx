@@ -51,60 +51,21 @@ export default function CompanyManagement() { // Renamed from CompanyManagementP
       }
       setCurrentUser(user);
 
-      // 2) Load company by reconciliation (avoiding direct Company.get call)
-      // This is the core logic from the original loadOrReconcileCompany
+      // Read only the immutable assigned company. Email matching must never
+      // silently change a user's tenant or grant company administrator status.
       try {
         setCompanyMissing(false);
         setError(null);
 
-        console.log('Attempting reconciliation by admin email first:', user.email);
-        const mine = await Company.filter({ admin_user_email: user.email }, "-created_date", 1);
-        if (mine && mine.length > 0) {
-          const comp = mine[0];
-          console.log('Found company during reconciliation:', comp.name, 'ID:', comp.id);
-
-          // Check if this is the same company the user thinks they have
-          if (comp.id === user.company_id) {
-            console.log('Company IDs match - user data is correct');
-            setCompanyData(comp); // Update companyData directly
-          } else {
-            console.log('Company IDs do not match. User company_id:', user.company_id, 'Found company ID:', comp.id);
-
-            // Link user to the correct company
-            await User.updateMyUserData({
-              company_id: comp.id,
-              company_name: comp.name,
-              company_access_code: comp.access_code,
-              company_description: comp.description || null,
-              company_industry: comp.industry || null,
-              company_size: comp.size || null,
-              company_onboarding_completed: true,
-              company_role: "admin"
-            });
-
-            setCurrentUser((prev) => prev ? ({
-              ...prev,
-              company_id: comp.id,
-              company_name: comp.name,
-              company_access_code: comp.access_code,
-              company_description: comp.description || null,
-              company_industry: comp.industry || null,
-              company_size: comp.size || null,
-              company_onboarding_completed: true,
-              company_role: "admin"
-            }) : prev);
-
-            setCompanyData(comp); // Update companyData directly
-            setCompanyMissing(false);
-          }
+        const comp = user.company_id ? await Company.get(user.company_id) : null;
+        if (comp) {
+          setCompanyData(comp);
         } else {
-          console.log('No company found with admin_user_email:', user.email);
-          // No company found by admin email - company is truly missing
           setCompanyMissing(true);
-          setError("We couldn't find a company where you are listed as the administrator. The company record appears to be missing from the database.");
+          setError("Your assigned company is unavailable. Contact your administrator to verify the assignment; it will not be recreated automatically.");
         }
       } catch (reconcileError) {
-        console.error('Reconciliation by admin email failed:', reconcileError);
+        console.error('Assigned company lookup failed:', reconcileError);
         setCompanyMissing(true);
         setError("Unable to locate your company. The company record may be missing.");
       }
@@ -122,81 +83,7 @@ export default function CompanyManagement() { // Renamed from CompanyManagementP
   }, [fetchCompanyDetails]); // Call fetchCompanyDetails on component mount
 
   const handleRecreateCompany = async () => {
-    if (!currentUser) {
-      alert('Current user data is not available.');
-      return;
-    }
-
-    const confirmMessage = `This will recreate your company record using cached data from your user profile.\n\nCompany Name: ${currentUser.company_name || 'Unknown'}\nAccess Code: ${currentUser.company_access_code || 'Will generate new'}\nIndustry: ${currentUser.company_industry || 'Not specified'}\nSize: ${currentUser.company_size || 'Not specified'}\n\nProceed with company recreation?`;
-
-    if (!confirm(confirmMessage)) return;
-
-    try {
-      setSaving(true);
-      setError(null);
-
-      // Generate access code if not available
-      const accessCode = currentUser.company_access_code || generateAccessCode();
-
-      // Create new company with current user's cached data
-      const newCompany = await Company.create({
-        name: currentUser.company_name || `${currentUser.email.split('@')[0]}'s Company`,
-        access_code: accessCode,
-        admin_user_email: currentUser.email,
-        description: currentUser.company_description || '',
-        industry: currentUser.company_industry || 'Other',
-        size: currentUser.company_size || 'Small_1-50',
-        subscription_tier: 'free_trial',
-        status: 'active'
-      });
-
-      console.log('Company recreated:', newCompany);
-
-      // Update current user to point to the new company
-      await User.updateMyUserData({
-        company_id: newCompany.id,
-        company_name: newCompany.name,
-        company_access_code: newCompany.access_code,
-        company_description: newCompany.description,
-        company_industry: newCompany.industry,
-        company_size: newCompany.size,
-        company_onboarding_completed: true,
-        company_role: "admin"
-      });
-
-      // Update local state
-      setCurrentUser(prev => ({
-        ...prev,
-        company_id: newCompany.id,
-        company_name: newCompany.name,
-        company_access_code: newCompany.access_code,
-        company_description: newCompany.description,
-        company_industry: newCompany.industry,
-        company_size: newCompany.size
-      }));
-
-      setCompanyData(newCompany); // Update companyData with the newly created company
-      setCompanyMissing(false);
-      setError(null);
-
-      alert(`Company "${newCompany.name}" recreated successfully!\nAccess Code: ${newCompany.access_code}\n\nYour account has been updated and linked to the new company record.`);
-
-    } catch (error) {
-      console.error('Error recreating company:', error);
-      setError(`Failed to recreate company: ${error.message}`);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Helper to generate a simple access code
-  const generateAccessCode = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let result = '';
-    for (let i = 0; i < 8; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
+    setError("Company recovery requires verified administrator provisioning. No company or tenant assignment has been changed.");
   };
 
   // Handler for form field changes, updates companyData state
@@ -300,16 +187,15 @@ export default function CompanyManagement() { // Renamed from CompanyManagementP
 
           {companyMissing && currentUser && (
             <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-              <h3 className="text-blue-300 font-medium mb-2">Data Recovery Available</h3>
+              <h3 className="text-blue-300 font-medium mb-2">Administrator Review Required</h3>
               <p className="text-blue-200 text-sm mb-3">
                 We can recreate your company record using the cached data from your user profile:
               </p>
               <div className="text-left text-sm text-gray-300 mb-4">
                 <p><strong>Company Name:</strong> {currentUser.company_name || 'Not cached (will default)'}</p>
-                <p><strong>Access Code:</strong> {currentUser.company_access_code || 'Will generate new'}</p>
-                <p><strong>Industry:</strong> {currentUser.company_industry || 'Not specified (will default)'}</p>
-                <p><strong>Size:</strong> {currentUser.company_size || 'Not specified (will default)'}</p>
-                <p className="text-xs text-gray-400 mt-2">Note: This will create a new company record and link your account to it. Old data will not be recovered.</p>
+                <p><strong>Industry:</strong> {currentUser.company_industry || 'Not specified'}</p>
+                <p><strong>Size:</strong> {currentUser.company_size || 'Not specified'}</p>
+                <p className="text-xs text-gray-400 mt-2">Cached profile details are not proof of ownership. An authorized operator must verify the assignment; this screen will not create or relink a company.</p>
               </div>
             </div>
           )}
@@ -327,7 +213,7 @@ export default function CompanyManagement() { // Renamed from CompanyManagementP
                 className="bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600"
               >
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                Recreate Company Record
+                Show Recovery Guidance
               </Button>
             )}
 

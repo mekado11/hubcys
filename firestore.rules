@@ -4,7 +4,7 @@
 // Key principles:
 //   1. All reads/writes require authentication
 //   2. Users can only read/write their own company's data (company_id scoping)
-//   3. Super admin bypass via is_super_admin field on user document
+//   3. Super admin authority comes only from an operator-managed Auth claim
 //   4. Per-user collections (training, notifications) scoped by user_email
 //
 // WARNING: These rules are the primary security layer. Client-side checks are
@@ -39,24 +39,144 @@ service cloud.firestore {
 
     function isSuperAdmin() {
       return isAuthed()
-        && exists(/databases/$(database)/documents/users/$(uid()))
-        && callerProfile().is_super_admin == true;
+        && request.auth.token.get('is_super_admin', false) == true;
     }
 
     function sameCompany(resourceCompanyId) {
-      return isAuthed() && callerCompanyId() == resourceCompanyId;
+      return isAuthed()
+        && exists(/databases/$(database)/documents/users/$(uid()))
+        && resourceCompanyId is string && resourceCompanyId.size() > 0
+        && callerProfile().get('approval_status', '') == 'approved'
+        && callerCompanyId() == resourceCompanyId;
+    }
+
+    function sameCompanyUpdate() {
+      return sameCompany(resource.data.company_id)
+        && request.resource.data.company_id == resource.data.company_id;
+    }
+
+    function isCompanyAdmin() {
+      return isAuthed()
+        && exists(/databases/$(database)/documents/users/$(uid()))
+        && callerProfile().company_role == 'admin'
+        && callerProfile().approval_status == 'approved';
+    }
+
+    function safeSelfProfileCreate(userId) {
+      return uid() == userId
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.keys().hasOnly([
+          'email', 'full_name', 'approval_status', 'company_onboarding_completed',
+          'disclaimer_acknowledged', 'subscription_tier', 'company_role',
+          'is_super_admin', 'created_date', 'updated_date'
+        ])
+        && request.resource.data.is_super_admin == false
+        && request.resource.data.approval_status == 'approved'
+        && request.resource.data.company_onboarding_completed == false
+        && request.resource.data.company_role == 'admin'
+        && request.resource.data.subscription_tier == 'free_trial'
+        && !request.resource.data.keys().hasAny(['company_id', 'app_role']);
+    }
+
+    function safeSelfProfileUpdate(userId) {
+      return uid() == userId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'full_name', 'disclaimer_acknowledged', 'onboarding_completed',
+          'role_type', 'company_name', 'company_description',
+          'company_industry', 'company_size', 'updated_date'
+        ]);
+    }
+
+    function canClaimCreatedCompany(userId) {
+      return uid() == userId
+        && !resource.data.keys().hasAny(['company_id'])
+        && resource.data.approval_status == 'approved'
+        && resource.data.company_role == 'admin'
+        && request.resource.data.is_super_admin == false
+        && request.resource.data.company_role == 'admin'
+        && request.resource.data.approval_status == 'approved'
+        && request.resource.data.company_onboarding_completed == true
+        && exists(/databases/$(database)/documents/company/$(request.resource.data.company_id))
+        && get(/databases/$(database)/documents/company/$(request.resource.data.company_id)).data.created_by_uid == uid()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'company_id', 'company_name', 'company_access_code',
+          'company_description', 'company_industry', 'company_size',
+          'company_onboarding_completed', 'company_role',
+          'approval_status', 'updated_date'
+        ]);
+    }
+
+    function canAdministerCompanyUser(userId) {
+      return uid() != userId
+        && isCompanyAdmin()
+        && sameCompany(resource.data.company_id)
+        && request.resource.data.company_id == resource.data.company_id
+        && request.resource.data.company_role in ['admin', 'member']
+        && request.resource.data.approval_status in ['approved', 'pending', 'rejected', 'suspended', 'banned']
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'approval_status', 'company_role', 'approved_by',
+          'approved_date', 'rejection_reason', 'updated_date'
+        ]);
     }
 
     // Owner by user_email (training progress, badges, notifications, etc.)
     function isOwnerByEmail(resourceUserEmail) {
-      return isAuthed() && userEmail() == resourceUserEmail;
+      return isAuthed() && request.auth.token.email_verified == true
+        && userEmail() == resourceUserEmail;
+    }
+
+    function safeCompanyCreate() {
+      return isAuthed()
+        && exists(/databases/$(database)/documents/users/$(uid()))
+        && !callerProfile().keys().hasAny(['company_id'])
+        && callerProfile().approval_status == 'approved'
+        && request.resource.data.created_by_uid == uid()
+        && request.resource.data.admin_user_email == request.auth.token.email
+        && request.resource.data.status == 'active'
+        && request.resource.data.get('subscription_tier', 'free_trial') == 'free_trial'
+        && request.resource.data.keys().hasOnly([
+          'name', 'access_code', 'admin_user_email', 'description', 'industry',
+          'size', 'status', 'subscription_tier', 'created_by_uid',
+          'created_date', 'updated_date'
+        ]);
+    }
+
+    function canEditCompany(companyId) {
+      return isCompanyAdmin() && sameCompany(companyId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'name', 'description', 'industry', 'size', 'updated_date'
+        ]);
+    }
+
+    function ownsUnclaimedCompany() {
+      return isAuthed() && resource.data.get('created_by_uid', '') == uid()
+        && !callerProfile().keys().hasAny(['company_id'])
+        && callerProfile().approval_status == 'approved';
+    }
+
+    function personalOrCompany(data) {
+      return sameCompany(data.get('company_id', null)) ||
+        (isOwnerByEmail(data.get('user_email', ''))
+          && (!data.keys().hasAny(['company_id']) || sameCompany(data.company_id)));
+    }
+
+    function safePersonalCreate() {
+      return isOwnerByEmail(request.resource.data.user_email)
+        && (!request.resource.data.keys().hasAny(['company_id'])
+          || sameCompany(request.resource.data.company_id))
+        && request.resource.data.get('user_id', uid()) == uid();
     }
 
     // ── Users ─────────────────────────────────────────────────────────────────
     match /users/{userId} {
       allow read: if isAuthed() && (uid() == userId || sameCompany(resource.data.company_id) || isSuperAdmin());
-      allow create: if isAuthed() && uid() == userId;
-      allow update: if isAuthed() && (uid() == userId || isSuperAdmin());
+      allow create: if isAuthed() && safeSelfProfileCreate(userId);
+      allow update: if isAuthed() && (
+        safeSelfProfileUpdate(userId) ||
+        canClaimCreatedCompany(userId) ||
+        canAdministerCompanyUser(userId) ||
+        isSuperAdmin()
+      );
       allow delete: if isSuperAdmin();
     }
 
@@ -67,204 +187,239 @@ service cloud.firestore {
 
     // Assessments
     match /assessment/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
     match /assessments/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
     // Compliance Frameworks
     match /compliance_framework/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
     match /compliance_frameworks/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
     // Compliance Controls
     match /compliance_control/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
     match /compliance_controls/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
     // Action Items
     match /action_item/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
     match /action_items/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
     // Incidents
     match /incident/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
     match /incidents/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
     // Incident Notes
     match /incident_note/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
     // Policies
     match /policy/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
     match /policies/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
     // Risks
     match /risk/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
     match /risks/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
     // BIA (entity factory generates 'b_i_a')
     match /b_i_a/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
     match /b_i_as/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
     // Tabletop Exercises
     match /tabletop_exercise/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
     match /tabletop_exercises/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
     // Exercise Participants
     match /exercise_participant/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
     // Teams
     match /team/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
     match /teams/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
     // Team Members
     match /team_member/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
     match /team_members/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
     // ETSI Assessments
     match /etsi_assessment/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
     // Evidence
     match /evidence/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
     // PCI Scope
     match /pci_scope/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
     // Regulatory Requirements
     match /regulatory_requirement/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
     // Org Units
     match /org_unit/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
     // Asset Types
     match /asset_type/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
     // Subtasks
     match /subtask/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
     // Comments
     match /comment/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
     // Editing Sessions (collaborative editing)
     match /editing_session/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
     // Smart Analysis Config
     match /smart_analysis_config/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
     // IOC Analyzer Config (entity generates 'i_o_c_analyzer_config')
     match /i_o_c_analyzer_config/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
     // Backwards-compat alias
     match /ioc_analyzer_config/{docId} {
-      allow read, write: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow read, delete: if isAuthed() && (sameCompany(resource.data.company_id) || isSuperAdmin());
+      allow update: if isAuthed() && (sameCompanyUpdate() || isSuperAdmin());
       allow create: if isAuthed() && (sameCompany(request.resource.data.company_id) || isSuperAdmin());
     }
 
     // Smart Consultation (AI chat sessions — per company + per user)
     match /smart_consultation/{docId} {
-      allow read, write: if isAuthed() && (
-        sameCompany(resource.data.company_id) ||
-        isOwnerByEmail(resource.data.user_email) ||
-        isSuperAdmin()
-      );
+      allow read, delete: if personalOrCompany(resource.data) || isSuperAdmin();
+      allow update: if isSuperAdmin() || (personalOrCompany(resource.data)
+        && !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['company_id', 'user_email', 'user_id']));
       allow create: if isAuthed() && (
         sameCompany(request.resource.data.company_id) ||
         isSuperAdmin()
@@ -273,14 +428,17 @@ service cloud.firestore {
 
     // ── Companies ─────────────────────────────────────────────────────────────
     match /company/{companyId} {
-      allow read: if isAuthed();
-      allow create: if isAuthed();
-      allow update, delete: if isAuthed() && (callerCompanyId() == companyId || isSuperAdmin());
+      allow get: if isAuthed() && (sameCompany(companyId) || ownsUnclaimedCompany() || isSuperAdmin());
+      allow list: if isSuperAdmin();
+      allow create: if safeCompanyCreate();
+      allow update: if canEditCompany(companyId) || isSuperAdmin();
+      allow delete: if isSuperAdmin();
     }
     match /companies/{companyId} {
-      allow read: if isAuthed();
-      allow create: if isAuthed();
-      allow update, delete: if isAuthed() && (callerCompanyId() == companyId || isSuperAdmin());
+      allow get: if isAuthed() && (sameCompany(companyId) || isSuperAdmin());
+      allow list: if isSuperAdmin();
+      allow create, delete: if isSuperAdmin();
+      allow update: if canEditCompany(companyId) || isSuperAdmin();
     }
 
     // ── Global / admin-only collections ───────────────────────────────────────
@@ -317,63 +475,43 @@ service cloud.firestore {
     // These use user_email (not UID) for ownership — match the entity fields.
 
     match /training_progress/{docId} {
-      allow read, write: if isAuthed() && (
-        isOwnerByEmail(resource.data.user_email) ||
-        sameCompany(resource.data.company_id) ||
-        isSuperAdmin()
-      );
-      allow create: if isAuthed() && (
-        request.resource.data.user_email == userEmail() ||
-        isSuperAdmin()
-      );
+      allow read, delete: if personalOrCompany(resource.data) || isSuperAdmin();
+      allow update: if isSuperAdmin() || (personalOrCompany(resource.data)
+        && !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['company_id', 'user_email', 'user_id']));
+      allow create: if safePersonalCreate() || isSuperAdmin();
     }
 
     match /training_badge/{docId} {
-      allow read, write: if isAuthed() && (
-        isOwnerByEmail(resource.data.user_email) ||
-        sameCompany(resource.data.company_id) ||
-        isSuperAdmin()
-      );
-      allow create: if isAuthed() && (
-        request.resource.data.user_email == userEmail() ||
-        isSuperAdmin()
-      );
+      allow read, delete: if personalOrCompany(resource.data) || isSuperAdmin();
+      allow update: if isSuperAdmin() || (personalOrCompany(resource.data)
+        && !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['company_id', 'user_email', 'user_id']));
+      allow create: if safePersonalCreate() || isSuperAdmin();
     }
 
     match /video_progress/{docId} {
-      allow read, write: if isAuthed() && (
-        isOwnerByEmail(resource.data.user_email) ||
-        sameCompany(resource.data.company_id) ||
-        isSuperAdmin()
-      );
-      allow create: if isAuthed() && (
-        request.resource.data.user_email == userEmail() ||
-        isSuperAdmin()
-      );
+      allow read, delete: if personalOrCompany(resource.data) || isSuperAdmin();
+      allow update: if isSuperAdmin() || (personalOrCompany(resource.data)
+        && !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['company_id', 'user_email', 'user_id']));
+      allow create: if safePersonalCreate() || isSuperAdmin();
     }
 
     match /ioc_feedback/{docId} {
-      allow read, write: if isAuthed() && (
-        isOwnerByEmail(resource.data.user_email) ||
-        sameCompany(resource.data.company_id) ||
-        isSuperAdmin()
-      );
-      allow create: if isAuthed() && (
-        request.resource.data.user_email == userEmail() ||
-        isSuperAdmin()
-      );
+      allow read, delete: if personalOrCompany(resource.data) || isSuperAdmin();
+      allow update: if isSuperAdmin() || (personalOrCompany(resource.data)
+        && !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['company_id', 'user_email', 'user_id']));
+      allow create: if safePersonalCreate() || isSuperAdmin();
     }
 
     match /notification/{docId} {
-      allow read, write: if isAuthed() && (
-        isOwnerByEmail(resource.data.user_email) ||
-        sameCompany(resource.data.company_id) ||
-        isSuperAdmin()
-      );
-      allow create: if isAuthed() && (
-        request.resource.data.user_email == userEmail() ||
-        isSuperAdmin()
-      );
+      allow read, delete: if personalOrCompany(resource.data) || isSuperAdmin();
+      allow update: if isSuperAdmin() || (personalOrCompany(resource.data)
+        && !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['company_id', 'user_email', 'user_id']));
+      allow create: if safePersonalCreate() || isSuperAdmin();
     }
 
     // V2 is server-command-only. Legacy profile flags confer NO access here.
