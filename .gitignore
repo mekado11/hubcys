@@ -16,6 +16,10 @@ dist
 dist-ssr
 .v2-build
 .firebase
+review-dist/
+review/fixture.json
+playwright-report/
+test-results/
 firestore-debug.log
 ui-debug.log
 *.local

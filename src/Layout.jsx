@@ -674,6 +674,9 @@ export default function Layout({ children, currentPageName }) {
           </Link>
 
           <div className="flex-grow overflow-y-auto">
+            <Link to="/app/overview" className="flex items-center gap-3 rounded-lg border border-slate-600 px-3 py-3 mb-4 text-white">
+              <Shield size={18} aria-hidden="true" />Readiness workspace
+            </Link>
             <Accordion type="multiple" defaultValue={defaultOpenGroups} className="w-full">
               {groupedNav.map((group) => (
                 <AccordionItem key={group.id} value={group.id} className="border-b border-slate-700/40">

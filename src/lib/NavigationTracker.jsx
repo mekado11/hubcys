@@ -11,6 +11,8 @@ export default function NavigationTracker() {
 
     // Post navigation changes to parent window
     useEffect(() => {
+        // Do not broadcast V2 tenant/exercise identifiers to an embedding parent.
+        if (location.pathname.startsWith('/app')) return;
         window.parent?.postMessage({
             type: "app_changed_url",
             url: window.location.href
