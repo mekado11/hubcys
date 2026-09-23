@@ -1,4 +1,5 @@
 import { getServerAuth, validateServerEnvironment } from './firebase.js';
+import { syncWorkloadIdentity } from './workload-identity.js';
 
 export class IdentityError extends Error {
   constructor(status = 401) {
@@ -22,10 +23,12 @@ export function bearerToken(headers) {
 }
 
 // Dependency injection is internal test composition, never request configuration.
-export function createIdentityVerifier({ getAuth, projectId }) {
+export function createIdentityVerifier({ getAuth, projectId, prepareCredentials = () => {} }) {
   return async headers => {
     const token = bearerToken(headers);
     try {
+      // Server credentials are refreshed only after a syntactically valid bearer token is presented.
+      prepareCredentials(headers);
       const expectedProject = projectId();
       const decoded = await getAuth().verifyIdToken(token, true);
       if (!decoded.uid || decoded.sub !== decoded.uid ||
@@ -46,6 +49,7 @@ export function createIdentityVerifier({ getAuth, projectId }) {
 export const verifyRequestIdentity = createIdentityVerifier({
   getAuth: getServerAuth,
   projectId: validateServerEnvironment,
+  prepareCredentials: headers => syncWorkloadIdentity({ headers }),
 });
 
 export async function requireIdentity(req, res) {
