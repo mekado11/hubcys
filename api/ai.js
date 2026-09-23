@@ -22,6 +22,7 @@
  */
 
 import { createHash } from 'crypto';
+import { requireIdentity } from '../server/security/identity.js';
 
 // ─── Model IDs ────────────────────────────────────────────────────────────────
 const CHEAP_MODEL   = process.env.CHEAP_MODEL_ID   || 'gpt-4o-mini';
@@ -116,9 +117,9 @@ function normalise(text) {
     .trim();
 }
 
-function hashInput(normalised, feature, wantJson) {
+function hashInput(normalised, feature, wantJson, identityUid, model, schema) {
   return createHash('sha256')
-    .update(`${feature}|${wantJson}|${normalised}`)
+    .update(JSON.stringify([identityUid, model, schema, feature, wantJson, normalised]))
     .digest('hex')
     .slice(0, 16); // 16 hex chars is plenty for a cache key
 }
@@ -257,15 +258,6 @@ function setCorsHeaders(req, res) {
   res.setHeader('Vary', 'Origin');
 }
 
-// ─── Simple token check ───────────────────────────────────────────────────────
-// Verifies the client passes a non-empty Bearer token.
-// Full Firebase token verification requires the Firebase Admin SDK;
-// add that when you wire up server-side Firebase Admin.
-function isAuthenticated(req) {
-  const auth = req.headers.authorization || '';
-  return auth.startsWith('Bearer ') && auth.length > 10;
-}
-
 // ─── Handler ──────────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   setCorsHeaders(req, res);
@@ -277,9 +269,8 @@ export default async function handler(req, res) {
   }
 
   // Require a Firebase ID token from the client
-  if (!isAuthenticated(req)) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
+  const identity = await requireIdentity(req, res);
+  if (!identity) return;
 
   // Rate limit: 30 req/min per IP
   if (!checkRateLimit(getClientIp(req))) {
@@ -298,7 +289,7 @@ export default async function handler(req, res) {
   const wantJson    = !!response_json_schema;
   const normalised  = normalise(prompt);
   const featureKey  = feature || 'default';
-  const cacheKey    = hashInput(normalised, featureKey, wantJson);
+  const cacheKey    = hashInput(normalised, featureKey, wantJson, identity.uid, model || null, response_json_schema || null);
 
   // ── Cache check ────────────────────────────────────────────────────────────
   const cached = cacheGet(cacheKey);

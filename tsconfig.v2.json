@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "allowJs": true,
+    "checkJs": false,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "rootDir": ".",
+    "outDir": ".v2-build",
+    "types": ["node"]
+  },
+  "include": ["shared/v2/**/*.ts", "server/v2/**/*.ts", "server/security/**/*.js", "api/v2/**/*.ts", "tests/v2/**/*.ts", "tests/emulator/**/*.ts"]
+}
