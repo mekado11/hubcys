@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { auth, db } from '@/api/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, getIdTokenResult } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 
 const AuthContext = createContext();
@@ -25,7 +25,9 @@ export const AuthProvider = ({ children }) => {
           // Load Firestore profile
           const snap = await getDoc(doc(db, 'users', firebaseUser.uid));
           const profile = snap.exists() ? snap.data() : {};
-          setUser({ id: firebaseUser.uid, email: firebaseUser.email, full_name: firebaseUser.displayName, ...profile });
+          const token = await getIdTokenResult(firebaseUser);
+          setUser({ full_name: firebaseUser.displayName, ...profile, id: firebaseUser.uid,
+            email: firebaseUser.email, is_super_admin: token.claims.is_super_admin === true });
           setIsAuthenticated(true);
           setAuthError(null);
         } catch (err) {
