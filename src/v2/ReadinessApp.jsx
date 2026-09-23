@@ -772,7 +772,7 @@ export default function ReadinessApp({
               <Route
                 path="*"
                 element={
-                  <Empty title="Workspace page not found">
+                  <Empty headingLevel={1} title="Workspace page not found">
                     <Link
                       className="v2-text-link"
                       to={`/app/overview?org=${encodeURIComponent(org)}`}

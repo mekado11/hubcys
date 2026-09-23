@@ -46,7 +46,7 @@ export default function V2Route() {
   if (!isAuthenticated || idleError)
     return (
       <div className="v2-app v2-gate">
-        <Empty title={idleError ? "Session locked" : "Sign in to HubCyS"}>
+        <Empty headingLevel={1} title={idleError ? "Session locked" : "Sign in to HubCyS"}>
           <p>
             {idleError
               ? "Automatic sign out could not complete. Workspace data is hidden; sign in again."

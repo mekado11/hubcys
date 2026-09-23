@@ -753,6 +753,7 @@
 .v2-error p {
   margin-block: var(--s3) var(--s5);
 }
+.v2-error h1 { font-size: var(--v2-lg); }
 .v2-loading {
   display: grid;
   gap: var(--s5);

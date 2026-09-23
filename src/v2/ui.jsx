@@ -50,10 +50,11 @@ export function PageHeader({ eyebrow, title, description, children }) {
     </header>
   );
 }
-export function Empty({ title, children }) {
+export function Empty({ title, children, headingLevel = 2 }) {
+  const Heading = headingLevel === 1 ? 'h1' : 'h2';
   return (
     <div className="v2-empty">
-      <h2>{title}</h2>
+      <Heading>{title}</Heading>
       <div className="v2-muted">{children}</div>
     </div>
   );
@@ -81,13 +82,13 @@ export function Failure({ error, retry }) {
     <section className="v2-error" role="alert">
       <AlertCircle size={24} aria-hidden="true" />
       <div>
-        <h2>
+        <h1>
           {error.status === 403
             ? "Access restricted"
             : error.status === 404
               ? "Workspace not enabled"
               : "Unable to load workspace"}
-        </h2>
+        </h1>
         <p>{error.message}</p>
         <div className="v2-inline">
           {error.status === 401 ? (
