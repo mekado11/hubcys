@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Badge, PageHeader, Empty, Failure, Loading, useResource, label, date } from './ui';
+import { PageHeader, Failure, Loading, useResource, label, date } from './ui';
+import { ExerciseStatus, FacilitatorConsole, IncidentTimeline, ResponseLedger } from './ExercisePanels';
+import './exercise-workspace.css';
 
 function useCommand(client) {
   const request = useRef(null);
@@ -121,7 +123,7 @@ function ObservationReview({ client, org, workspace, refresh }) {
   </form>;
 }
 
-export function ExerciseWorkspace({ client, org }) {
+export function ExerciseWorkspace({ client, org, preview = false }) {
   const { exerciseId } = useParams();
   const [workspace, setWorkspace] = useState(null);
   const [error, setError] = useState(null);
@@ -130,6 +132,7 @@ export function ExerciseWorkspace({ client, org }) {
   const [content, setContent] = useState('');
   const [receipt, setReceipt] = useState(null);
   const operation = useCommand(client);
+  const responseForm = useRef(null);
   const live = useRef(true);
   async function refresh() {
     setLoading(true);
@@ -143,28 +146,39 @@ export function ExerciseWorkspace({ client, org }) {
   if (error) return <Failure error={error} retry={refresh} />;
   if (!workspace) return <Loading />;
   const { exercise } = workspace;
-  const released = new Set(workspace.releases.map(row => row.inject_definition_id));
-  const disabled = operation.busy || operation.locked || loading;
+  const disabled = preview || operation.busy || operation.locked || loading;
   const send = payload => operation.run({ organization_id: org, exercise_id: exerciseId, ...payload }, refresh);
   return <>
     <PageHeader eyebrow="Exercise workspace" title={label(exercise.threat_id)} description={`${exercise.scope_key} · ${label(exercise.state)} · All artifacts below are simulated.`}><button className="v2-button secondary" disabled={loading || operation.busy} onClick={refresh}>{loading ? 'Refreshing…' : 'Check for updates'}</button></PageHeader>
-    <p className="v2-caution">Participants should check for updates when the facilitator announces a new inject. Draft responses remain in this tab during refresh, but are not saved until submitted.</p>
-    {workspace.can_facilitate && <section className="v2-panel"><h2>Facilitator controls</h2><p className="v2-muted">Ending the response phase stops further submissions and opens evaluator review.</p><div className="v2-inline">{(transitions[exercise.state] ?? []).map(([next, text]) => <button key={next} className="v2-button secondary" disabled={disabled} onClick={() => send({ command: 'transition_exercise', next_state: next, expected_record_version: exercise.record_version })}>{text}</button>)}</div></section>}
-    {workspace.can_facilitate && <section className="v2-panel"><h2>Inject release queue</h2>{workspace.available_injects.map(row => <article className="v2-source" key={row.id}><div className="v2-between"><h3>{row.title}</h3><Badge>{released.has(row.id) ? 'Released' : 'Facilitator only'}</Badge></div><p>{row.content}</p><button className="v2-button secondary" disabled={disabled || exercise.state !== 'running' || released.has(row.id)} onClick={() => send({ command: 'release_inject', inject_definition_id: row.id, expected_record_version: exercise.record_version })}>Release {row.title}</button></article>)}</section>}
+    <ExerciseStatus workspace={workspace} />
+    <p className="v2-session-notice">Check for updates when the facilitator announces a new inject. Draft responses remain in this tab during refresh, but are not saved until submitted.</p>
+    {preview && <p className="v2-session-notice" role="note">Read-only synthetic workspace. State transitions, inject release and response submission are disabled; no production writes are available.</p>}
     <CommandError operation={operation} />
     {operation.locked && <button className="v2-button" disabled={operation.busy} onClick={() => operation.run({}, refresh)}>Retry unconfirmed action</button>}
-    <section className="v2-panel"><h2>Released incident artifacts</h2>{!workspace.releases.length ? <Empty title="Waiting for the first inject"><p>The facilitator must start the exercise and release an inject. Unreleased artifacts are not shown to participants.</p></Empty> : workspace.releases.map(row => <article className="v2-source" key={row.id}><div className="v2-between"><h3>{row.artifact?.title || row.inject_definition_id}</h3><Badge tone="warning">Simulated exercise</Badge></div><blockquote>{row.artifact?.content}</blockquote><p className="v2-muted">Released {date(row.released_at)}</p></article>)}</section>
-    {workspace.can_respond && <form className="v2-panel v2-form" onSubmit={event => {
+    <div className={`v2-session-layout ${workspace.can_facilitate || workspace.can_respond ? 'has-console' : ''}`}>
+      <IncidentTimeline workspace={workspace} selectedRelease={releaseId || workspace.releases[0]?.id} onRespond={id => {
+        setReleaseId(id);
+        responseForm.current?.scrollIntoView({ behavior: 'auto', block: 'start' });
+        responseForm.current?.querySelector('textarea')?.focus({ preventScroll: true });
+      }} />
+      {(workspace.can_facilitate || workspace.can_respond) && <aside className="v2-session-console" aria-label="Exercise actions">
+      {workspace.can_facilitate && <FacilitatorConsole workspace={workspace} transitions={transitions} disabled={disabled} send={send} />}
+    {workspace.can_respond && <form ref={responseForm} className="v2-panel v2-form v2-response-composer" onSubmit={event => {
       event.preventDefault();
+      if (preview) return;
       operation.run({ command: 'submit_response', organization_id: org, exercise_id: exerciseId, inject_release_id: releaseId || workspace.releases[0]?.id, content },
         async result => { setReceipt(result); setContent(''); await refresh(); });
-    }}><h2>Record your response</h2><fieldset disabled={disabled || exercise.state !== 'running' || !workspace.releases.length}>
+    }}><p className="v2-eyebrow">Participant workspace</p><h2>Record your response</h2><p className="v2-muted">Capture a decision, an action or a communication. Only submitted responses become records.</p><fieldset disabled={disabled || exercise.state !== 'running' || !workspace.releases.length}>
       <label>Released inject<select aria-label="Released inject" value={releaseId || workspace.releases[0]?.id || ''} onChange={event => setReleaseId(event.target.value)}>{workspace.releases.map(row => <option value={row.id} key={row.id}>{row.artifact?.title || row.inject_definition_id}</option>)}</select></label>
       <label>Your decision, action or communication<textarea required maxLength={20000} value={content} onChange={event => setContent(event.target.value)} placeholder="Record what you decided, what you did, who owns the action, and what remains unknown." /></label>
-      <button className="v2-button" disabled={!content.trim()}>Submit response</button>
-    </fieldset>{exercise.state !== 'running' && <p role="status">Responses are closed while the exercise is {label(exercise.state).toLowerCase()}.</p>}{receipt && <p role="status">Response saved at {date(receipt.received_at)}. Receipt: <span className="v2-id">{receipt.response_id}</span></p>}</form>}
-    <section className="v2-panel"><h2>{workspace.can_review ? 'Recorded participant responses' : 'Your recorded responses'}</h2>{!workspace.responses.length && <p className="v2-muted">No responses in this view.</p>}{workspace.responses.map(row => <article className="v2-source" key={row.id}><h3>{row.actor_uid}</h3><blockquote>{row.content}</blockquote><p className="v2-muted">{date(row.received_at)} · {row.inject_release_id}</p></article>)}{workspace.possibly_truncated && <p role="status">This workspace is bounded; additional records may exist outside this view.</p>}</section>
+      <div className="v2-response-submit"><span className="v2-small-note">{content.trim() ? 'Draft · not submitted' : 'No draft response'}</span><button className="v2-button" disabled={!content.trim()}>Submit response</button></div>
+    </fieldset>{exercise.state !== 'running' && <p role="status">Responses are closed while the exercise is {label(exercise.state).toLowerCase()}.</p>}{receipt && <p className="v2-response-receipt" role="status">Response saved at {date(receipt.received_at)}. Receipt: <span className="v2-id">{receipt.response_id}</span></p>}</form>}
+      </aside>}
+    </div>
+    <ResponseLedger workspace={workspace} />
     {workspace.can_evaluate && exercise.state === 'review' && <ObservationReview client={client} org={org} workspace={workspace} refresh={refresh} />}
-    {workspace.can_review && <Link className="v2-button" to={`/app/readiness/${exerciseId}?org=${encodeURIComponent(org)}`}>View evidence and results</Link>}
+    {workspace.can_review && (preview
+      ? <p className="v2-small-note">Evidence and result review for this live-workspace sample require connected exercise records.</p>
+      : <Link className="v2-button" to={`/app/readiness/${exerciseId}?org=${encodeURIComponent(org)}`}>View evidence and results</Link>)}
   </>;
 }

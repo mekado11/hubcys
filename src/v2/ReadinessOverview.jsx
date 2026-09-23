@@ -47,28 +47,28 @@ export default function ReadinessOverview({ client, data, org, children }) {
     <div className="v2-command-grid">
       <section className="v2-panel v2-performance-panel">
         <div className="v2-section-heading"><div><p className="v2-eyebrow">Latest reviewable exercise</p><h2>{resource.exercise ? label(resource.exercise.threat_id) : 'Establish your baseline'}</h2></div>
-          <Badge tone={resource.exercise ? 'warning' : ''}>{resource.exercise ? label(resource.exercise.state) : 'Not tested'}</Badge></div>
+          <Badge>{resource.exercise ? label(resource.exercise.state) : 'Not tested'}</Badge></div>
         {resource.loading ? <Loading /> : resource.error ? <EvidenceUnavailable resource={resource} /> : view ? <>
           <div className="v2-performance-main">
-            <div className="v2-exercise-score"><strong>{result?.score ?? '—'}</strong><span>{result?.score != null ? '/ 100' : 'Not scored'}</span><p>Exercise result</p></div>
-            <div className="v2-performance-context"><p className="v2-muted">{label(view.exercise.scope_key.replaceAll('-', '_'))}</p>
-              <p>{result?.score == null ? 'A complete result needs eligible evidence for every required criterion.' : 'An observed result. Every capability links to its scoring inputs and source evidence.'}</p>
-              <p className="v2-small-note">Created {date(view.exercise.created_at)}</p></div>
+            <div className="v2-exercise-score"><p>Exercise result</p><strong>{result?.score ?? '—'}</strong><span>{result?.score != null ? '/ 100' : 'Not scored'}</span></div>
+            <div className="v2-performance-capabilities"><p className="v2-eyebrow">Tested capabilities</p><CapabilityBars data={view} org={org} exerciseId={view.exercise.id} /></div>
           </div>
-          <CapabilityBars data={view} org={org} exerciseId={view.exercise.id} />
+          <div className="v2-performance-context"><p className="v2-muted">{label(view.exercise.scope_key.replaceAll('-', '_'))}</p>
+            <p className="v2-small-note">Created {date(view.exercise.created_at)}</p>
+            <p>{result?.score == null ? 'A complete result needs eligible evidence for every required criterion.' : 'Calculated from accepted observations and eligible evidence. Select a capability to inspect its sources.'}</p></div>
           <div className="v2-panel-footer"><span><FileCheck2 size={15} /> {view.sources.filter(row => row.integrity === 'verified').length} verified source digests</span>
-            <Link className="v2-text-link" to={link}>Open evidence chain <ArrowRight size={16} /></Link></div>
+            <Link className="v2-button" to={link}>Open evidence chain <ArrowRight size={16} /></Link></div>
         </> : <div className="v2-baseline-state"><CircleDashed size={30} /><h3>Start with an observed response</h3><p>No reviewable exercise is available in this view. Run an exercise before making readiness claims.</p><Link className="v2-text-link" to={link}>Explore exercises <ArrowRight size={16} /></Link></div>}
       </section>
       <aside className="v2-focus-panel">
         <p className="v2-eyebrow">Attention required</p>
         <h2>{lowest && lowest.score < 100 ? label(lowest.capability_id) : 'What needs your attention?'}</h2>
-        <p>{lowest && lowest.score < 100 ? 'The lowest measured capability in this exercise. Inspect what happened before deciding what to change.' : 'Use the latest exercise evidence to distinguish response gaps from missing observations.'}</p>
+        <p>{lowest && lowest.score < 100 ? 'Lowest measured capability in this exercise.' : 'Review the evidence to distinguish response gaps from missing observations.'}</p>
         {lowest && lowest.score < 100 && <div className="v2-focus-result"><ArrowDownRight size={22} /><strong>{lowest.score}<small>/ 100</small></strong><span>Capability result</span></div>}
         <Link className="v2-button secondary" to={lowest ? `${link}&capability=${lowest.capability_id}` : link}>Inspect evidence <ArrowUpRight size={16} /></Link>
         <div className="v2-focus-divider" />
         <p className="v2-eyebrow">Verification</p><h3>{view ? `${pending.length} ${pending.length === 1 ? 'action awaits' : 'actions await'} verification` : 'Completion is not verification'}</h3>
-        <p>Corrective work is not proof of improvement. A verified outcome needs evidence.</p>
+        <p>Completed work still needs evidence of improvement.</p>
         <Link className="v2-text-link" to={`/app/remediation?org=${encodeURIComponent(org)}`}>Review corrective work <ArrowRight size={16} /></Link>
       </aside>
     </div>

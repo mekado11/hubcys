@@ -264,3 +264,63 @@ test("threat index toggles and the synthetic create form never claims a save", a
   await expect(page.getByRole("button", { name: "Create exercise", exact: true })).toBeDisabled();
   await expect(page.getByRole("note")).toContainText("read-only");
 });
+
+test("enterprise palette preserves readable navigation and primary actions in both themes", async ({ page }) => {
+  await page.goto(start);
+  await expect(page.locator(".v2-exercise-score strong")).toHaveText("60");
+  for (const theme of ["light", "dark"]) {
+    if (theme === "dark") await page.getByRole("button", { name: "Switch to dark mode" }).click();
+    const menu = page.getByRole("button", { name: "Open navigation", exact: true });
+    const mobile = await menu.isVisible();
+    if (mobile) await menu.click();
+    const ratios = await page.evaluate(() => {
+      const luminance = color => {
+        const channels = color.match(/[\d.]+/g).slice(0, 3).map(Number).map(n => {
+          const value = n / 255;
+          return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+        });
+        return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+      };
+      return [".v2-sidebar nav a.active", ".v2-panel-footer .v2-button"].map(selector => {
+        const style = getComputedStyle(document.querySelector(selector));
+        const foreground = luminance(style.color);
+        const background = luminance(style.backgroundColor);
+        return (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05);
+      });
+    });
+    for (const ratio of ratios) expect(ratio).toBeGreaterThanOrEqual(4.5);
+    if (mobile) await page.keyboard.press("Escape");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await expect(page.getByRole("button", { name: "Refresh", exact: true })).toBeVisible();
+  }
+  await page.getByRole("button", { name: "Switch to light mode" }).click();
+  await page.getByLabel("Interface review state").selectOption("empty");
+  await expect(page.getByRole("link", { name: "Explore exercises" })).toBeVisible();
+  await expect(page.locator(".v2-exercise-score")).toHaveCount(0);
+});
+
+test("live preview separates released artifacts, facilitator authority and participant responses", async ({ page }) => {
+  const errors = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.goto(start);
+  await page.getByRole("link", { name: "Live exercise preview", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Facilitator controls", exact: true })).toBeVisible();
+  await expect(page.locator(".v2-timeline-event")).toHaveCount(2);
+  await expect(page.locator(".v2-queue-item")).toHaveCount(3);
+  await expect(page.getByRole("button", { name: "Release Business owner impact request", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "End response phase", exact: true })).toBeDisabled();
+  await expect(page.locator(".v2-response-record")).toHaveCount(2);
+  await page.locator(".v2-queue-item").last().getByText("Inspect scenario text", { exact: true }).click();
+  await expect(page.locator(".v2-queue-item").last()).toContainText("Operations requests a factual impact update");
+  await page.getByLabel("Interface review state").selectOption("participant");
+  await expect(page.getByRole("heading", { name: "Record your response", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Facilitator controls", exact: true })).toHaveCount(0);
+  await expect(page.getByText("Business owner impact request", { exact: true })).toHaveCount(0);
+  await expect(page.locator(".v2-response-record")).toHaveCount(1);
+  await page.getByRole("button", { name: "Respond to New privileged credential", exact: true }).click();
+  await expect(page.getByLabel("Released inject", { exact: true })).toHaveValue("release-2");
+  await expect(page.getByRole("button", { name: "Submit response", exact: true })).toBeDisabled();
+  await expect(page.getByRole("note")).toContainText("Read-only synthetic workspace");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  expect(errors).toEqual([]);
+});

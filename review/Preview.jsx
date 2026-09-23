@@ -1,12 +1,20 @@
 import React, { useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { HashRouter, Link, Navigate, Route, Routes } from "react-router-dom";
+import { HashRouter, Link, Navigate, Route, Routes, useNavigate, useLocation } from "react-router-dom";
 import ReadinessApp from "../src/v2/ReadinessApp";
 import { WorkspaceError } from "../src/v2/api-client";
 import fixture from "./fixture.json";
+import { workspaceFixture } from "./workspace-fixture";
 
 function Preview() {
   const [mode, setMode] = useState("populated");
+  const navigate = useNavigate();
+  const location = useLocation();
+  function selectMode(next) {
+    setMode(next);
+    if (['facilitator', 'participant'].includes(next)) navigate('/app/exercises/exercise-live?org=org-a');
+    else if (location.pathname === '/app/exercises/exercise-live') navigate('/app/overview');
+  }
   const client = useMemo(() => {
     async function respond(data, signal) {
       if (mode === "loading")
@@ -32,7 +40,7 @@ function Preview() {
       {
         id: "org-a",
         name: "Northstar Response Lab",
-        roles: ["readiness_lead"],
+        roles: [mode === 'participant' ? 'participant' : "readiness_lead"],
       },
       {
         id: "org-empty",
@@ -46,7 +54,9 @@ function Preview() {
         context_description: "Synthetic review environment: identity services, endpoints and business-critical operations.",
         members: [{ uid: "synthetic-responder", roles: ["participant"] }],
       }, signal),
-      workspace: () => Promise.reject(new WorkspaceError(409, "This preview contains evidence snapshots only. Live exercise operations require the connected application; no production writes are available here.")),
+      workspace: (org, id, signal) => org === 'org-a' && id === 'exercise-live' && ['facilitator', 'participant'].includes(mode)
+        ? respond(workspaceFixture(mode), signal)
+        : Promise.reject(new WorkspaceError(409, "This preview has no live-workspace snapshot for this exercise. Use Live exercise preview to inspect the read-only example. No production writes are available.")),
       command: () => Promise.reject(new WorkspaceError(403, "This interface preview is read-only.")),
       context: (signal) =>
         respond(
@@ -60,6 +70,7 @@ function Preview() {
             exercises:
               mode === "empty" || org === "org-empty"
                 ? []
+                : ['facilitator', 'participant'].includes(mode) ? [{ ...workspaceFixture(mode).exercise, can_review: false }]
                 : [
                     { ...fixture.exercise, can_review: true },
                     {
@@ -115,7 +126,7 @@ function Preview() {
       <div
         className="review-controls"
         style={{
-          background: "#16272c",
+          background: "#142236",
           color: "#eef5f4",
           padding: "8px 16px",
           font: "14px sans-serif",
@@ -129,7 +140,7 @@ function Preview() {
         <select
           id="review-state"
           value={mode}
-          onChange={(event) => setMode(event.target.value)}
+          onChange={(event) => selectMode(event.target.value)}
           style={{
             padding: 8,
             color: "#142a2c",
@@ -145,12 +156,15 @@ function Preview() {
             ["unavailable", "Service unavailable"],
             ["loading", "Delayed loading"],
             ["integrity", "Unverified source"],
+            ["facilitator", "Live exercise: facilitator"],
+            ["participant", "Live exercise: participant"],
           ].map(([value, text]) => (
             <option value={value} key={value}>
               {text}
             </option>
           ))}
         </select>
+        <Link style={{ color: '#eef5f4', textDecoration: 'underline', minHeight: 44, display: 'inline-flex', alignItems: 'center' }} to="/app/exercises/exercise-live?org=org-a" onClick={() => setMode('facilitator')}>Live exercise preview</Link>
       </div>
       <Routes>
         <Route path="/" element={<Navigate replace to="/app/overview" />} />
@@ -160,7 +174,7 @@ function Preview() {
             <ReadinessApp
               key={mode}
               client={client}
-              userLabel="Review facilitator"
+              userLabel={mode === 'participant' ? 'Review participant' : "Review facilitator"}
               preview
             />
           }
