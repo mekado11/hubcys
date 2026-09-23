@@ -1,0 +1,27 @@
+name: V2 domain contracts
+on:
+  pull_request:
+    paths:
+      - 'shared/v2/**'
+      - 'server/v2/**'
+      - 'tests/v2/**'
+      - 'tsconfig.v2.json'
+      - 'package*.json'
+      - '.github/workflows/v2-domain.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  domain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run typecheck:v2
+      - run: npm run test:v2
+      - run: npm run build
