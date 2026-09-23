@@ -9,6 +9,9 @@ import { executeExerciseCommand } from '../../server/v2/command-service.js';
 import { getExerciseWorkspace } from '../../server/v2/workspace-query.js';
 import commandHandler from '../../api/v2/commands.js';
 import workspaceHandler from '../../api/v2/exercise.js';
+import readinessHandler from '../../api/v2/readiness.js';
+import { getReadinessContext, getReadinessIndex, getEvidenceDrilldown } from '../../server/v2/readiness-query.js';
+import { reviewFixture } from '../v2/review-fixture.js';
 import { base, NOW, scoringFixture } from '../v2/fixtures.js';
 
 let rules: RulesTestEnvironment;
@@ -59,6 +62,77 @@ beforeEach(async () => {
   await batch.commit();
 });
 after(async () => { await rules.cleanup(); });
+
+async function seedReviewEvidence() {
+  const fixture = reviewFixture();
+  const root = db.doc('organizations/org-a');
+  const batch = db.batch();
+  batch.set(root.collection('exercises').doc(fixture.exercise.id), fixture.exercise);
+  batch.set(root.collection('scenario_versions').doc(fixture.scenario.id), fixture.scenario);
+  batch.set(root.collection('exercises').doc(fixture.exercise.id).collection('participants').doc('leader'), {
+    ...base('leader'), exercise_id: fixture.exercise.id, uid: 'leader', roles: ['evaluator'], status: 'active',
+  });
+  for (const row of fixture.expected_actions) batch.set(root.collection('scenario_versions').doc(fixture.scenario.id).collection('expected_actions').doc(row.id), row);
+  for (const row of fixture.criteria) batch.set(root.collection('scenario_versions').doc(fixture.scenario.id).collection('criteria').doc(row.id), row);
+  for (const row of fixture.observations) batch.set(root.collection('observations').doc(row.id), row);
+  for (const row of fixture.evidence) batch.set(root.collection('evidence').doc(row.id), row);
+  for (const row of fixture.responses) batch.set(root.collection('exercises').doc(fixture.exercise.id).collection('responses').doc(row.id), row);
+  for (const row of fixture.findings) batch.set(root.collection('findings').doc(row.id), row);
+  for (const row of fixture.actions) batch.set(root.collection('actions').doc(row.id), row);
+  await batch.commit();
+  return fixture;
+}
+
+test('readiness context and index resolve current authority, not legacy profile claims', async () => {
+  await seedReviewEvidence();
+  assert.deepEqual((await getReadinessContext(db, 'leader')).organizations.map(row => row.id), ['org-a']);
+  assert.deepEqual((await getReadinessContext(db, 'legacy-admin')).organizations, []);
+  assert.equal((await getReadinessIndex(db, 'leader', 'org-a')).exercises[0]?.can_review, true);
+  assert.equal((await getReadinessIndex(db, 'p1', 'org-a')).exercises.length, 0);
+  await assert.rejects(getReadinessIndex(db, 'leader', 'org-b'), /FORBIDDEN/);
+  await db.doc('organizations/org-a/memberships/leader').update({ status: 'revoked' });
+  assert.deepEqual((await getReadinessContext(db, 'leader')).organizations, []);
+  await assert.rejects(getReadinessIndex(db, 'leader', 'org-a'), /FORBIDDEN/);
+});
+
+test('evidence drilldown returns source-backed score inputs and linked corrective work without writes', async () => {
+  const fixture = await seedReviewEvidence();
+  const view = await getEvidenceDrilldown(db, 'leader', 'org-a', fixture.exercise.id);
+  assert.equal(view.score?.result.score, 60);
+  assert.equal(view.sources.length, 4);
+  assert.ok(view.sources.every(row => row.integrity === 'verified' && row.response));
+  assert.equal(view.actions[0]?.state, 'ready_for_verification');
+  assert.equal(view.findings[0]?.id, 'FND-014');
+  assert.equal(view.calculation_kind, 'current_evidence_view');
+  assert.equal((await db.collection('organizations/org-a/audit_events').get()).size, 0);
+  await assert.rejects(getEvidenceDrilldown(db, 'p1', 'org-a', fixture.exercise.id), /FORBIDDEN/);
+  await db.doc(`organizations/org-a/exercises/${fixture.exercise.id}/participants/leader`).update({ status: 'withdrawn' });
+  await assert.rejects(getEvidenceDrilldown(db, 'leader', 'org-a', fixture.exercise.id), /FORBIDDEN/);
+});
+
+test('tampered and missing source records withhold complete scores and original content', async () => {
+  const fixture = await seedReviewEvidence();
+  const responseRef = db.doc(`organizations/org-a/exercises/${fixture.exercise.id}/responses/response-2`);
+  await responseRef.update({ content: 'Altered after capture' });
+  const altered = await getEvidenceDrilldown(db, 'leader', 'org-a', fixture.exercise.id);
+  assert.equal(altered.score?.result.score, null);
+  assert.equal(altered.score?.result.status, 'insufficient_evidence');
+  assert.equal(altered.sources.find(row => row.evidence.id === 'evidence-2')?.response, null);
+  assert.equal(altered.sources.find(row => row.evidence.id === 'evidence-2')?.integrity, 'digest_mismatch');
+  await responseRef.delete();
+  const missing = await getEvidenceDrilldown(db, 'leader', 'org-a', fixture.exercise.id);
+  assert.equal(missing.sources.find(row => row.evidence.id === 'evidence-2')?.integrity, 'source_missing');
+  assert.equal(missing.score?.result.score, null);
+});
+
+test('cross-tenant evidence metadata and incomplete manifests fail closed', async () => {
+  const fixture = await seedReviewEvidence();
+  await db.doc('organizations/org-a/evidence/evidence-1').update({ organization_id: 'org-b' });
+  await assert.rejects(getEvidenceDrilldown(db, 'leader', 'org-a', fixture.exercise.id), /TENANT_MISMATCH/);
+  await db.doc('organizations/org-a/evidence/evidence-1').update({ organization_id: 'org-a' });
+  await db.doc('organizations/org-a/scenario_versions/scenario-v1/criteria/criterion-4').delete();
+  await assert.rejects(getEvidenceDrilldown(db, 'leader', 'org-a', fixture.exercise.id), /EVIDENCE_CHAIN_INCOMPLETE/);
+});
 
 function createCommand(key = 'create-1') {
   return {
@@ -237,8 +311,10 @@ test('provider authority intersects customer grant, organization role and exerci
   const exercise = await releasedExercise();
   await executeExerciseCommand(db, 'p1', responseCommand(exercise.exercise_id));
   assert.equal((await getExerciseWorkspace(db, 'leader', 'org-a', String(exercise.exercise_id))).responses.length, 0);
+  await assert.rejects(getEvidenceDrilldown(db, 'leader', 'org-a', String(exercise.exercise_id)), /FORBIDDEN/);
   await grant.update({ permissions: [...permissions, 'exercise:review'] });
   assert.equal((await getExerciseWorkspace(db, 'leader', 'org-a', String(exercise.exercise_id))).responses.length, 1);
+  assert.equal((await getEvidenceDrilldown(db, 'leader', 'org-a', String(exercise.exercise_id))).sources.length, 1);
   await grant.update({ expires_at: '2000-01-01T00:00:00.000Z' });
   await assert.rejects(getExerciseWorkspace(db, 'leader', 'org-a', String(exercise.exercise_id)), /FORBIDDEN/);
   await grant.update({ expires_at: '2099-01-01T00:00:00.000Z', status: 'revoked' });
@@ -256,7 +332,7 @@ test('server API handlers use verified identity, gate activation and reject cros
     body: JSON.stringify({ email: 'leader@example.test', password: 'Synthetic-local-test-only-123!', returnSecureToken: true }),
   }).then(response => response.json()) as { idToken: string };
   assert.ok(signedIn.idToken);
-  async function invoke(handler: typeof commandHandler | typeof workspaceHandler, method: string, body?: unknown, query?: unknown) {
+  async function invoke(handler: typeof commandHandler | typeof workspaceHandler | typeof readinessHandler, method: string, body?: unknown, query?: unknown) {
     const result = { code: 0, payload: undefined as unknown, headers: {} as Record<string, string> };
     const response = {
       setHeader(key: string, value: string) { result.headers[key] = value; },
@@ -271,12 +347,16 @@ test('server API handlers use verified identity, gate activation and reject cros
   try {
     delete process.env.HUBCYS_V2_ENABLED;
     assert.equal((await invoke(commandHandler, 'POST', createCommand())).code, 404);
+    assert.equal((await invoke(readinessHandler, 'GET', undefined, { view: 'context' })).code, 404);
     assert.equal((await db.collection('organizations/org-a/exercises').get()).size, 0);
     process.env.HUBCYS_V2_ENABLED = 'true';
     const result = await invoke(commandHandler, 'POST', createCommand());
     assert.equal(result.code, 200);
     assert.equal(result.headers['Cache-Control'], 'no-store');
     const payload = result.payload as { data: { exercise_id: string } };
+    assert.equal((await invoke(readinessHandler, 'GET', undefined, { view: 'context' })).code, 200);
+    assert.equal((await invoke(readinessHandler, 'GET', undefined, { view: 'index', organization_id: 'org-b' })).code, 403);
+    assert.equal((await invoke(readinessHandler, 'GET', undefined, { view: 'evidence', organization_id: 'org-a', exercise_id: payload.data.exercise_id })).code, 200);
     assert.equal((await invoke(workspaceHandler, 'GET', undefined, {
       organization_id: 'org-a', exercise_id: payload.data.exercise_id,
     })).code, 200);

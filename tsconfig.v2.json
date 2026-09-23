@@ -15,5 +15,5 @@
     "outDir": ".v2-build",
     "types": ["node"]
   },
-  "include": ["shared/v2/**/*.ts", "server/v2/**/*.ts", "server/security/**/*.js", "api/v2/**/*.ts", "tests/v2/**/*.ts", "tests/emulator/**/*.ts"]
+  "include": ["shared/v2/**/*.ts", "server/v2/**/*.ts", "server/security/**/*.js", "api/v2/**/*.ts", "tests/v2/**/*.ts", "tests/emulator/**/*.ts", "scripts/generate-review-fixture.ts"]
 }

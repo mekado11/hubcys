@@ -2,7 +2,8 @@
   "functions": {
     "api/surface-recon.js": { "maxDuration": 60 },
     "api/ai.js": { "maxDuration": 60 },
-    "api/v2/commands.ts": { "maxDuration": 60 }
+    "api/v2/commands.ts": { "maxDuration": 60 },
+    "api/v2/readiness.ts": { "maxDuration": 60 }
   },
   "crons": [
     {

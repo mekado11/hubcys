@@ -6,6 +6,12 @@ on:
       - 'server/v2/**'
       - 'server/security/**'
       - 'api/**'
+      - 'src/**'
+      - 'review/**'
+      - 'review.html'
+      - 'vite.config.js'
+      - 'playwright.config.js'
+      - 'tests/browser/**'
       - 'tests/v2/**'
       - 'tests/security/**'
       - 'tests/emulator/**'
@@ -36,5 +42,9 @@ jobs:
       - run: npm run typecheck:v2
       - run: npm run test:v2
       - run: npm run test:security
+      - run: npm run lint:v2
       - run: npm run test:emulator
       - run: npm run build
+      - run: npm run build:review
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:ui

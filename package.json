@@ -9,7 +9,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:review": "tsc -p tsconfig.v2.json && node .v2-build/scripts/generate-review-fixture.js && vite build --mode review",
     "lint": "eslint . --quiet",
+    "lint:v2": "eslint src/v2 src/App.jsx review/Preview.jsx --quiet",
+    "test:ui": "playwright test",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
     "typecheck:v2": "tsc -p tsconfig.v2.json --noEmit",
@@ -20,6 +23,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource-variable/ibm-plex-sans": "^5.3.0",
     "@hello-pangea/dnd": "^17.0.0",
     "@hookform/resolvers": "^4.1.2",
     "@radix-ui/react-accordion": "^1.2.3",
@@ -92,6 +96,7 @@
   "devDependencies": {
     "@eslint/js": "^9.19.0",
     "@firebase/rules-unit-testing": "^4.0.1",
+    "@playwright/test": "^1.63.0",
     "@types/node": "^22.13.5",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
