@@ -30,7 +30,7 @@ function CommandError({ operation }) {
   return operation.error ? <p className="v2-caution" role="alert">{operation.error}{operation.locked && ' The original request is retained. Retry before changing this action.'}</p> : null;
 }
 
-export function CreateExercise({ client, org }) {
+export function CreateExercise({ client, org, preview = false }) {
   const setup = useResource(`setup:${org}`, signal => client.setup(org, signal));
   const [scope, setScope] = useState('production-response');
   const [context, setContext] = useState(null);
@@ -45,6 +45,7 @@ export function CreateExercise({ client, org }) {
     <PageHeader eyebrow="New exercise" title="Ransomware response exercise" description="Create a tenant-owned exercise with three simulated injects and explicit response objectives. No participant actions or results are prefilled." />
     <form className="v2-panel v2-form" onSubmit={event => {
       event.preventDefault();
+      if (preview) return;
       operation.run({
         command: 'create_ransomware_exercise', organization_id: org, scope_key: scope,
         context_description: context ?? data.context_description,
@@ -63,7 +64,8 @@ export function CreateExercise({ client, org }) {
       </fieldset>
       <div className="v2-panel"><h2>What this exercise tests</h2><p>Triage, evidence preservation before destructive remediation, and factual executive communication. These are exercise objectives, not assumed regulatory obligations.</p></div>
       <CommandError operation={operation} />
-      <button className="v2-button" disabled={operation.busy || (!selected.length && !operation.locked)}>{operation.busy ? 'Creating…' : operation.locked ? 'Retry creation' : 'Create exercise'}</button>
+      {preview && <p className="v2-caution" role="note">This interface preview is read-only. Exercise creation and participant provisioning require the connected application.</p>}
+      <button className="v2-button" disabled={preview || operation.busy || (!selected.length && !operation.locked)}>{operation.busy ? 'Creating…' : operation.locked ? 'Retry creation' : 'Create exercise'}</button>
     </form>
   </>;
 }

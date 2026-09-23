@@ -30,6 +30,8 @@ import {
   Search,
 } from "lucide-react";
 import EvidenceView from "./EvidenceView";
+import ReadinessOverview from "./ReadinessOverview";
+import RemediationView from "./RemediationView";
 import { CreateExercise, ExerciseWorkspace } from './ExerciseWorkflow';
 import {
   Badge,
@@ -120,6 +122,7 @@ function Brand({ org, onNavigate }) {
 function ExerciseRows({
   exercises,
   org,
+  workspaceLinks = false,
   emptyTitle = "No exercises in this view",
 }) {
   const [search, setSearch] = useState("");
@@ -163,6 +166,8 @@ function ExerciseRows({
               </div>
               <Badge>{label(row.state)}</Badge>
               <time className="v2-muted">{date(row.created_at)}</time>
+              <div className="v2-row-actions">
+              {workspaceLinks && <Link className="v2-text-link" to={`/app/exercises/${encodeURIComponent(row.id)}?org=${encodeURIComponent(org)}`}>Open workspace <ArrowRight size={16} /></Link>}
               {row.can_review ? (
                 <Link
                   className="v2-text-link"
@@ -174,6 +179,7 @@ function ExerciseRows({
               ) : (
                 <span className="v2-muted">Reviewer access required</span>
               )}
+              </div>
             </article>
           ))}
         </div>
@@ -181,109 +187,26 @@ function ExerciseRows({
     </>
   );
 }
-function Overview({ data, org }) {
-  const reviewed = data.exercises.filter(
-    (row) => ["review", "completed"].includes(row.state) && row.can_review,
-  );
-  return (
-    <>
-      <section className="v2-readiness-summary">
-        <div>
-          <p className="v2-eyebrow">Overall readiness</p>
-          <h2>Not measured</h2>
-          <p>
-            Exercise evidence is available below. An organization-wide score is
-            withheld until a validated readiness projection exists.
-          </p>
-          <Link
-            className="v2-button"
-            to={`/app/readiness?org=${encodeURIComponent(org)}`}
-          >
-            Inspect readiness profiles
-            <ArrowRight size={16} />
-          </Link>
-        </div>
-        <dl>
-          <div>
-            <dt>Recorded exercises in view</dt>
-            <dd>{data.exercises.length}</dd>
-          </div>
-          <div>
-            <dt>Reviewable evidence views</dt>
-            <dd>{reviewed.length}</dd>
-          </div>
-          <div>
-            <dt>Verified improvement trend</dt>
-            <dd className="v2-small-value">Not established</dd>
-          </div>
-        </dl>
-      </section>
-      <div className="v2-section-heading">
-        <h2>Where to focus</h2>
-        <Badge>Evidence before conclusions</Badge>
-      </div>
-      <div className="v2-priority-grid">
-        <section className="v2-panel">
-          <p className="v2-eyebrow">Response performance</p>
-          <h2>
-            {reviewed.length
-              ? label(reviewed[0].threat_id)
-              : "Establish your baseline"}
-          </h2>
-          <p className="v2-muted">
-            {reviewed.length
-              ? "Inspect the latest reviewable exercise. Separate observed weaknesses from actions that still need verification."
-              : "No reviewable exercise is available in this view. Build a baseline before making readiness claims."}
-          </p>
-          {reviewed.length > 0 && (
-            <Link
-              className="v2-text-link"
-              to={`/app/readiness/${reviewed[0].id}?org=${encodeURIComponent(org)}`}
-            >
-              Open evidence chain
-              <ArrowRight size={16} />
-            </Link>
-          )}
-        </section>
-        <section className="v2-panel">
-          <p className="v2-eyebrow">Verification boundary</p>
-          <h2>Fixed is not yet proven</h2>
-          <p className="v2-muted">
-            Completing corrective work does not change readiness by itself.
-            Verification and targeted retests must establish the improvement.
-          </p>
-          <Link
-            className="v2-text-link"
-            to={`/app/remediation?org=${encodeURIComponent(org)}`}
-          >
-            Review corrective work
-            <ArrowRight size={16} />
-          </Link>
-        </section>
-      </div>
-      <section className="v2-panel">
-        <div className="v2-section-heading">
-          <h2>Recent exercises</h2>
-          <Link
-            className="v2-text-link"
-            to={`/app/exercises?org=${encodeURIComponent(org)}`}
-          >
-            All in this view
-            <ArrowRight size={16} />
-          </Link>
-        </div>
-        <ExerciseRows exercises={data.exercises.slice(0, 5)} org={org} />
-      </section>
-    </>
-  );
-}
 function Profiles({ data, org }) {
   const [selected, setSelected] = useState("all");
+  const [expanded, setExpanded] = useState(false);
+  const orderedThreats = [...threats].sort((a, b) =>
+    Number(data.exercises.some(row => row.threat_id === b)) - Number(data.exercises.some(row => row.threat_id === a)),
+  );
   const selectedRows = data.exercises.filter(
     (row) => selected === "all" || row.threat_id === selected,
   );
   return (
     <>
+      <div className="v2-profile-index" aria-label="Threat coverage in this view">
+        {(expanded ? orderedThreats : orderedThreats.slice(0, 3)).map(threat => {
+          const count = data.exercises.filter(row => row.threat_id === threat).length;
+          return <button key={threat} aria-pressed={selected === threat} onClick={() => setSelected(selected === threat ? "all" : threat)}>
+            <ShieldCheck size={18} aria-hidden="true" /><span>{label(threat)}<small>{count ? `${count} exercise${count === 1 ? "" : "s"} in view` : "No exercises in view"}</small></span><ArrowRight size={15} />
+          </button>;
+        })}
+      </div>
+      <button className="v2-text-link v2-profile-expand" aria-expanded={expanded} onClick={() => setExpanded(value => !value)}>{expanded ? "Show fewer profiles" : "Show all threat profiles"} <ArrowRight size={15} /></button>
       <div className="v2-toolbar">
         <label>
           Threat profile
@@ -316,34 +239,6 @@ function Profiles({ data, org }) {
   );
 }
 function SupportingSection({ section, data, org }) {
-  if (section === "remediation")
-    return (
-      <>
-        <section className="v2-panel">
-          <h2>Follow the finding back to its evidence</h2>
-          <p className="v2-muted">
-            Linked findings, owners and recorded corrective-action states are
-            available inside each exercise evidence view. An organization-wide
-            remediation queue is not connected yet.
-          </p>
-          <Link
-            className="v2-button"
-            to={`/app/readiness?org=${encodeURIComponent(org)}`}
-          >
-            Inspect exercise findings
-            <ArrowRight size={16} />
-          </Link>
-        </section>
-        <section className="v2-panel">
-          <h2>Existing corrective work</h2>
-          <p className="v2-muted">
-            Legacy action items remain available. They are not silently counted
-            as verified V2 remediation.
-          </p>
-          <LegacyLink to="ActionItems">Open existing action items</LegacyLink>
-        </section>
-      </>
-    );
   if (section === "threats")
     return (
       <>
@@ -493,7 +388,7 @@ function SupportingSection({ section, data, org }) {
     </section>
   );
 }
-function IndexPage({ section, resource, org }) {
+function IndexPage({ section, resource, org, client }) {
   if (resource.loading) return <Loading />;
   if (resource.error)
     return <Failure error={resource.error} retry={resource.refresh} />;
@@ -515,18 +410,21 @@ function IndexPage({ section, resource, org }) {
         </button>
       </PageHeader>
       {section === "overview" ? (
-        <Overview data={resource.data} org={org} />
+        <ReadinessOverview client={client} data={resource.data} org={org}>
+          <ExerciseRows exercises={resource.data.exercises.slice(0, 5)} org={org} />
+        </ReadinessOverview>
       ) : section === "readiness" ? (
         <Profiles data={resource.data} org={org} />
       ) : section === "exercises" ? (
         <section className="v2-panel">
-          <Link className="v2-button" to={`/app/exercises/new?org=${encodeURIComponent(org)}`}>Create ransomware exercise</Link>
-          <div className="v2-workflow-links">{resource.data.exercises.map(row => <Link className="v2-text-link" key={row.id} to={`/app/exercises/${row.id}?org=${encodeURIComponent(org)}`}>Open {label(row.threat_id)} · {row.scope_key}</Link>)}</div>
-          <ExerciseRows exercises={resource.data.exercises} org={org} />
+          <div className="v2-section-heading"><div><p className="v2-eyebrow">Response operations</p><h2>Exercise register</h2></div><Link className="v2-button" to={`/app/exercises/new?org=${encodeURIComponent(org)}`}>Create ransomware exercise <ArrowRight size={16} /></Link></div>
+          <ExerciseRows exercises={resource.data.exercises} org={org} workspaceLinks />
           <p className="v2-muted v2-footnote">
             Open an exercise to release injects, submit assigned responses or review captured evidence.
           </p>
         </section>
+      ) : section === "remediation" ? (
+        <RemediationView client={client} data={resource.data} org={org} />
       ) : (
         <SupportingSection section={section} data={resource.data} org={org} />
       )}
@@ -742,7 +640,7 @@ export default function ReadinessApp({
             />
           ) : (
             <Routes>
-              <Route path="exercises/new" element={<CreateExercise key={org} client={client} org={org} />} />
+              <Route path="exercises/new" element={<CreateExercise key={org} client={client} org={org} preview={preview} />} />
               <Route path="exercises/:exerciseId" element={<ExerciseWorkspace key={`${org}:${location.pathname}`} client={client} org={org} />} />
               <Route
                 index
@@ -758,7 +656,7 @@ export default function ReadinessApp({
                   key={path}
                   path={path}
                   element={
-                    <IndexPage section={path} resource={index} org={org} />
+                    <IndexPage section={path} resource={index} org={org} client={client} />
                   }
                 />
               ))}
