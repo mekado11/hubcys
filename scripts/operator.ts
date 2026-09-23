@@ -48,8 +48,8 @@ export async function run(argv: string[], out: (line: string) => void = line => 
   }
   let plan: Plan;
   switch (command) {
-    case 'grant-operator': plan = await planOperatorClaim(auth, need('uid'), true); break;
-    case 'revoke-operator': plan = await planOperatorClaim(auth, need('uid'), false); break;
+    case 'grant-operator': plan = await planOperatorClaim(auth, db, need('uid'), true); break;
+    case 'revoke-operator': plan = await planOperatorClaim(auth, db, need('uid'), false); break;
     case 'provision-org': plan = await planProvisionOrganization(auth, db, {
       organizationId: need('org'), name: need('name'), contextDescription: need('context'), actorUid: need('actor'), now,
     }); break;

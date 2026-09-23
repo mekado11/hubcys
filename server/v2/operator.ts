@@ -96,22 +96,34 @@ export async function auditLegacyAdmins(auth: Auth, db: Firestore) {
   return { profile_flag_count: flagged.size, truncated: flagged.size === 200, accounts: rows };
 }
 
-/** Grant or revoke the global legacy-administration claim, preserving unrelated claims. */
-export async function planOperatorClaim(auth: Auth, uid: string, grant: boolean): Promise<Plan> {
+/**
+ * Grant or revoke the global legacy-administration claim, preserving unrelated claims.
+ * Revocation also revokes refresh tokens and records the revocation time, which the
+ * Firestore rules compare with each ID token's auth_time. Already-issued tokens stop
+ * conferring authority at once, not when they expire.
+ */
+export async function planOperatorClaim(auth: Auth, db: Firestore, uid: string, grant: boolean): Promise<Plan> {
   const user = await userOrThrow(auth, uid);
   if (grant) activeVerified(user);
   const before = { ...(user.customClaims ?? {}) };
   const after: Record<string, unknown> = { ...before };
   if (grant) after.is_super_admin = true; else delete after.is_super_admin;
-  const changed = canonicalJson(before) !== canonicalJson(after);
+  const claimChanged = canonicalJson(before) !== canonicalJson(after);
+  const revocationRef = db.doc(`operator_revocations/${user.uid}`);
+  const changes: Change[] = claimChanged ? [{ target: `auth/users/${uid}/customClaims`, before, after }] : [];
+  // Revocation is always recorded, so that tokens cached from earlier sessions are cut off
+  // even when the claim itself was already removed elsewhere.
+  if (!grant) changes.push({ target: revocationRef.path, before: null, after: { uid: user.uid, revoked_at_seconds: '<time of revocation>' } });
   return {
     action: grant ? 'operator.grant' : 'operator.revoke',
-    changes: changed ? [{ target: `auth/users/${uid}/customClaims`, before, after }] : [],
+    changes,
     apply: async () => {
-      if (!changed) return;
-      await auth.setCustomUserClaims(uid, after);
-      // Revocation must not wait for existing ID tokens (up to 1h) to expire.
-      if (!grant) await auth.revokeRefreshTokens(uid);
+      if (claimChanged) await auth.setCustomUserClaims(uid, after);
+      if (grant) return;
+      await auth.revokeRefreshTokens(uid);
+      const validAfter = (await auth.getUser(uid)).tokensValidAfterTime;
+      const revokedAt = Math.floor(Date.parse(validAfter ?? new Date().toISOString()) / 1000);
+      await revocationRef.set({ uid: user.uid, revoked_at_seconds: revokedAt, recorded_at: new Date().toISOString(), source: 'operator_cli' });
     },
   };
 }
@@ -129,6 +141,13 @@ export async function planProvisionOrganization(auth: Auth, db: Firestore, input
   const contextRef = orgRef.collection('context_versions').doc(context.id);
   const [orgSnap, contextSnap] = await Promise.all([orgRef.get(), contextRef.get()]);
   if (orgSnap.exists && orgSnap.get('name') !== organization.name) throw new OperatorError('ORGANIZATION_EXISTS_WITH_DIFFERENT_NAME');
+  if (contextSnap.exists) {
+    // A re-run must not silently keep a retired or different context while reporting success.
+    const existing = ContextVersion.safeParse(contextSnap.data());
+    if (!existing.success || existing.data.status !== 'published' || existing.data.description !== context.description) {
+      throw new OperatorError('CONTEXT_EXISTS_WITH_DIFFERENT_CONTENT');
+    }
+  }
   const writes = [
     ...(orgSnap.exists ? [] : [{ ref: orgRef, data: organization }]),
     ...(contextSnap.exists ? [] : [{ ref: contextRef, data: context }]),

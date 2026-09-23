@@ -38,7 +38,7 @@ npm run operator -- grant-operator --project P --uid <your-uid>           # revi
 npm run operator -- grant-operator --project P --uid <your-uid> --apply
 ```
 
-Sign out and back in so your ID token carries the claim. Other claims on the account are preserved. `revoke-operator` removes the claim and revokes existing sessions.
+Sign out and back in so your ID token carries the claim. Other claims on the account are preserved. `revoke-operator` removes the claim, revokes refresh tokens and records the revocation. The rules then reject any claimed ID token from an earlier session straight away, instead of waiting up to an hour for it to expire. This needs the rules from step 5 to be deployed.
 
 ## 4. Organization and membership
 
