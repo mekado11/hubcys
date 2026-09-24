@@ -30,7 +30,7 @@ Finish [activation-runbook.md](activation-runbook.md) steps 0–7 on the Vercel 
 
 - `https://hubcys.com` shows the redesign's landing page, not the Base44 one. Response headers include `x-vercel-id`.
 - `https://www.hubcys.com` redirects to `https://hubcys.com`.
-- Signing up with a new account works. The account gets no company or admin rights until assigned (expected).
+- Signing up with a new test account (for example `cutover-test+<date>@…`) works. It gets no company or admin rights until assigned (expected). Delete it afterwards.
 - Your account signs in. `/Dashboard` redirects to `/app/overview` and shows your organization.
 - `/api/health` with the secret header returns 200.
 - A logged-out visit to `/app/overview` shows sign-in, not data.
@@ -38,7 +38,11 @@ Finish [activation-runbook.md](activation-runbook.md) steps 0–7 on the Vercel 
 
 ## Rollback
 
-Restore the recorded Base44 DNS records in Cloudflare. Traffic returns within the DNS TTL, typically minutes. No data is changed by the cut-over itself, so rollback loses nothing. Leave the Vercel domain attached; it is inactive without DNS.
+1. **Record the switch time (UTC)** when you change DNS. Anything created in Firebase after that time exists only in the new app. The two backends are not synchronized.
+2. **Restore the recorded Base44 DNS records** in Cloudflare. This is also the write freeze: once DNS propagates (within the TTL), no new sign-ups or saves reach Firebase through hubcys.com.
+3. **Snapshot what the new app received**, after propagation: run `gcloud firestore export gs://<backup-bucket>/post-cutover-<date>`. In Firebase console → Authentication, list users created after the switch time.
+
+Nothing is deleted by rolling back, but accounts and records created during the window become **unreachable to those users** until they are reconciled. If step 3 shows any real users or data, contact those users. Their records stay in the Firebase export and can be migrated when the cut-over is retried. For this reason, keep the window before deciding on rollback short, and use a clearly named test account for the verification sign-up (delete it afterwards in Firebase Authentication).
 
 ## After the switch
 
