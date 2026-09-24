@@ -131,7 +131,7 @@ export default function LandingPage() {
           <Link to={createPageUrl("LandingPage")} className="flex items-center gap-3">
             <div className="relative">
               <img
-                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/686c4c7cddeaa31e94f721d6/3e69b2e7d_Hubcys.png"
+                src="/brand/3e69b2e7d_Hubcys.png"
                 alt="Hubcys"
                 className="w-8 h-8 object-contain"
               />
@@ -396,7 +396,7 @@ export default function LandingPage() {
           <Card className="glass-effect border-slate-700/50 overflow-hidden mb-10">
             <CardContent className="p-0">
               <img
-                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/686c4c7cddeaa31e94f721d6/81e0a8c6c_image.png"
+                src="/brand/81e0a8c6c_image.png"
                 alt="Cybersecurity breach cost vs spend by industry"
                 className="w-full h-auto"
                 loading="lazy"

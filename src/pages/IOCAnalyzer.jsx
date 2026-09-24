@@ -241,7 +241,7 @@ export default function IOCAnalyzer() {
       <div 
         className="fixed inset-0 z-0"
         style={{
-          backgroundImage: 'url(https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/686c4c7cddeaa31e94f721d6/0031e6902_image.png)',
+          backgroundImage: 'url(/brand/0031e6902_image.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
