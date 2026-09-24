@@ -662,7 +662,7 @@ export default function Layout({ children, currentPageName }) {
           <Link to={createPageUrl("LandingPage")} className="flex items-center space-x-3 px-2 mb-10">
             <div className="relative">
               <img
-                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/686c4c7cddeaa31e94f721d6/3e69b2e7d_Hubcys.png"
+                src="/brand/3e69b2e7d_Hubcys.png"
                 alt="Hubcys Logo"
                 className="w-10 h-10 object-contain"
               />

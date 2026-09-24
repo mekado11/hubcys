@@ -82,7 +82,7 @@ export default function OnboardingTour({ isOpen, onClose, onComplete }) {
               >
                 <div className="flex justify-center mb-6">
                    <img 
-                      src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/27b05ae20_fortigap.png" 
+                      src="/brand/27b05ae20_fortigap.png" 
                       alt="Hubcys Logo" 
                       className="w-20 h-20 object-contain"
                     />

@@ -11,7 +11,7 @@ export default function Questionnaire() {
 
   const downloadTemplate = () => {
     // Direct link to the professionally formatted PDF template
-    const pdfUrl = "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/686c4c7cddeaa31e94f721d6/a107556f2_FortigapCybersecurityAssessmentQuestions.pdf";
+    const pdfUrl = "/brand/a107556f2_FortigapCybersecurityAssessmentQuestions.pdf";
     const a = document.createElement("a");
     a.href = pdfUrl;
     a.download = "Hubcys_Assessment_Questionnaire.pdf";
